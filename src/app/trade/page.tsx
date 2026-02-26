@@ -10,8 +10,7 @@ import {
   Search, 
   Wallet, 
   Zap,
-  Info,
-  ShoppingCart
+  Info
 } from "lucide-react"
 import { LineChart, Line, ResponsiveContainer } from "recharts"
 import { MOCK_STOCKS, MOCK_USER } from "@/lib/mock-data"
@@ -21,23 +20,11 @@ import { useToast } from "@/hooks/use-toast"
 export default function TradePage() {
   const { toast } = useToast()
   const [searchQuery, setSearchQuery] = React.useState("")
-  const [isOrdering, setIsOrdering] = React.useState<string | null>(null)
 
   const filteredStocks = MOCK_STOCKS.filter(stock => 
     stock.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
     stock.symbol.toLowerCase().includes(searchQuery.toLowerCase())
   )
-
-  const handleBuy = (stock: typeof MOCK_STOCKS[0]) => {
-    setIsOrdering(stock.symbol)
-    setTimeout(() => {
-      setIsOrdering(null)
-      toast({
-        title: "Order Placed Successfully",
-        description: `Bought 1 share of ${stock.symbol} at ${stock.price} INR`,
-      })
-    }, 1200)
-  }
 
   return (
     <DashboardShell>
@@ -80,7 +67,6 @@ export default function TradePage() {
                         <th className="px-6 py-4 text-center">Market Chart</th>
                         <th className="px-6 py-4 text-right">Price (INR)</th>
                         <th className="px-6 py-4 text-right">Volume</th>
-                        <th className="px-6 py-4 text-right">Action</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border/30">
@@ -131,21 +117,6 @@ export default function TradePage() {
                           </td>
                           <td className="px-6 py-4 text-right">
                             <div className="text-xs font-medium text-muted-foreground">{stock.volume}</div>
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <Button 
-                              size="sm"
-                              className="rounded-lg font-bold gap-2 h-9 text-xs"
-                              disabled={isOrdering === stock.symbol}
-                              onClick={() => handleBuy(stock)}
-                            >
-                              {isOrdering === stock.symbol ? (
-                                <span className="size-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                              ) : (
-                                <ShoppingCart className="size-3" />
-                              )}
-                              Buy
-                            </Button>
                           </td>
                         </tr>
                       ))}
