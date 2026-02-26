@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -34,7 +33,7 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-white text-[#44475b] font-body selection:bg-[#00d09c]/30">
-      {/* Top Navigation Bar */}
+      {/* Top Navigation Bar - Exact Groww Style */}
       <header className="fixed top-0 w-full z-50 bg-white border-b border-gray-100">
         <div className="container mx-auto px-4 md:px-8 h-20 flex items-center justify-between">
           <div className="flex items-center gap-12">
@@ -80,7 +79,7 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* Market Ticker */}
+      {/* Market Ticker - Exact Marquee Location */}
       <div className="pt-20 bg-white border-b border-gray-50 h-12 flex items-center overflow-hidden">
         <div className="flex animate-marquee whitespace-nowrap">
           {[...MOCK_INDICES, ...MOCK_INDICES, ...MOCK_INDICES].map((index, i) => (
@@ -95,7 +94,7 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Hero Section */}
+      {/* Hero Section - Matched to Screenshot */}
       <section className="pt-24 pb-16 bg-white overflow-hidden">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-6xl md:text-8xl font-headline font-bold text-[#44475b] mb-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
