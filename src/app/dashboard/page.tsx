@@ -80,6 +80,11 @@ export default function DashboardOverview() {
     router.push(`/trade/${symbol}`)
   }
 
+  const handleIndexClick = (name: string) => {
+    // Navigate to trade page with index name as search query
+    router.push(`/trade?q=${encodeURIComponent(name.split(' ')[0])}`)
+  }
+
   return (
     <DashboardShell>
       <div className="space-y-12 pb-10">
@@ -91,6 +96,7 @@ export default function DashboardOverview() {
               key={index.name} 
               className="glass-card hover:bg-muted/10 cursor-pointer border-none shadow-sm transition-all hover:scale-[1.02]"
               style={{ animationDelay: `${i * 100}ms` }}
+              onClick={() => handleIndexClick(index.name)}
             >
               <CardContent className="p-4 flex flex-col justify-between h-full">
                 <div className="flex justify-between items-start">
