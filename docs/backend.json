@@ -24,6 +24,18 @@
         "addedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["symbol", "addedAt"]
+    },
+    "Holding": {
+      "title": "Stock Holding",
+      "description": "Information about a stock owned by the user.",
+      "type": "object",
+      "properties": {
+        "symbol": { "type": "string" },
+        "quantity": { "type": "number" },
+        "averagePrice": { "type": "number" },
+        "lastUpdated": { "type": "string", "format": "date-time" }
+      },
+      "required": ["symbol", "quantity", "averagePrice"]
     }
   },
   "auth": {
@@ -37,6 +49,10 @@
     "/users/{userId}/watchlist/{symbol}": {
       "schema": "#/entities/WatchlistItem",
       "description": "Collection of stocks watched by the user."
+    },
+    "/users/{userId}/holdings/{symbol}": {
+      "schema": "#/entities/Holding",
+      "description": "Collection of stocks owned by the user."
     }
   }
 }
