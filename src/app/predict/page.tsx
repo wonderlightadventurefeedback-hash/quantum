@@ -168,21 +168,21 @@ export default function PredictionArenaPage() {
       setTradeResult({ win: isWin, explanation: aiReview })
     }
 
-    // Save trade record to Firestore history
+    // Save unified Activity Log record
     if (db && user) {
-      const predictionsRef = collection(db, 'users', user.uid, 'stock_predictions');
-      addDocumentNonBlocking(predictionsRef, {
-        stockId: selectedStock.symbol,
-        predictionTimestamp: serverTimestamp(),
-        userPredictedDirection: prediction,
-        actualDirection: currentPrice > entryPrice ? "UP" : "DOWN",
-        userPredictionMatched: isWin,
-        amount: amount,
-        profit: profit,
-        startPrice: entryPrice,
-        endPrice: currentPrice,
-        aiExplanation: aiReview,
-        predictionHorizon: `${TRADE_DURATION}s`
+      const activityRef = collection(db, 'users', user.uid, 'activity');
+      addDocumentNonBlocking(activityRef, {
+        type: "ARENA_SPECULATE",
+        symbol: selectedStock.symbol,
+        name: selectedStock.name,
+        prediction: prediction,
+        outcome: isWin ? "WIN" : "LOSS",
+        stake: amount,
+        total: profit,
+        price: entryPrice,
+        timestamp: serverTimestamp(),
+        status: "SETTLED",
+        aiExplanation: aiReview
       });
     }
 

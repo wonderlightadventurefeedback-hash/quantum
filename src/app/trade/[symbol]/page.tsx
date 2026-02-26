@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -39,8 +40,8 @@ import {
 import { MOCK_STOCKS } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
-import { useUser, useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking } from "@/firebase"
-import { doc, serverTimestamp, getDoc, increment } from "firebase/firestore"
+import { useUser, useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase"
+import { doc, serverTimestamp, getDoc, increment, collection } from "firebase/firestore"
 
 const FINNHUB_API_KEY = "d6g3c49r01qqnmbqk10gd6g3c49r01qqnmbqk110";
 
@@ -208,6 +209,7 @@ export default function StockDetailsPage() {
     setIsProcessing(true)
     const holdingRef = doc(db, 'users', user.uid, 'holdings', symbol)
     const userRef = doc(db, 'users', user.uid)
+    const activityRef = collection(db, 'users', user.uid, 'activity')
 
     try {
       if (type === "BUY") {
@@ -224,6 +226,18 @@ export default function StockDetailsPage() {
           balance: newBalance,
           updatedAt: serverTimestamp()
         }, { merge: true })
+
+        // Log Activity
+        addDocumentNonBlocking(activityRef, {
+          type: "ORDER_BUY",
+          symbol,
+          name: stock.name,
+          quantity: orderQty,
+          price: stock.price,
+          total: totalValue,
+          timestamp: serverTimestamp(),
+          status: "COMPLETED"
+        })
         
         toast({ title: "Virtual Buy Success", description: `Added ${orderQty} shares of ${symbol} to your demo portfolio.` })
       } else {
@@ -243,6 +257,18 @@ export default function StockDetailsPage() {
           balance: newBalance,
           updatedAt: serverTimestamp()
         }, { merge: true })
+
+        // Log Activity
+        addDocumentNonBlocking(activityRef, {
+          type: "ORDER_SELL",
+          symbol,
+          name: stock.name,
+          quantity: orderQty,
+          price: stock.price,
+          total: totalValue,
+          timestamp: serverTimestamp(),
+          status: "COMPLETED"
+        })
         
         toast({ title: "Virtual Sell Success", description: `Sold ${orderQty} shares of ${symbol}. Funds added to demo balance.` })
       }
@@ -302,9 +328,26 @@ export default function StockDetailsPage() {
       } else {
         toast({ variant: "destructive", title: "TRADE EXPIRED", description: "Market moved against your prediction." })
       }
+
+      // Log Live Prediction Activity
+      if (db && user) {
+        const activityRef = collection(db, 'users', user.uid, 'activity');
+        addDocumentNonBlocking(activityRef, {
+          type: "ARENA_SPECULATE",
+          symbol,
+          name: stock.name,
+          prediction: prediction,
+          outcome: isWin ? "WIN" : "LOSS",
+          stake: amount,
+          total: isWin ? (amount * 0.8) : -amount,
+          price: entryPrice,
+          timestamp: serverTimestamp(),
+          status: "SETTLED"
+        })
+      }
     }
     return () => clearInterval(interval)
-  }, [isTradingLive, tradeTimer, db, user, prediction, entryPrice, stock.price, tradeAmount])
+  }, [isTradingLive, tradeTimer, db, user, prediction, entryPrice, stock.price, tradeAmount, symbol, stock.name])
 
   if (!isMounted) return null;
 

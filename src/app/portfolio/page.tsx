@@ -6,14 +6,15 @@ import { DashboardShell } from "@/components/dashboard-shell"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from "recharts"
-import { BrainCircuit, Plus, RefreshCw, Loader2, Wallet, TrendingUp, TrendingDown, LayoutDashboard } from "lucide-react"
+import { BrainCircuit, Plus, RefreshCw, Loader2, Wallet, TrendingUp, TrendingDown, LayoutDashboard, Clock, Activity, ShoppingBag, ArrowRightLeft } from "lucide-react"
 import { aiPortfolioImprovementInsights } from "@/ai/flows/ai-portfolio-improvement-insights"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from "@/firebase"
-import { collection, doc } from "firebase/firestore"
+import { collection, doc, query, orderBy, limit } from "firebase/firestore"
 import { useRouter } from "next/navigation"
+import { formatDistanceToNow } from "date-fns"
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))']
 const FINNHUB_API_KEY = "d6g3c49r01qqnmbqk10gd6g3c49r01qqnmbqk110";
@@ -44,6 +45,14 @@ export default function PortfolioPage() {
   }, [db, user])
 
   const { data: holdings, isLoading: holdingsLoading } = useCollection(holdingsQuery)
+
+  // Real-time Activity for Portfolio
+  const activityQuery = useMemoFirebase(() => {
+    if (!db || !user) return null
+    return query(collection(db, 'users', user.uid, 'activity'), orderBy('timestamp', 'desc'), limit(5))
+  }, [db, user])
+
+  const { data: recentActivity } = useCollection(activityQuery)
 
   React.useEffect(() => {
     setIsMounted(true);
@@ -275,6 +284,63 @@ export default function PortfolioPage() {
             </div>
           </Card>
         </div>
+
+        {/* Portfolio Unified Activity Feed */}
+        <Card className="glass-card border-none shadow-xl rounded-[2.5rem] overflow-hidden">
+          <CardHeader className="bg-muted/10 px-8 py-6 border-b border-border/50 flex flex-row items-center justify-between">
+            <CardTitle className="text-xl font-headline font-bold flex items-center gap-2">
+              <Activity className="size-5 text-primary" /> Recent Transaction Logs
+            </CardTitle>
+            <Button variant="ghost" className="text-xs font-bold gap-2" onClick={() => router.push('/settings')}>
+              View Full History <Clock className="size-3" />
+            </Button>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="divide-y divide-border/50">
+              {!recentActivity || recentActivity.length === 0 ? (
+                <div className="p-12 text-center text-muted-foreground italic text-sm">
+                  Your transaction history is currently empty.
+                </div>
+              ) : recentActivity.map((act) => {
+                const isBuy = act.type === "ORDER_BUY";
+                const isSell = act.type === "ORDER_SELL";
+                const isArena = act.type === "ARENA_SPECULATE";
+                
+                return (
+                  <div key={act.id} className="p-6 px-8 flex items-center justify-between hover:bg-muted/5 transition-colors">
+                    <div className="flex items-center gap-4">
+                      <div className={cn(
+                        "size-10 rounded-xl flex items-center justify-center shadow-sm border border-border/50",
+                        isBuy ? "bg-green-500/10 text-green-500" : isSell ? "bg-blue-500/10 text-blue-500" : "bg-amber-500/10 text-amber-500"
+                      )}>
+                        {isBuy ? <ShoppingBag size={18} /> : isSell ? <ArrowRightLeft size={18} /> : <Zap size={18} />}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold">{act.symbol}</span>
+                          <Badge variant="outline" className="text-[9px] h-4 py-0 uppercase tracking-widest font-black">
+                            {isBuy ? "SPOT BUY" : isSell ? "SPOT SELL" : "ARENA"}
+                          </Badge>
+                        </div>
+                        <div className="text-[10px] text-muted-foreground font-medium uppercase mt-0.5">
+                          {act.timestamp ? formatDistanceToNow(act.timestamp.toDate(), { addSuffix: true }) : 'Processing...'}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className={cn("font-black", (act.total || 0) >= 0 ? "text-primary" : "text-destructive")}>
+                        {(act.total || 0) >= 0 ? "+" : ""}₹{Math.abs(act.total || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground uppercase font-bold">
+                        {isArena ? `RESULT: ${act.outcome}` : `PRICE: ₹${act.price.toFixed(2)}`}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
 
         {insights && (
           <Card className="glass-card border-primary/30 bg-primary/5 rounded-[2.5rem] p-12 animate-in zoom-in-95 shadow-2xl">

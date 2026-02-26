@@ -33,7 +33,9 @@ import {
   ArrowDownRight,
   Loader2,
   Clock,
-  RefreshCw
+  RefreshCw,
+  ShoppingBag,
+  ArrowRightLeft
 } from "lucide-react"
 import { MOCK_USER } from "@/lib/mock-data"
 import { useToast } from "@/hooks/use-toast"
@@ -57,44 +59,48 @@ export default function SettingsPage() {
   const { data: userProfile } = useDoc(userProfileRef)
   const balance = userProfile?.balance ?? 50000
 
-  // Fetch Real Trade History
-  const predictionsQuery = useMemoFirebase(() => {
+  // Fetch Real Unified Activity History (Buy/Sell + Arena)
+  const activityQuery = useMemoFirebase(() => {
     if (!db || !user) return null
     return query(
-      collection(db, 'users', user.uid, 'stock_predictions'),
-      orderBy('predictionTimestamp', 'desc'),
-      limit(10)
+      collection(db, 'users', user.uid, 'activity'),
+      orderBy('timestamp', 'desc'),
+      limit(15)
     )
   }, [db, user])
 
-  const { data: tradeHistory, isLoading: historyLoading } = useCollection(predictionsQuery)
+  const { data: activityLog, isLoading: historyLoading } = useCollection(activityQuery)
 
   const performanceStats = React.useMemo(() => {
-    if (!tradeHistory) return { netProfit: 0, netLoss: 0, activeTrades: 0, accuracy: 0 }
+    if (!activityLog) return { netProfit: 0, netLoss: 0, activeTrades: 0, accuracy: 0 }
     
     let profit = 0;
     let loss = 0;
     let wins = 0;
+    let settledTrades = 0;
     
-    tradeHistory.forEach(trade => {
-      const p = trade.profit || 0;
-      if (p > 0) {
-        profit += p;
-        wins++;
-      } else {
-        loss += Math.abs(p);
+    activityLog.forEach(act => {
+      if (act.type === "ARENA_SPECULATE") {
+        settledTrades++;
+        const p = act.total || 0;
+        if (p > 0) {
+          profit += p;
+          wins++;
+        } else {
+          loss += Math.abs(p);
+        }
       }
     })
 
-    const accuracy = tradeHistory.length > 0 ? Math.round((wins / tradeHistory.length) * 100) : 0;
+    const accuracy = settledTrades > 0 ? Math.round((wins / settledTrades) * 100) : 0;
 
     return { 
       netProfit: profit, 
       netLoss: loss, 
-      activeTrades: tradeHistory.length,
+      activeTrades: settledTrades,
       accuracy: accuracy
     }
-  }, [tradeHistory])
+  }, [activityLog])
 
   const handleSave = (section: string) => {
     setIsSaving(true)
@@ -222,94 +228,104 @@ export default function SettingsPage() {
 
                 {/* Performance Analytics */}
                 <div className="space-y-6 pt-4">
-                  <h3 className="text-sm font-black uppercase tracking-[0.2em] text-primary border-l-2 border-primary pl-4">Real-Time Performance</h3>
+                  <h3 className="text-sm font-black uppercase tracking-[0.2em] text-primary border-l-2 border-primary pl-4">Arena Performance</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <Card className="bg-primary/5 border-primary/20 p-6 rounded-2xl shadow-sm">
                       <div className="flex items-center justify-between mb-4">
                         <TrendingUp className="size-5 text-primary" />
-                        <Badge className="bg-primary/20 text-primary border-none text-[10px]">Net Profit</Badge>
+                        <Badge className="bg-primary/20 text-primary border-none text-[10px]">Arena Gains</Badge>
                       </div>
                       <div className="text-2xl font-black text-primary">₹{performanceStats.netProfit.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
-                      <p className="text-[10px] text-muted-foreground mt-1 uppercase font-bold tracking-wider">Total virtual gains</p>
+                      <p className="text-[10px] text-muted-foreground mt-1 uppercase font-bold tracking-wider">Cumulative virtual profit</p>
                     </Card>
                     <Card className="bg-destructive/5 border-destructive/20 p-6 rounded-2xl shadow-sm">
                       <div className="flex items-center justify-between mb-4">
                         <TrendingDown className="size-5 text-destructive" />
-                        <Badge variant="destructive" className="bg-destructive/20 text-destructive border-none text-[10px]">Net Loss</Badge>
+                        <Badge variant="destructive" className="bg-destructive/20 text-destructive border-none text-[10px]">Arena Loss</Badge>
                       </div>
                       <div className="text-2xl font-black text-destructive">₹{performanceStats.netLoss.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
-                      <p className="text-[10px] text-muted-foreground mt-1 uppercase font-bold tracking-wider">Total virtual drawdown</p>
+                      <p className="text-[10px] text-muted-foreground mt-1 uppercase font-bold tracking-wider">Cumulative virtual drawdown</p>
                     </Card>
                     <Card className="bg-muted/30 border-border/50 p-6 rounded-2xl shadow-sm">
                       <div className="flex items-center justify-between mb-4">
                         <Activity className="size-5 text-muted-foreground" />
-                        <Badge variant="secondary" className="text-[10px]">History</Badge>
+                        <Badge variant="secondary" className="text-[10px]">Arena Stats</Badge>
                       </div>
                       <div className="text-2xl font-black">{performanceStats.activeTrades}</div>
-                      <p className="text-[10px] text-muted-foreground mt-1 uppercase font-bold tracking-wider">Trades recorded in history</p>
+                      <p className="text-[10px] text-muted-foreground mt-1 uppercase font-bold tracking-wider">Speculations settled</p>
                     </Card>
                   </div>
                 </div>
 
-                {/* Trading History */}
+                {/* Real-Time Activity Log */}
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-black uppercase tracking-[0.2em] text-primary border-l-2 border-primary pl-4">Live History</h3>
+                    <h3 className="text-sm font-black uppercase tracking-[0.2em] text-primary border-l-2 border-primary pl-4">Live Activity Terminal</h3>
                     <div className="flex items-center gap-2">
                       {historyLoading && <Loader2 className="size-3 animate-spin text-primary" />}
-                      <span className="text-[10px] font-black uppercase text-muted-foreground">Showing last 10 sessions</span>
+                      <span className="text-[10px] font-black uppercase text-muted-foreground">Showing real-time order history</span>
                     </div>
                   </div>
-                  <div className="rounded-2xl border border-border/50 overflow-hidden">
+                  <div className="rounded-2xl border border-border/50 overflow-hidden shadow-sm">
                     <div className="overflow-x-auto">
                       <table className="w-full text-left text-sm">
                         <thead className="bg-muted/30 text-[10px] uppercase font-black text-muted-foreground tracking-widest border-b border-border/50">
                           <tr>
                             <th className="px-6 py-4">Asset</th>
-                            <th className="px-6 py-4">Prediction</th>
-                            <th className="px-6 py-4">Stake</th>
-                            <th className="px-6 py-4">Outcome</th>
-                            <th className="px-6 py-4 text-right">Profit/Loss</th>
+                            <th className="px-6 py-4">Action</th>
+                            <th className="px-6 py-4">Qty / Stake</th>
+                            <th className="px-6 py-4">Execution Price</th>
+                            <th className="px-6 py-4 text-right">Total / Result</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-border/30">
                           {historyLoading ? (
                             <tr><td colSpan={5} className="p-12 text-center"><Loader2 className="animate-spin mx-auto text-primary" /></td></tr>
-                          ) : !tradeHistory || tradeHistory.length === 0 ? (
-                            <tr><td colSpan={5} className="p-12 text-center text-muted-foreground italic">No arena activity found. Start a session in the Prediction Arena to see real results.</td></tr>
-                          ) : tradeHistory.map((trade) => (
-                            <tr key={trade.id} className="hover:bg-muted/10 transition-colors group">
-                              <td className="px-6 py-4">
-                                <div className="flex items-center gap-2">
-                                  <div className="size-6 rounded bg-muted flex items-center justify-center font-black text-[10px] text-primary">
-                                    {trade.stockId?.[0] || '?'}
+                          ) : !activityLog || activityLog.length === 0 ? (
+                            <tr><td colSpan={5} className="p-12 text-center text-muted-foreground italic">No real-time data found. Start buying stocks or speculating in the Arena to see your activity here.</td></tr>
+                          ) : activityLog.map((act) => {
+                            const isBuy = act.type === "ORDER_BUY";
+                            const isSell = act.type === "ORDER_SELL";
+                            const isArena = act.type === "ARENA_SPECULATE";
+                            
+                            return (
+                              <tr key={act.id} className="hover:bg-muted/10 transition-colors group">
+                                <td className="px-6 py-4">
+                                  <div className="flex items-center gap-2">
+                                    <div className="size-6 rounded bg-muted flex items-center justify-center font-black text-[10px] text-primary">
+                                      {act.symbol?.[0] || '?'}
+                                    </div>
+                                    <div className="flex flex-col">
+                                      <span className="font-bold">{act.symbol}</span>
+                                      <span className="text-[9px] text-muted-foreground uppercase flex items-center gap-1">
+                                        <Clock className="size-2" />
+                                        {act.timestamp ? formatDistanceToNow(act.timestamp.toDate(), { addSuffix: true }) : 'just now'}
+                                      </span>
+                                    </div>
                                   </div>
-                                  <div className="flex flex-col">
-                                    <span className="font-bold">{trade.stockId}</span>
-                                    <span className="text-[9px] text-muted-foreground uppercase flex items-center gap-1">
-                                      <Clock className="size-2" />
-                                      {trade.predictionTimestamp ? formatDistanceToNow(trade.predictionTimestamp.toDate(), { addSuffix: true }) : 'just now'}
-                                    </span>
+                                </td>
+                                <td className="px-6 py-4">
+                                  <div className={cn(
+                                    "flex items-center gap-1.5 font-bold text-[10px] uppercase tracking-tighter",
+                                    isBuy ? "text-green-500" : isSell ? "text-blue-500" : "text-amber-500"
+                                  )}>
+                                    {isBuy ? <ShoppingBag className="size-3" /> : isSell ? <ArrowRightLeft className="size-3" /> : <Activity className="size-3" />}
+                                    {isBuy ? "Spot Buy" : isSell ? "Spot Sell" : "Arena Trade"}
                                   </div>
-                                </div>
-                              </td>
-                              <td className="px-6 py-4">
-                                <div className={cn("flex items-center gap-1.5 font-bold text-xs", trade.userPredictedDirection === "UP" ? "text-primary" : "text-destructive")}>
-                                  {trade.userPredictedDirection === "UP" ? <ArrowUpRight className="size-3" /> : <ArrowDownRight className="size-3" />}
-                                  {trade.userPredictedDirection}
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 font-medium text-muted-foreground">₹{(trade.amount || 0).toLocaleString()}</td>
-                              <td className="px-6 py-4">
-                                <Badge className={cn("text-[9px] font-black uppercase tracking-tighter rounded-md h-5", trade.userPredictionMatched ? "bg-primary/20 text-primary border-none" : "bg-destructive/20 text-destructive border-none")}>
-                                  {trade.userPredictionMatched ? 'WIN' : 'LOSS'}
-                                </Badge>
-                              </td>
-                              <td className={cn("px-6 py-4 text-right font-black", (trade.profit || 0) > 0 ? "text-primary" : "text-destructive")}>
-                                {(trade.profit || 0) > 0 ? "+" : ""}₹{(trade.profit || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                              </td>
-                            </tr>
-                          ))}
+                                </td>
+                                <td className="px-6 py-4 font-medium text-muted-foreground">
+                                  {isArena ? `₹${(act.stake || 0).toLocaleString()}` : `${act.quantity} Units`}
+                                </td>
+                                <td className="px-6 py-4 font-bold">₹{(act.price || 0).toFixed(2)}</td>
+                                <td className={cn(
+                                  "px-6 py-4 text-right font-black",
+                                  (act.total || 0) >= 0 ? "text-primary" : "text-destructive"
+                                )}>
+                                  {(act.total || 0) >= 0 ? "+" : ""}₹{Math.abs(act.total || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                </td>
+                              </tr>
+                            );
+                          })}
                         </tbody>
                       </table>
                     </div>
