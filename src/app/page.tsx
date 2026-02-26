@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -83,8 +82,6 @@ export default function LandingPage() {
     setIsSending(true)
 
     try {
-      // NOTE: You must provide your EmailJS Public Key here.
-      // If you haven't set one, you can find it in your EmailJS Dashboard -> Account.
       const result = await emailjs.send(
         'service_hzskuno',
         'template_acfg77l',
@@ -95,7 +92,7 @@ export default function LandingPage() {
           message: formData.message,
           to_name: 'FinIntel Support'
         },
-        'YOUR_PUBLIC_KEY' // PLEASE REPLACE WITH YOUR ACTUAL PUBLIC KEY
+        'Hh3sZ7CqkJ1I6EBIV'
       )
 
       if (result.status === 200) {
@@ -110,7 +107,7 @@ export default function LandingPage() {
       toast({
         variant: "destructive",
         title: "Message Failed",
-        description: "Something went wrong. Please try again later or check your Public Key.",
+        description: "Something went wrong. Please try again later.",
       })
     } finally {
       setIsSending(false)
