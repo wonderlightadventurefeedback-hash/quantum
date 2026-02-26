@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -35,6 +36,10 @@ export default function DashboardOverview() {
     router.push(`/explore?category=${encodeURIComponent(category)}`)
   }
 
+  const handleStockClick = (symbol: string) => {
+    router.push(`/trade/${symbol}`)
+  }
+
   return (
     <DashboardShell>
       <div className="space-y-12 pb-10">
@@ -49,7 +54,7 @@ export default function DashboardOverview() {
             >
               <CardContent className="p-4 flex flex-col justify-between h-full">
                 <div className="flex justify-between items-start">
-                  <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{index.name}</span>
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{index.name}</span>
                   <div className={cn(
                     "text-[10px] font-bold px-1.5 py-0.5 rounded",
                     index.trend === "UP" ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
@@ -125,7 +130,7 @@ export default function DashboardOverview() {
                         key={stock.symbol} 
                         className="group hover:bg-muted/5 transition-colors cursor-pointer animate-in fade-in slide-in-from-right-4"
                         style={{ animationDelay: `${700 + (i * 50)}ms` }}
-                        onClick={() => handleAction(`Viewing ${stock.symbol}`, `Current price: ${stock.price} INR`)}
+                        onClick={() => handleStockClick(stock.symbol)}
                       >
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-4">
@@ -182,14 +187,14 @@ export default function DashboardOverview() {
             <Card className="glass-card bg-primary/5 border-primary/20 p-6 space-y-4 hover:shadow-primary/10 transition-shadow">
               <h2 className="font-headline font-bold text-lg">Your Portfolio</h2>
               <div>
-                <div className="text-3xl font-bold">${MOCK_USER.balance.toLocaleString()}</div>
+                <div className="text-3xl font-bold">₹{MOCK_USER.balance.toLocaleString()}</div>
                 <div className="text-xs text-green-500 font-bold flex items-center gap-1 mt-1">
                   <TrendingUp className="size-3" /> +12.5% Returns
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3 pt-2">
                 <Button variant="outline" className="text-xs h-9 rounded-lg" onClick={() => router.push('/portfolio')}>Analyze</Button>
-                <Button className="text-xs h-9 rounded-lg" onClick={() => handleAction("Quick Buy", "Opening execution panel...")}>Invest More</Button>
+                <Button className="text-xs h-9 rounded-lg" onClick={() => router.push('/trade')}>Invest More</Button>
               </div>
             </Card>
           </div>

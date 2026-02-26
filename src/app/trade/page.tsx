@@ -1,6 +1,8 @@
+
 "use client"
 
 import * as React from "react"
+import { useRouter } from "next/navigation"
 import { DashboardShell } from "@/components/dashboard-shell"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -19,12 +21,17 @@ import { useToast } from "@/hooks/use-toast"
 
 export default function TradePage() {
   const { toast } = useToast()
+  const router = useRouter()
   const [searchQuery, setSearchQuery] = React.useState("")
 
   const filteredStocks = MOCK_STOCKS.filter(stock => 
     stock.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
     stock.symbol.toLowerCase().includes(searchQuery.toLowerCase())
   )
+
+  const handleStockClick = (symbol: string) => {
+    router.push(`/trade/${symbol}`)
+  }
 
   return (
     <DashboardShell>
@@ -40,7 +47,7 @@ export default function TradePage() {
             </div>
             <div>
               <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Buying Power</div>
-              <div className="text-xl font-bold">${MOCK_USER.balance.toLocaleString()}</div>
+              <div className="text-xl font-bold">₹{MOCK_USER.balance.toLocaleString()}</div>
             </div>
           </Card>
         </div>
@@ -73,8 +80,9 @@ export default function TradePage() {
                       {filteredStocks.map((stock, i) => (
                         <tr 
                           key={stock.symbol} 
-                          className="group hover:bg-muted/5 transition-colors animate-in fade-in slide-in-from-right-4"
+                          className="group hover:bg-muted/5 transition-colors cursor-pointer animate-in fade-in slide-in-from-right-4"
                           style={{ animationDelay: `${100 + (i * 30)}ms` }}
+                          onClick={() => handleStockClick(stock.symbol)}
                         >
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-4">
