@@ -2,7 +2,7 @@ export const MOCK_USER = {
   name: "Alex Thompson",
   email: "alex@finintel.ai",
   avatar: "https://picsum.photos/seed/alex/200",
-  balance: 24500.50,
+  balance: 10000.00,
   learningProgress: 65,
   predictionAccuracy: 78,
 };

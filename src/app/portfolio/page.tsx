@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -118,7 +117,7 @@ export default function PortfolioPage() {
 
   const handleRunAnalysis = async () => {
     if (!holdings || holdings.length === 0) {
-      toast({ title: "No Holdings", description: "Add some assets to your portfolio first.", variant: "destructive" })
+      toast({ title: "No Holdings", description: "Add some assets to your demo portfolio first.", variant: "destructive" })
       return
     }
     
@@ -151,12 +150,15 @@ export default function PortfolioPage() {
       <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-headline font-bold">Portfolio Analyzer</h1>
-            <p className="text-muted-foreground">Comprehensive tracking of your assets, equity, and performance.</p>
+            <div className="flex items-center gap-3 mb-1">
+              <h1 className="text-3xl font-headline font-bold">Demo Portfolio</h1>
+              <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-black uppercase tracking-widest text-[10px]">Virtual</Badge>
+            </div>
+            <p className="text-muted-foreground">Tracking your virtual assets and paper trading performance.</p>
           </div>
           <div className="flex items-center gap-3">
             <Button variant="outline" className="gap-2 h-11 rounded-xl shadow-sm" onClick={() => router.push('/trade')}>
-              <Plus className="size-4" /> New Trade
+              <Plus className="size-4" /> Virtual Trade
             </Button>
             <Button className="gap-2 h-11 rounded-xl shadow-lg shadow-primary/20" onClick={handleRunAnalysis} disabled={isAnalyzing}>
               {isAnalyzing ? <RefreshCw className="size-4 animate-spin" /> : <BrainCircuit className="size-4" />}
@@ -167,11 +169,11 @@ export default function PortfolioPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card className="glass-card bg-primary/5 border-primary/20 p-6 shadow-sm">
-            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Current Value</span>
+            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Portfolio Value</span>
             <div className="text-3xl font-bold">₹{portfolioStats.totalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
           </Card>
           <Card className="glass-card bg-muted/30 p-6 shadow-sm">
-            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Profit / Loss</span>
+            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Virtual P/L</span>
             <div className={cn("text-3xl font-bold flex items-center gap-2", portfolioStats.totalPL >= 0 ? "text-primary" : "text-destructive")}>
               ₹{Math.abs(portfolioStats.totalPL).toLocaleString(undefined, { minimumFractionDigits: 2 })}
               <Badge variant={portfolioStats.totalPL >= 0 ? "default" : "destructive"} className="text-[10px] h-5">
@@ -180,14 +182,14 @@ export default function PortfolioPage() {
             </div>
           </Card>
           <Card className="glass-card p-6 shadow-sm">
-            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Buying Power</span>
+            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Virtual Cash</span>
             <div className="text-3xl font-bold flex items-center gap-2">
               <Wallet className="size-6 text-primary" />
               ₹{userBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </div>
           </Card>
           <Card className="glass-card p-6 shadow-sm">
-            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Holdings</span>
+            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Demo Holdings</span>
             <div className="text-3xl font-bold">{holdings?.length || 0} Assets</div>
           </Card>
         </div>
@@ -196,7 +198,7 @@ export default function PortfolioPage() {
           <Card className="lg:col-span-2 glass-card rounded-[2.5rem] overflow-hidden shadow-xl border-none">
             <CardHeader className="bg-muted/10 px-8 py-6 flex flex-row items-center justify-between">
               <CardTitle className="text-xl font-headline font-bold flex items-center gap-2">
-                <LayoutDashboard className="size-5 text-primary" /> Asset Breakdown
+                <LayoutDashboard className="size-5 text-primary" /> Virtual Asset Breakdown
               </CardTitle>
               {isFetching && <Loader2 className="size-4 animate-spin text-primary" />}
             </CardHeader>
@@ -216,7 +218,7 @@ export default function PortfolioPage() {
                     {holdingsLoading ? (
                       <tr><td colSpan={5} className="p-16 text-center"><Loader2 className="animate-spin mx-auto text-primary" /></td></tr>
                     ) : holdings?.length === 0 ? (
-                      <tr><td colSpan={5} className="p-16 text-center text-muted-foreground italic">No holdings found. Start trading to track your portfolio.</td></tr>
+                      <tr><td colSpan={5} className="p-16 text-center text-muted-foreground italic">No demo holdings found. Start trading to track your virtual performance.</td></tr>
                     ) : holdings?.map((h: any, i: number) => {
                       const ltp = livePrices[h.symbol] || h.averagePrice
                       const pl = (ltp - h.averagePrice) * h.quantity
@@ -248,7 +250,7 @@ export default function PortfolioPage() {
           </Card>
 
           <Card className="glass-card rounded-[2.5rem] overflow-hidden shadow-xl border-none p-8 flex flex-col items-center justify-center">
-            <h3 className="text-lg font-headline font-bold mb-8 w-full text-left">Diversification</h3>
+            <h3 className="text-lg font-headline font-bold mb-8 w-full text-left">Demo Diversification</h3>
             <div className="h-[280px] w-full">
               {allocationData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
@@ -278,14 +280,6 @@ export default function PortfolioPage() {
                 </div>
               )}
             </div>
-            <div className="mt-8 grid grid-cols-2 gap-4 w-full">
-              {allocationData.slice(0, 4).map((data, i) => (
-                <div key={data.name} className="flex items-center gap-2">
-                  <div className="size-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                  <span className="text-[10px] font-bold truncate">{data.name}</span>
-                </div>
-              ))}
-            </div>
           </Card>
         </div>
 
@@ -296,7 +290,7 @@ export default function PortfolioPage() {
                 <BrainCircuit className="size-8 text-white" />
               </div>
               <div className="space-y-4">
-                <h3 className="text-2xl font-headline font-bold text-foreground">AI Strategic Review</h3>
+                <h3 className="text-2xl font-headline font-bold text-foreground">Demo AI Strategic Review</h3>
                 <div className="text-foreground/80 leading-relaxed whitespace-pre-wrap text-sm border-l-2 border-primary/20 pl-6 py-2">
                   {insights}
                 </div>

@@ -173,6 +173,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 </form>
               </div>
               <div className="flex items-center gap-2">
+                <div className="hidden sm:flex items-center bg-primary/10 border border-primary/20 px-3 py-1 rounded-full mr-4">
+                  <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Demo Account</span>
+                </div>
                 <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-muted-foreground hover:text-primary">
                   {theme === "light" ? <Moon className="size-5" /> : <Sun className="size-5" />}
                 </Button>
@@ -191,8 +194,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                     <AvatarFallback>{user.displayName?.charAt(0) || user.email?.charAt(0)}</AvatarFallback>
                   </Avatar>
                   <div className="hidden lg:flex flex-col items-start text-sm text-left">
-                    <span className="font-bold truncate max-w-[100px]">{user.displayName || 'User'}</span>
-                    <span className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">Pro Member</span>
+                    <span className="font-bold truncate max-w-[100px]">{user.displayName || 'Demo User'}</span>
+                    <span className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">Demo Status</span>
                   </div>
                 </Button>
                 <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={handleLogout}>
