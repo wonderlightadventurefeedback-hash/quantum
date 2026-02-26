@@ -10,7 +10,7 @@ import { aiPortfolioImprovementInsights } from "@/ai/flows/ai-portfolio-improvem
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
-import { useUser, useFirestore, useCollection } from "@/firebase"
+import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
 import { collection, doc, getDoc } from "firebase/firestore"
 import { useRouter } from "next/navigation"
 
@@ -30,12 +30,12 @@ export default function PortfolioPage() {
   const [livePrices, setLivePrices] = React.useState<Record<string, number>>({})
   const [userBalance, setUserBalance] = React.useState<number>(0)
 
-  const holdingsQuery = React.useMemo(() => {
+  const holdingsQuery = useMemoFirebase(() => {
     if (!db || !user) return null
     return collection(db, 'users', user.uid, 'holdings')
   }, [db, user])
 
-  const { data: holdings, loading: holdingsLoading } = useCollection(holdingsQuery)
+  const { data: holdings, isLoading: holdingsLoading } = useCollection(holdingsQuery)
 
   React.useEffect(() => {
     setIsMounted(true);
