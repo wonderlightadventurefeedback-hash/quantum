@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { 
   LayoutDashboard, 
   BookOpen, 
@@ -41,6 +41,7 @@ const navItems = [
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const router = useRouter()
   const { toast } = useToast()
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(true)
   const [theme, setTheme] = React.useState<"light" | "dark">("dark")
@@ -67,10 +68,14 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   }
 
   const handleHeaderAction = (action: string) => {
-    toast({
-      title: action,
-      description: `Feature coming soon: ${action} configuration.`,
-    })
+    if (action === "Profile Settings" || action === "Settings") {
+      router.push("/settings")
+    } else if (action === "Notifications") {
+      toast({
+        title: "Notifications",
+        description: "Checking for latest market alerts...",
+      })
+    }
   }
 
   const handleSearch = (e: React.FormEvent) => {
@@ -109,6 +114,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 <Link key={item.name} href={item.href}>
                   <Button
                     variant="ghost"
+                    suppressHydrationWarning
                     className={cn(
                       "w-full justify-start gap-4 h-12",
                       isActive ? "bg-primary/10 text-primary hover:bg-primary/20" : "text-muted-foreground hover:text-foreground",
@@ -127,6 +133,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           <div className="p-4 border-t border-border">
             <Button
               variant="ghost"
+              suppressHydrationWarning
               className={cn(
                 "w-full justify-start gap-4 p-2 h-auto hover:bg-muted",
                 !isSidebarOpen && "justify-center"
@@ -153,7 +160,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         {/* Header */}
         <header className="h-20 border-b border-border bg-background/80 backdrop-blur-md flex items-center justify-between px-8 z-40">
           <div className="flex items-center gap-6">
-            <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
+            <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(!isSidebarOpen)} suppressHydrationWarning>
               <Menu className="size-5" />
             </Button>
             <form onSubmit={handleSearch} className="relative w-64 md:w-96 hidden md:block">
@@ -161,18 +168,19 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               <Input 
                 placeholder="Search stocks, news, lessons..." 
                 className="pl-10 bg-muted/50 border-none focus-visible:ring-primary/50" 
+                suppressHydrationWarning
               />
             </form>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-muted-foreground hover:text-primary">
+            <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-muted-foreground hover:text-primary" suppressHydrationWarning>
               {theme === "light" ? <Moon className="size-5" /> : <Sun className="size-5" />}
             </Button>
-            <Button variant="ghost" size="icon" className="relative text-muted-foreground" onClick={() => handleHeaderAction("Notifications")}>
+            <Button variant="ghost" size="icon" className="relative text-muted-foreground" onClick={() => handleHeaderAction("Notifications")} suppressHydrationWarning>
               <Bell className="size-5" />
               <span className="absolute top-2.5 right-2.5 size-2 bg-primary rounded-full ring-2 ring-background"></span>
             </Button>
-            <Button variant="ghost" size="icon" className="text-muted-foreground" onClick={() => handleHeaderAction("Settings")}>
+            <Button variant="ghost" size="icon" className="text-muted-foreground" onClick={() => handleHeaderAction("Settings")} suppressHydrationWarning>
               <Settings className="size-5" />
             </Button>
           </div>
