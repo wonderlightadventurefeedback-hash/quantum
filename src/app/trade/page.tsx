@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -38,7 +37,7 @@ export default function TradePage() {
       setIsOrdering(null)
       toast({
         title: "Order Placed Successfully",
-        description: `Bought 1 share of ${stock.symbol} at $${stock.price}`,
+        description: `Bought 1 share of ${stock.symbol} at ${stock.price} INR`,
       })
     }, 1200)
   }
@@ -68,59 +67,65 @@ export default function TradePage() {
             <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
               <Input 
-                placeholder="Search stocks by name or symbol (e.g. AAPL, Tesla)..." 
+                placeholder="Search stocks by name or symbol (e.g. SBLI, AAPL)..." 
                 className="pl-12 h-14 bg-card/50 border-border rounded-2xl focus-visible:ring-primary/40"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-3">
               {filteredStocks.map((stock) => (
-                <Card key={stock.symbol} className="glass-card hover:border-primary/50 transition-all group overflow-hidden">
-                  <CardContent className="p-6">
-                    <div className="flex justify-between items-start mb-6">
-                      <div className="flex items-center gap-4">
-                        <div className="size-12 rounded-2xl bg-muted/50 flex items-center justify-center font-bold text-primary group-hover:scale-110 transition-transform">
-                          {stock.symbol[0]}
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-lg">{stock.name}</h3>
-                          <Badge variant="outline" className="text-[10px] h-5">{stock.category}</Badge>
-                        </div>
+                <Card key={stock.symbol} className="glass-card hover:border-primary/50 transition-all group overflow-hidden border-none shadow-sm">
+                  <CardContent className="p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-4 min-w-0">
+                      <div className="size-12 rounded-full bg-muted flex items-center justify-center shrink-0 font-bold text-muted-foreground border border-border/50">
+                        {stock.symbol[0]}
                       </div>
-                      <div className="text-right">
-                        <div className="text-xl font-bold">${stock.price}</div>
-                        <div className={cn(
-                          "text-xs font-bold flex items-center justify-end gap-1",
-                          stock.change > 0 ? "text-green-500" : "text-red-500"
-                        )}>
-                          {stock.change > 0 ? <ArrowUpRight className="size-3" /> : <ArrowDownRight className="size-3" />}
-                          {Math.abs(stock.change)}%
-                        </div>
+                      <div className="flex flex-col min-w-0">
+                        <h3 className="font-bold text-sm truncate">{stock.name}</h3>
+                        <Badge variant="secondary" className="w-fit text-[9px] h-4 py-0 px-1.5 bg-muted/50 text-muted-foreground font-bold uppercase border-none rounded-sm">
+                          {stock.symbol}
+                        </Badge>
                       </div>
                     </div>
-                    
-                    <div className="grid grid-cols-2 gap-3 mt-4">
-                      <Button 
-                        variant="secondary" 
-                        className="rounded-xl font-bold"
-                        onClick={() => toast({ title: "View Chart", description: `Loading ${stock.symbol} real-time candlestick data...` })}
-                      >
-                        Details
-                      </Button>
-                      <Button 
-                        className="rounded-xl font-bold gap-2"
-                        disabled={isOrdering === stock.symbol}
-                        onClick={() => handleBuy(stock)}
-                      >
-                        {isOrdering === stock.symbol ? (
-                          <span className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        ) : (
-                          <ShoppingCart className="size-4" />
-                        )}
-                        Buy {stock.symbol}
-                      </Button>
+
+                    <div className="flex items-center gap-6">
+                      <div className="text-right shrink-0">
+                        <div className="text-base font-bold flex items-center gap-1 justify-end">
+                          {stock.price.toFixed(2)} <span className="text-[10px] text-muted-foreground font-normal">INR</span>
+                        </div>
+                        <div className={cn(
+                          "text-[11px] font-bold px-2 py-0.5 rounded min-w-[70px] text-center mt-1",
+                          stock.change > 0 ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
+                        )}>
+                          {stock.change > 0 ? "+" : ""}{stock.change.toFixed(2)}%
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="rounded-lg font-bold h-9 text-xs"
+                          onClick={() => toast({ title: stock.symbol, description: `Loading technical charts...` })}
+                        >
+                          Details
+                        </Button>
+                        <Button 
+                          size="sm"
+                          className="rounded-lg font-bold gap-2 h-9 text-xs"
+                          disabled={isOrdering === stock.symbol}
+                          onClick={() => handleBuy(stock)}
+                        >
+                          {isOrdering === stock.symbol ? (
+                            <span className="size-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          ) : (
+                            <ShoppingCart className="size-3" />
+                          )}
+                          Buy
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -180,7 +185,7 @@ export default function TradePage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="text-[10px] text-muted-foreground leading-tight">
-                All simulated trades are executed at current market price. Commission is $0.00 for the first 100 trades of the month. High volatility might cause slippage.
+                All simulated trades are executed at current market price. Commission is 0 INR for the first 100 trades of the month.
               </CardContent>
             </Card>
           </div>

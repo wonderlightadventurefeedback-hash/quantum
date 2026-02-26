@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -109,37 +108,43 @@ export default function DashboardOverview() {
             </div>
             
             <Card className="glass-card border-none shadow-none bg-transparent">
-              <div className="space-y-4">
-                {MOCK_STOCKS.filter(s => s.category === "Stocks").slice(0, 5).map((stock) => (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
+                {MOCK_STOCKS.filter(s => s.category === "Stocks").slice(0, 10).map((stock) => (
                   <div 
                     key={stock.symbol} 
-                    className="flex items-center justify-between p-4 rounded-xl hover:bg-muted/20 transition-colors cursor-pointer border border-transparent hover:border-border"
-                    onClick={() => handleAction(`Viewing ${stock.symbol}`, `Current price: $${stock.price}`)}
+                    className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/10 transition-colors cursor-pointer group"
+                    onClick={() => handleAction(`Viewing ${stock.symbol}`, `Current price: ${stock.price} INR`)}
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="size-10 rounded-xl bg-muted/50 flex items-center justify-center font-bold text-primary">
+                    <div className="flex items-center gap-3">
+                      <div className="size-10 rounded-full bg-muted flex items-center justify-center shrink-0 font-bold text-muted-foreground text-xs border border-border/50">
                         {stock.symbol[0]}
                       </div>
-                      <div>
-                        <div className="font-bold text-sm">{stock.name}</div>
-                        <div className="text-xs text-muted-foreground">{stock.symbol}</div>
+                      <div className="flex flex-col min-w-0">
+                        <div className="font-bold text-sm truncate">{stock.name}</div>
+                        <Badge variant="secondary" className="w-fit text-[9px] h-4 py-0 px-1.5 bg-muted/50 text-muted-foreground font-bold uppercase border-none rounded-sm">
+                          {stock.symbol}
+                        </Badge>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-sm font-bold">${stock.price}</div>
+                    <div className="flex items-center gap-4 text-right shrink-0">
+                      <div className="flex flex-col items-end">
+                        <div className="text-sm font-bold flex items-center gap-1">
+                          {stock.price.toFixed(2)} <span className="text-[9px] text-muted-foreground font-normal">INR</span>
+                        </div>
+                      </div>
                       <div className={cn(
-                        "text-xs font-bold",
-                        stock.change > 0 ? "text-green-500" : "text-red-500"
+                        "text-[11px] font-bold px-2 py-1 rounded min-w-[70px] text-center",
+                        stock.change > 0 ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
                       )}>
-                        {stock.change > 0 ? "+" : ""}{stock.change}%
+                        {stock.change > 0 ? "+" : ""}{stock.change.toFixed(2)}%
                       </div>
                     </div>
                   </div>
                 ))}
-                <Button variant="ghost" className="w-full text-primary font-bold text-sm gap-2" onClick={() => navigateToExplore('Stocks')}>
-                  View more stocks <ArrowRight className="size-4" />
-                </Button>
               </div>
+              <Button variant="ghost" className="w-full text-primary font-bold text-sm gap-2 mt-4" onClick={() => navigateToExplore('Stocks')}>
+                View more stocks <ArrowRight className="size-4" />
+              </Button>
             </Card>
           </div>
 

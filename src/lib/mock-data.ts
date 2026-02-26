@@ -15,11 +15,18 @@ export const MOCK_INDICES = [
 ];
 
 export const MOCK_STOCKS = [
-  { symbol: "AAPL", name: "Apple Inc.", price: 189.43, change: 1.25, trend: "UP", category: "Stocks" },
-  { symbol: "TSLA", name: "Tesla, Inc.", price: 238.12, change: -2.4, trend: "DOWN", category: "Stocks" },
-  { symbol: "NVDA", name: "NVIDIA Corp.", price: 485.50, change: 4.15, trend: "UP", category: "Stocks" },
-  { symbol: "MSFT", name: "Microsoft Corp.", price: 374.12, change: 0.85, trend: "UP", category: "Stocks" },
-  { symbol: "GOOGL", name: "Alphabet Inc.", price: 142.10, change: -0.15, trend: "DOWN", category: "Stocks" },
+  { symbol: "SBLI", name: "SBL Infratech Limited", price: 42.60, change: 20.00, trend: "UP", category: "Stocks" },
+  { symbol: "SBRANDS", name: "Sanghvi Brands Ltd.", price: 10.98, change: 20.00, trend: "UP", category: "Stocks" },
+  { symbol: "TARMAT", name: "Tarmat Ltd.", price: 64.89, change: 19.99, trend: "UP", category: "Stocks" },
+  { symbol: "XTGLOBAL", name: "XTGlobal Infotech Ltd.", price: 33.63, change: 19.98, trend: "UP", category: "Stocks" },
+  { symbol: "RUDRA", name: "Rudra Global Infra Products L...", price: 21.40, change: 19.96, trend: "UP", category: "Stocks" },
+  { symbol: "SHANTIDENM", name: "Shanti Spintex Ltd.", price: 68.75, change: 19.57, trend: "UP", category: "Stocks" },
+  { symbol: "RMDRIP", name: "R M Drip And Sprinklers Syste...", price: 78.36, change: -20.00, trend: "DOWN", category: "Stocks" },
+  { symbol: "SIROHIA", name: "Sirohia & Sons Ltd", price: 4.82, change: -19.67, trend: "DOWN", category: "Stocks" },
+  { symbol: "SOFCOM", name: "Sofcom Systems Ltd.", price: 22.49, change: -18.28, trend: "DOWN", category: "Stocks" },
+  { symbol: "TGIF", name: "TGIF Agribusiness Ltd.", price: 70.50, change: -18.02, trend: "DOWN", category: "Stocks" },
+  { symbol: "LLFICL", name: "Leading Leasing Finance & In...", price: 2.31, change: -17.79, trend: "DOWN", category: "Stocks" },
+  { symbol: "ANNVRPP", name: "Annvriddhi Ventures Ltd TEMP", price: 2.42, change: -16.55, trend: "DOWN", category: "Stocks" },
   { symbol: "AMZN", name: "Amazon.com", price: 175.35, change: 1.12, trend: "UP", category: "US Stocks" },
   { symbol: "META", name: "Meta Platforms", price: 485.58, change: 2.34, trend: "UP", category: "US Stocks" },
   { symbol: "BRK.B", name: "Berkshire Hathaway", price: 405.12, change: -0.45, trend: "DOWN", category: "US Stocks" },
