@@ -1,7 +1,7 @@
 'use server';
 /**
- * @fileOverview An AI financial advisor chatbot powered by high-performance intelligence via SiliconFlow.
- * This flow provides personalized advice based on real-time market data from Finnhub.
+ * @fileOverview An AI financial advisor chatbot powered by RapidAPI Llama.
+ * This flow provides expert answers on the stock market and finance.
  *
  * - aiFinancialStrategyAdvisor - A function that handles the AI financial advisor chat process.
  * - AiFinancialAdvisorInput - The input type for the aiFinancialStrategyAdvisor function.
@@ -10,7 +10,6 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import OpenAI from 'openai';
 
 const FINNHUB_API_KEY = process.env.NEXT_PUBLIC_FINNHUB_API_KEY || 'd6g3c49r01qqnmbqk10gd6g3c49r01qqnmbqk110';
 
@@ -26,22 +25,12 @@ async function getStockQuote(symbol: string) {
   }
 }
 
-async function getCompanyProfile(symbol: string) {
+async function getMarketNews() {
   try {
-    const res = await fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol.toUpperCase()}&token=${FINNHUB_API_KEY}`);
-    if (!res.ok) return { error: "Failed to fetch profile" };
-    return res.json();
-  } catch (e) {
-    return { error: "Service unavailable" };
-  }
-}
-
-async function getMarketNews(category: 'general' | 'forex' | 'crypto' | 'merger' = 'general') {
-  try {
-    const res = await fetch(`https://finnhub.io/api/v1/news?category=${category}&token=${FINNHUB_API_KEY}`);
+    const res = await fetch(`https://finnhub.io/api/v1/news?category=general&token=${FINNHUB_API_KEY}`);
     if (!res.ok) return { error: "Failed to fetch news" };
     const data = await res.json();
-    return Array.isArray(data) ? data.slice(0, 5) : { error: "Invalid response" };
+    return Array.isArray(data) ? data.slice(0, 3) : { error: "Invalid response" };
   } catch (e) {
     return { error: "Service unavailable" };
   }
@@ -74,123 +63,58 @@ const aiFinancialStrategyAdvisorFlow = ai.defineFlow(
     outputSchema: AiFinancialAdvisorOutputSchema,
   },
   async (input) => {
-    // API Key provided by user for SiliconFlow/Ollama connection
-    const API_KEY = process.env.OPENAI_API_KEY || 'ef844e3b8eac407990679dffbd62147c.I9mEPUXANRbOARAI150CNX2a';
+    // RapidAPI Key provided by user
+    const API_KEY = process.env.RAPIDAPI_KEY || 'ef844e3b8eac407990679dffbd62147c.I9mEPUXANRbOARAI150CNX2a';
 
     try {
-      const openai = new OpenAI({
-        apiKey: API_KEY,
-        baseURL: 'https://api.siliconflow.cn/v1'
-      });
+      // Prefetch some market context to make the AI "Expert"
+      const news = await getMarketNews();
+      const newsSummary = Array.isArray(news) ? news.map((n: any) => n.headline).join(' | ') : "N/A";
 
-      const messages: any[] = [
-        {
-          role: 'system',
-          content: `You are FinIntel AI, a high-performance Financial Strategy Advisor directly connected to ChatGPT intelligence.
-Your core mission is to provide data-driven, professional, and actionable financial advice covering ALL areas of personal and professional finance.
+      const systemPrompt = `You are FinIntel AI, a high-performance Financial Strategy Advisor directly connected to ChatGPT intelligence. 
+Your core mission is to provide data-driven, professional, and actionable financial advice covering stock markets and personal finance.
 
-AREAS OF EXPERTISE:
-- Stock Market Analysis (Live technical and fundamental data)
-- Portfolio Diversification & Risk Management
-- Retirement Planning & Wealth Building
-- Tax Strategy & Financial Optimization
-- Technical Education (explaining complex instruments like F&O, Bonds, or ETFs)
+CURRENT MARKET CONTEXT:
+Latest News: ${newsSummary}
+User Portfolio: ${input.portfolioData || 'No active holdings'}
 
 KEY GUIDELINES:
-1. USE TOOLS: You have access to real-time market data via Finnhub. Always check latest prices if asked about symbols.
-2. PERSONALIZED: Reference the user's portfolio context: ${input.portfolioData || 'No portfolio data provided'}.
-3. TONE: Professional, analytical, and supportive.
-4. DISCLAIMER: Always mention that this is for educational purposes and not professional financial advice.
-5. FORMATTING: Use Markdown with bolding for tickers and figures.`
-        },
-        {
-          role: 'user',
-          content: input.userQuery
-        }
-      ];
+1. PERSONALIZED: Reference the user's portfolio context.
+2. TONE: Professional, analytical, and supportive.
+3. DISCLAIMER: Always mention that this is for educational purposes and not professional financial advice.
+4. FORMATTING: Use Markdown with bolding for tickers and figures.`;
 
-      const tools = [
-        {
-          type: 'function',
-          function: {
-            name: 'get_stock_quote',
-            description: 'Get real-time price for a stock symbol',
-            parameters: {
-              type: 'object',
-              properties: { symbol: { type: 'string' } },
-              required: ['symbol']
-            }
-          }
+      const response = await fetch('https://open-ai21.p.rapidapi.com/conversationllama', {
+        method: 'POST',
+        headers: {
+          'x-rapidapi-host': 'open-ai21.p.rapidapi.com',
+          'x-rapidapi-key': API_KEY,
+          'Content-Type': 'application/json'
         },
-        {
-          type: 'function',
-          function: {
-            name: 'get_market_news',
-            description: 'Get latest general market news',
-            parameters: {
-              type: 'object',
-              properties: { category: { type: 'string', enum: ['general', 'crypto'] } }
-            }
-          }
-        },
-        {
-          type: 'function',
-          function: {
-            name: 'get_company_profile',
-            description: 'Get company profile and industry information',
-            parameters: {
-              type: 'object',
-              properties: { symbol: { type: 'string' } },
-              required: ['symbol']
-            }
-          }
-        }
-      ];
-
-      const response = await openai.chat.completions.create({
-        model: 'deepseek-ai/DeepSeek-V3', // High-performance model via SiliconFlow
-        messages,
-        tools: tools as any,
-        tool_choice: 'auto',
+        body: JSON.stringify({
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: input.userQuery }
+          ],
+          web_access: false
+        })
       });
 
-      const responseMessage = response.choices[0].message;
-
-      if (responseMessage.tool_calls) {
-        for (const toolCall of responseMessage.tool_calls) {
-          const functionName = toolCall.function.name;
-          const functionArgs = JSON.parse(toolCall.function.arguments);
-          let toolResult;
-
-          if (functionName === 'get_stock_quote') {
-            toolResult = await getStockQuote(functionArgs.symbol);
-          } else if (functionName === 'get_market_news') {
-            toolResult = await getMarketNews(functionArgs.category);
-          } else if (functionName === 'get_company_profile') {
-            toolResult = await getCompanyProfile(functionArgs.symbol);
-          }
-
-          messages.push(responseMessage);
-          messages.push({
-            tool_call_id: toolCall.id,
-            role: 'tool',
-            name: functionName,
-            content: JSON.stringify(toolResult),
-          });
-        }
-
-        const secondResponse = await openai.chat.completions.create({
-          model: 'deepseek-ai/DeepSeek-V3',
-          messages,
-        });
-
-        return { response: secondResponse.choices[0].message.content || "I processed the market data but could not generate a textual response. Please try asking in a different way." };
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("RapidAPI Error:", errorText);
+        throw new Error(`Intelligence Layer Unavailable (Status: ${response.status})`);
       }
 
-      return { response: responseMessage.content || "I'm here to help with your stock market and finance questions." };
+      const result = await response.json();
+      
+      // Handle the common RapidAPI open-ai21 response format
+      const botResponse = result.BOT || result.result || result.response || "I have analyzed the market data but could not generate a textual response. Please try asking about a specific stock symbol.";
+
+      return { response: botResponse };
     } catch (error: any) {
       console.error("Advisor Flow Error:", error);
-      return { response: "I'm having difficulty connecting to my ChatGPT intelligence layer right now. Please ensure your API key is active or try again in a few moments." };
+      return { response: "I'm having difficulty connecting to my ChatGPT intelligence layer right now. Please ensure your configuration is active or try again in a few moments." };
     }
   }
 );
