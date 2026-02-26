@@ -35,7 +35,7 @@ import { useUser, useAuth } from "@/firebase"
 import { signOut } from "firebase/auth"
 
 const navItems = [
-  { name: "Overview", href: "/", icon: LayoutDashboard },
+  { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
   { name: "Learn", href: "/learn", icon: BookOpen },
   { name: "Prediction Arena", href: "/predict", icon: TrendingUp },
   { name: "News Intel", href: "/news", icon: Newspaper },
@@ -143,7 +143,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       )}>
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center gap-3 px-6 h-20">
+          <Link href="/" className="flex items-center gap-3 px-6 h-20">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0">
               <span className="font-headline font-bold text-white">FI</span>
             </div>
@@ -152,7 +152,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 FinIntel AI
               </span>
             )}
-          </div>
+          </Link>
 
           {/* Navigation */}
           <nav className="flex-1 px-3 space-y-1">
@@ -162,6 +162,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 <Link key={item.name} href={item.href}>
                   <Button
                     variant="ghost"
+                    suppressHydrationWarning
                     className={cn(
                       "w-full justify-start gap-4 h-12",
                       isActive ? "bg-primary/10 text-primary hover:bg-primary/20" : "text-muted-foreground hover:text-foreground",
@@ -181,6 +182,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             <div className="flex flex-col gap-2">
               <Button
                 variant="ghost"
+                suppressHydrationWarning
                 className={cn(
                   "w-full justify-start gap-4 p-2 h-auto hover:bg-muted",
                   !isSidebarOpen && "justify-center"
@@ -202,6 +204,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 <Button 
                   variant="ghost" 
                   size="sm" 
+                  suppressHydrationWarning
                   className="w-full justify-start gap-4 text-muted-foreground hover:text-destructive" 
                   onClick={handleLogout}
                 >
@@ -219,7 +222,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         {/* Header */}
         <header className="h-20 border-b border-border bg-background/80 backdrop-blur-md flex items-center justify-between px-8 z-40">
           <div className="flex items-center gap-6">
-            <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
+            <Button variant="ghost" size="icon" suppressHydrationWarning onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
               <Menu className="size-5" />
             </Button>
             <form onSubmit={handleSearch} className="relative w-64 md:w-96 hidden md:block">
@@ -231,14 +234,14 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             </form>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-muted-foreground hover:text-primary">
+            <Button variant="ghost" size="icon" suppressHydrationWarning onClick={toggleTheme} className="text-muted-foreground hover:text-primary">
               {theme === "light" ? <Moon className="size-5" /> : <Sun className="size-5" />}
             </Button>
-            <Button variant="ghost" size="icon" className="relative text-muted-foreground" onClick={() => handleHeaderAction("Notifications")}>
+            <Button variant="ghost" size="icon" suppressHydrationWarning className="relative text-muted-foreground" onClick={() => handleHeaderAction("Notifications")}>
               <Bell className="size-5" />
               <span className="absolute top-2.5 right-2.5 size-2 bg-primary rounded-full ring-2 ring-background"></span>
             </Button>
-            <Button variant="ghost" size="icon" className="text-muted-foreground" onClick={() => handleHeaderAction("Settings")}>
+            <Button variant="ghost" size="icon" suppressHydrationWarning className="text-muted-foreground" onClick={() => handleHeaderAction("Settings")}>
               <Settings className="size-5" />
             </Button>
           </div>
