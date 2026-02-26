@@ -28,8 +28,9 @@ import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { MOCK_USER, MOCK_NEWS } from "@/lib/mock-data"
 import { useToast } from "@/hooks/use-toast"
-import { useUser, useAuth } from "@/firebase"
+import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from "@/firebase"
 import { signOut } from "firebase/auth"
+import { doc } from "firebase/firestore"
 import { StaggeredMenu } from "./staggered-menu"
 
 const navItems = [
@@ -48,6 +49,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
   const auth = useAuth()
+  const db = useFirestore()
   const { user, loading } = useUser()
   const { toast } = useToast()
   
@@ -57,6 +59,15 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   
   const scrollContainerRef = React.useRef<HTMLDivElement>(null)
   const lastScrollY = React.useRef(0)
+
+  // Real-time Balance fetch for header
+  const userProfileRef = useMemoFirebase(() => {
+    if (!db || !user) return null
+    return doc(db, 'users', user.uid)
+  }, [db, user])
+
+  const { data: userProfile } = useDoc(userProfileRef)
+  const balance = userProfile?.balance ?? 50000
 
   React.useEffect(() => {
     if (!loading && !user) {
@@ -175,8 +186,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 </form>
               </div>
               <div className="flex items-center gap-2">
-                <div className="hidden sm:flex items-center bg-primary/10 border border-primary/20 px-3 py-1 rounded-full mr-4">
-                  <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Demo Account</span>
+                <div className="hidden sm:flex items-center bg-primary/10 border border-primary/20 px-4 py-1.5 rounded-full mr-4 gap-3 shadow-sm">
+                  <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em] border-r border-primary/20 pr-3">Demo Account</span>
+                  <span className="text-sm font-black text-primary tracking-tight">₹{balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                 </div>
                 <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-muted-foreground hover:text-primary">
                   {theme === "light" ? <Moon className="size-5" /> : <Sun className="size-5" />}
