@@ -24,7 +24,8 @@ import {
   ArrowDownRight,
   TrendingDown,
   Globe,
-  Search
+  Search,
+  Cpu
 } from "lucide-react"
 import { 
   AreaChart, 
@@ -90,7 +91,7 @@ export default function AdvisorPage() {
       setMessages(history.map(m => ({ role: m.role, content: m.content, timestamp: m.timestamp })))
     } else if (history && history.length === 0 && !isHistoryLoading) {
       setMessages([
-        { role: 'assistant', content: "Welcome to **QuantumF AI**. My reasoning engine is configured to research your questions and collect all relevant information before responding. How can I help you optimize your wealth today?" }
+        { role: 'assistant', content: "Welcome to **QuantumF AI**. My reasoning engine is directly connected to OpenAI through ChatGPT. I research your questions and collect all relevant market information before responding. How can I help you optimize your wealth today?" }
       ])
     }
   }, [history, isHistoryLoading])
@@ -126,7 +127,7 @@ export default function AdvisorPage() {
     } catch (error) {
       addDocumentNonBlocking(userMsgRef, {
         role: 'assistant',
-        content: "I encountered a communication error with my research intelligence layer. Please verify your connection or try again shortly.",
+        content: "I encountered a communication error with my premium ChatGPT intelligence layer. Please verify your connection or try again shortly.",
         timestamp: serverTimestamp()
       })
     } finally {
@@ -160,9 +161,12 @@ export default function AdvisorPage() {
               <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full">
                 <Search className="size-3 mr-1 inline animate-pulse" /> Research Mode
               </Badge>
+              <Badge variant="outline" className="border-primary/30 text-primary text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">
+                <Cpu className="size-3 mr-1 inline" /> ChatGPT Powered
+              </Badge>
             </div>
             <p className="text-muted-foreground text-xs font-medium">
-              QuantumF AI researches your questions and collects all information before outputting a professional strategy.
+              QuantumF AI researches your questions and collects all information through ChatGPT before outputting a professional strategy.
             </p>
           </div>
           <div className="flex items-center gap-4 bg-muted/30 border border-border/50 px-6 py-2.5 rounded-2xl">
@@ -234,7 +238,7 @@ export default function AdvisorPage() {
                         <span className="size-2 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]"></span>
                         <span className="size-2 bg-primary rounded-full animate-bounce"></span>
                       </div>
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">QuantumF Researching...</span>
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">ChatGPT Researching & Collecting...</span>
                     </div>
                   </div>
                 )}
@@ -263,7 +267,7 @@ export default function AdvisorPage() {
                 <Input 
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="Ask a question for QuantumF to research..." 
+                  placeholder="Ask a question for QuantumF to research through ChatGPT..." 
                   className="pr-16 h-16 bg-background border-border/50 rounded-2xl focus-visible:ring-primary/40 text-lg shadow-xl"
                 />
                 <Button 
@@ -278,8 +282,8 @@ export default function AdvisorPage() {
               <div className="flex items-center justify-center gap-6 mt-4">
                 <div className="flex items-center gap-2">
                   <Info className="size-3 text-muted-foreground" />
-                  <p className="text-[9px] text-muted-foreground uppercase font-black tracking-widest">
-                    AI researches and collects information before outputting
+                  <p className="text-[9px] text-muted-foreground uppercase font-black tracking-widest text-center">
+                    QuantumF researches the question and collects all information through ChatGPT before outputting the professional response
                   </p>
                 </div>
               </div>

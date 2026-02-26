@@ -2,8 +2,8 @@
 'use server';
 /**
  * @fileOverview QuantumF AI Financial Advisor flow powered by high-performance reasoning models.
- * This flow implements a "Research & Collect" strategy where the AI aggregates 
- * information before providing a synthesized financial output.
+ * This flow implements a "Research & Collect through ChatGPT" strategy where the AI 
+ * aggregates all relevant financial information before providing a synthesized output.
  *
  * - aiFinancialStrategyAdvisor - Entry point for the AI advisor process.
  * - AiFinancialAdvisorInput - Input schema for queries and context.
@@ -53,26 +53,26 @@ const aiFinancialStrategyAdvisorFlow = ai.defineFlow(
     try {
       const marketNews = await getMarketContext();
 
-      const systemPrompt = `You are QuantumF AI, a high-performance Financial Reasoning Engine. 
-Your mission is to perform a "Research & Synthesize" process for every query.
+      const systemPrompt = `You are QuantumF AI, a high-performance Financial Reasoning Engine powered by ChatGPT intelligence. 
+Your mission is to perform a mandatory "Research & Collect" process for every query.
 
 STEP 1: RESEARCH
 Analyze the user's input: "${input.userQuery}"
-Cross-reference with provided REAL-TIME CONTEXT:
+You must research this question against the provided REAL-TIME CONTEXT:
 - Latest Market Intel: ${marketNews}
 - User Portfolio Snapshot: ${input.portfolioData || 'Empty Portfolio'}
 - User Learning Level: ${input.learningProgress || 'Novice'}
 
 STEP 2: COLLECT & AGGREGATE
-Identify all relevant financial factors, stock symbols, and economic indicators. Gather and weigh the information provided in the context against the user's specific question.
+Identify all relevant financial factors, stock symbols, and economic indicators. You must collect all necessary information through your ChatGPT-based reasoning layer before formulating a final response.
 
 STEP 3: OUTPUT
-Provide a professional, data-driven response that demonstrates you have "collected all information" before answering.
+Provide a professional, data-driven response. Your output must demonstrate that you have collected and processed all information before answering.
 
 GUIDELINES:
-1. Identify as QuantumF AI Reasoning Layer.
+1. Identify as QuantumF AI Reasoning Layer (Direct ChatGPT Connection).
 2. Use Markdown formatting. **Bold** all stock tickers (e.g., **AAPL**).
-3. Be analytical but supportive.
+3. Be analytical, precise, and supportive.
 4. Always include a disclaimer that this is educational information, not financial advice.`;
 
       // Using deepseek-ai/DeepSeek-V3 for its high-performance reasoning/thinking capabilities
@@ -90,7 +90,7 @@ GUIDELINES:
           ],
           stream: false,
           max_tokens: 2000,
-          temperature: 0.3 // Lower temperature for more consistent analytical reasoning
+          temperature: 0.3
         })
       });
 
@@ -108,7 +108,7 @@ GUIDELINES:
       return { response: text };
     } catch (error: any) {
       console.error("Advisor Flow Error:", error);
-      return { response: "I encountered a communication error with my research intelligence layer. Please verify your connection or try again shortly." };
+      return { response: "I encountered a communication error with my premium ChatGPT intelligence layer. Please verify your connection or try again shortly." };
     }
   }
 );
