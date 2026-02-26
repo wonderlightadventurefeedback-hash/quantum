@@ -119,7 +119,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     })
   }
 
-  // Show nothing or a loader while checking authentication
   if (loading) {
     return (
       <div className="h-screen w-screen flex flex-col items-center justify-center bg-background gap-4">
@@ -131,7 +130,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     )
   }
 
-  // If no user after loading, let the useEffect handle the redirect
   if (!user) return null
 
   return (
@@ -277,7 +275,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Page Content */}
-        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-background">
+        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-background text-foreground">
           {children}
         </div>
       </main>

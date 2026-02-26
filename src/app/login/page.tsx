@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -116,23 +117,23 @@ export default function LoginPage() {
 
   if (loading || user) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center bg-[#0d1117]">
-        <Loader2 className="animate-spin size-8 text-[#00d09c]" />
+      <div className="h-screen w-screen flex items-center justify-center bg-background">
+        <Loader2 className="animate-spin size-8 text-primary" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-[#0d1117] relative overflow-hidden py-12 px-4">
-      <div className="absolute inset-0 bg-gradient-to-b from-[#0d1117] via-[#0f1715] to-[#0d1117]" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#00d09c]/5 rounded-full blur-[120px]" />
+    <div className="min-h-screen w-full flex items-center justify-center bg-background relative overflow-hidden py-12 px-4">
+      <div className="absolute inset-0 bg-gradient-to-b from-background via-muted/50 to-background" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-[120px]" />
 
       {/* Top Left Branding */}
       <div className="absolute top-8 left-8 flex items-center gap-3 z-10">
-        <div className="w-10 h-10 rounded-xl bg-[#00d09c] flex items-center justify-center">
+        <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
           <span className="font-headline font-bold text-white text-xl">FI</span>
         </div>
-        <span className="font-headline font-bold text-2xl tracking-tight text-[#00d09c]">
+        <span className="font-headline font-bold text-2xl tracking-tight text-primary">
           FinIntel AI
         </span>
       </div>
@@ -141,7 +142,7 @@ export default function LoginPage() {
       <div className="absolute top-8 right-8 z-10">
         <Button 
           variant="ghost" 
-          className="text-gray-400 hover:text-white hover:bg-white/5 gap-2"
+          className="text-muted-foreground hover:text-foreground hover:bg-muted gap-2"
           asChild
         >
           <Link href="/">
@@ -151,12 +152,12 @@ export default function LoginPage() {
         </Button>
       </div>
 
-      <Card className="w-full max-w-md bg-[#161b22]/40 backdrop-blur-xl border-[#30363d] shadow-2xl z-10 overflow-hidden">
+      <Card className="w-full max-w-md bg-card/40 backdrop-blur-xl border-border shadow-2xl z-10 overflow-hidden">
         <CardHeader className="space-y-2 text-center pb-2">
-          <CardTitle className="text-3xl font-headline font-bold text-white">
+          <CardTitle className="text-3xl font-headline font-bold text-foreground">
             {isSignUp ? "Create Account" : "Welcome Back"}
           </CardTitle>
-          <CardDescription className="text-gray-400 text-sm max-w-[280px] mx-auto leading-relaxed">
+          <CardDescription className="text-muted-foreground text-sm max-w-[280px] mx-auto leading-relaxed">
             {isSignUp 
               ? "Join 10,000+ smart investors today." 
               : "Sign in to access your AI-powered portfolio and market intel."}
@@ -166,14 +167,14 @@ export default function LoginPage() {
           <form onSubmit={handleEmailAuth} className="space-y-4">
             {isSignUp && (
               <div className="space-y-2">
-                <Label htmlFor="displayName" className="text-gray-300 text-xs font-bold uppercase tracking-wider">Full Name</Label>
+                <Label htmlFor="displayName" className="text-muted-foreground text-xs font-bold uppercase tracking-wider">Full Name</Label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-500" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                   <Input 
                     id="displayName"
                     placeholder="John Doe"
                     autoComplete="name"
-                    className="pl-10 h-12 bg-[#0d1117]/50 border-[#30363d] text-white focus-visible:ring-[#00d09c]/50"
+                    className="pl-10 h-12 bg-muted/30 border-border text-foreground focus-visible:ring-primary/50"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     disabled={isLoggingIn}
@@ -182,15 +183,15 @@ export default function LoginPage() {
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-gray-300 text-xs font-bold uppercase tracking-wider">Email Address</Label>
+              <Label htmlFor="email" className="text-muted-foreground text-xs font-bold uppercase tracking-wider">Email Address</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-500" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                 <Input 
                   id="email" 
                   type="email" 
                   placeholder="name@example.com"
                   autoComplete="email"
-                  className="pl-10 h-12 bg-[#0d1117]/50 border-[#30363d] text-white focus-visible:ring-[#00d09c]/50"
+                  className="pl-10 h-12 bg-muted/30 border-border text-foreground focus-visible:ring-primary/50"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isLoggingIn}
@@ -199,15 +200,15 @@ export default function LoginPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-gray-300 text-xs font-bold uppercase tracking-wider">Password</Label>
+              <Label htmlFor="password" className="text-muted-foreground text-xs font-bold uppercase tracking-wider">Password</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-500" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                 <Input 
                   id="password" 
                   type="password" 
                   placeholder="••••••••"
                   autoComplete={isSignUp ? "new-password" : "current-password"}
-                  className="pl-10 h-12 bg-[#0d1117]/50 border-[#30363d] text-white focus-visible:ring-[#00d09c]/50"
+                  className="pl-10 h-12 bg-muted/30 border-border text-foreground focus-visible:ring-primary/50"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={isLoggingIn}
@@ -217,7 +218,7 @@ export default function LoginPage() {
             </div>
             <Button 
               type="submit"
-              className="w-full h-12 bg-[#00d09c] hover:bg-[#00b085] text-white font-bold rounded-xl transition-all shadow-lg shadow-[#00d09c]/10"
+              className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl transition-all shadow-lg shadow-primary/10"
               disabled={isLoggingIn}
             >
               {isLoggingIn ? <Loader2 className="animate-spin size-5" /> : (isSignUp ? "Create Account" : "Sign In")}
@@ -226,17 +227,17 @@ export default function LoginPage() {
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <Separator className="w-full bg-[#30363d]" />
+              <Separator className="w-full bg-border" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-[#161b22] px-2 text-gray-500 font-bold">Or continue with</span>
+              <span className="bg-card px-2 text-muted-foreground font-bold">Or continue with</span>
             </div>
           </div>
 
           <Button 
             variant="outline" 
             type="button"
-            className="w-full h-12 gap-3 border-[#30363d] bg-transparent text-white hover:bg-[#ffffff05] hover:border-[#484f58] transition-all rounded-xl" 
+            className="w-full h-12 gap-3 border-border bg-transparent text-foreground hover:bg-muted transition-all rounded-xl" 
             onClick={handleGoogleSignIn}
             disabled={isLoggingIn}
           >
@@ -264,13 +265,13 @@ export default function LoginPage() {
         <CardFooter className="flex flex-col gap-4 pb-8">
           <button 
             type="button"
-            className="text-sm text-[#00d09c] hover:underline font-medium"
+            className="text-sm text-primary hover:underline font-medium"
             onClick={() => setIsSignUp(!isSignUp)}
           >
             {isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
           </button>
-          <div className="text-[10px] text-gray-500 flex items-center gap-2">
-            <Sparkles className="size-3 text-[#00d09c]" />
+          <div className="text-[10px] text-muted-foreground flex items-center gap-2">
+            <Sparkles className="size-3 text-primary" />
             Your financial intelligence hub.
           </div>
         </CardFooter>

@@ -141,7 +141,7 @@ export default function LandingPage() {
             <img 
               src="https://picsum.photos/seed/financial-infrastructure/1200/800" 
               alt="Financial Ecosystem" 
-              className="w-full h-full object-contain opacity-90 dark:invert-[0.05]"
+              className="w-full h-full object-contain opacity-90 dark:opacity-80"
               data-ai-hint="isometric finance"
             />
           </div>
