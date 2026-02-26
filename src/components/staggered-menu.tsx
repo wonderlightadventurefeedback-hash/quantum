@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -331,7 +330,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
         </div>
 
         <header className={`staggered-menu-header fixed top-0 left-0 w-full flex items-center justify-between p-8 bg-transparent pointer-events-none z-[110] ${position === 'left' ? 'flex-row' : 'flex-row-reverse'}`} aria-label="Main navigation header">
-          <button ref={toggleBtnRef} className={`sm-toggle relative inline-flex items-center gap-2 px-5 py-2.5 rounded-full border shadow-xl shadow-primary/20 cursor-pointer font-bold leading-none overflow-visible pointer-events-auto transition-all duration-300 ${open ? 'text-black bg-white border-white' : 'text-white bg-primary border-primary hover:scale-105 active:scale-95'}`}
+          <button ref={toggleBtnRef} className={`sm-toggle relative inline-flex items-center gap-2 px-5 py-2.5 rounded-full border shadow-xl shadow-primary/20 cursor-pointer font-medium leading-none overflow-visible pointer-events-auto transition-all duration-300 ${open ? 'text-black bg-white border-white' : 'text-white bg-primary border-primary hover:scale-105 active:scale-95'}`}
                   aria-label={open ? 'Close menu' : 'Open menu'} aria-expanded={open} aria-controls="staggered-menu-panel" onClick={toggleMenu} type="button">
             <span className="sm-toggle-textWrap relative inline-block h-[1em] overflow-hidden whitespace-nowrap min-w-[3rem]" aria-hidden="true">
               <span ref={textInnerRef} className="sm-toggle-textInner flex flex-col leading-none">
@@ -416,7 +415,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
           align-items: center;
           gap: 0.5rem;
           cursor: pointer;
-          font-weight: 700;
+          font-weight: 500;
           line-height: 1;
           overflow: visible;
         }
