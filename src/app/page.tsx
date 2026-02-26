@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -26,6 +25,7 @@ import { MOCK_INDICES } from "@/lib/mock-data"
 import { useToast } from "@/hooks/use-toast"
 import emailjs from '@emailjs/browser'
 import CircularGallery from "@/components/circular-gallery"
+import { PlaceHolderImages } from "@/lib/placeholder-images"
 
 export default function LandingPage() {
   const { user, loading } = useUser()
@@ -115,6 +115,11 @@ export default function LandingPage() {
       setIsSending(false)
     }
   }
+
+  const galleryItems = PlaceHolderImages.map(img => ({
+    image: `${img.imageUrl}?grayscale`,
+    text: img.description.split(' ').slice(0, 2).join(' ') // Short label for gallery
+  }));
 
   if (loading || user) return null
 
@@ -263,16 +268,7 @@ export default function LandingPage() {
         </div>
         <div className="h-[500px] w-full">
           <CircularGallery 
-            items={[
-              { image: 'https://picsum.photos/seed/market-1/800/600?grayscale', text: 'Global Stocks' },
-              { image: 'https://picsum.photos/seed/market-2/800/600?grayscale', text: 'AI Insights' },
-              { image: 'https://picsum.photos/seed/market-3/800/600?grayscale', text: 'Crypto Tech' },
-              { image: 'https://picsum.photos/seed/market-4/800/600?grayscale', text: 'Mutual Funds' },
-              { image: 'https://picsum.photos/seed/market-5/800/600?grayscale', text: 'Risk Analysis' },
-              { image: 'https://picsum.photos/seed/market-6/800/600?grayscale', text: 'Trading Arena' },
-              { image: 'https://picsum.photos/seed/market-7/800/600?grayscale', text: 'Wealth IQ' },
-              { image: 'https://picsum.photos/seed/market-8/800/600?grayscale', text: 'Future Trends' },
-            ]}
+            items={galleryItems}
           />
         </div>
       </section>

@@ -1,3 +1,52 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "finance-1",
+      "description": "Stock market trading floor",
+      "imageUrl": "https://images.unsplash.com/photo-1707762890671-52ef6d6f51e7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxzdG9jayUyMG1hcmtldHxlbnwwfHx8fDE3NzIwNjUwNTd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "stock market"
+    },
+    {
+      "id": "finance-2",
+      "description": "Financial graph on digital screen",
+      "imageUrl": "https://images.unsplash.com/photo-1634542984003-e0fb8e200e91?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxmaW5hbmNpYWwlMjBncmFwaHxlbnwwfHx8fDE3NzIwNjgzMjJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "financial graph"
+    },
+    {
+      "id": "finance-3",
+      "description": "Bull statue representing market growth",
+      "imageUrl": "https://images.unsplash.com/photo-1623524713064-257294b0e34b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHx3YWxsJTIwc3RyZWV0fGVufDB8fHx8MTc3MjEyMTA2MHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "wall street"
+    },
+    {
+      "id": "finance-4",
+      "description": "Professional analyzing wealth data",
+      "imageUrl": "https://images.unsplash.com/photo-1635236269483-7e5d494e0097?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHx3ZWFsdGglMjBhbmFseXNpc3xlbnwwfHx8fDE3NzIxMjEwNjB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "wealth analysis"
+    },
+    {
+      "id": "finance-5",
+      "description": "Digital currency and blockchain tech",
+      "imageUrl": "https://images.unsplash.com/photo-1669881336715-5a51a78d5434?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxkaWdpdGFsJTIwY3VycmVuY3l8ZW58MHx8fHwxNzcyMTIxMDYwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "digital currency"
+    },
+    {
+      "id": "finance-6",
+      "description": "Investment portfolio growth",
+      "imageUrl": "https://images.unsplash.com/photo-1768207450151-30c0bf8e8091?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxpbnZlc3RtZW50JTIwZ3Jvd3RofGVufDB8fHx8MTc3MjEyMTA2MHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "investment growth"
+    },
+    {
+      "id": "finance-7",
+      "description": "Global financial connectivity",
+      "imageUrl": "https://images.unsplash.com/photo-1738997104202-ca929a63cf4a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxnbG9iYWwlMjBmaW5hbmNlfGVufDB8fHx8MTc3MjEyMTA2MHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "global finance"
+    },
+    {
+      "id": "finance-8",
+      "description": "Trading terminal setup",
+      "imageUrl": "https://images.unsplash.com/photo-1548247813-39fd73105a43?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHx0cmFkaW5nJTIwdGVybWluYWx8ZW58MHx8fHwxNzcyMTIxMDYxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "trading terminal"
+    }
+  ]
 }
