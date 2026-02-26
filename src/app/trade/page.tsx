@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -20,11 +21,11 @@ import {
   XCircle
 } from "lucide-react"
 import { LineChart, Line, ResponsiveContainer } from "recharts"
-import { MOCK_STOCKS, MOCK_USER, Stock } from "@/lib/mock-data"
+import { MOCK_STOCKS, Stock } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
-import { useUser, useFirestore } from "@/firebase"
-import { doc, getDoc } from "firebase/firestore"
+import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase"
+import { doc } from "firebase/firestore"
 
 const FINNHUB_API_KEY = "d6g3c49r01qqnmbqk10gd6g3c49r01qqnmbqk110";
 
@@ -38,7 +39,14 @@ export default function TradePage() {
   const [searchQuery, setSearchQuery] = React.useState(searchParams.get("q") || "")
   const [liveStocks, setLiveStocks] = React.useState<Stock[]>(MOCK_STOCKS)
   const [isRefreshing, setIsRefreshing] = React.useState(false)
-  const [userBalance, setUserBalance] = React.useState(50000)
+
+  const userProfileRef = useMemoFirebase(() => {
+    if (!db || !user) return null
+    return doc(db, 'users', user.uid)
+  }, [db, user])
+
+  const { data: userProfile } = useDoc(userProfileRef)
+  const balance = userProfile?.balance ?? 50000
 
   const fetchLivePrices = async (showToast = false) => {
     setIsRefreshing(true)
@@ -83,15 +91,6 @@ export default function TradePage() {
   }, [])
 
   React.useEffect(() => {
-    async function fetchBalance() {
-      if (!db || !user) return
-      const snap = await getDoc(doc(db, 'users', user.uid))
-      if (snap.exists()) setUserBalance(snap.data().balance || 50000)
-    }
-    fetchBalance()
-  }, [db, user])
-
-  React.useEffect(() => {
     const q = searchParams.get("q")
     if (q) setSearchQuery(q)
   }, [searchParams])
@@ -123,8 +122,8 @@ export default function TradePage() {
                 <Wallet className="size-5 text-primary" />
               </div>
               <div>
-                <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Buying Power</div>
-                <div className="text-xl font-bold">₹{userBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Demo Balance</div>
+                <div className="text-xl font-bold">₹{balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
               </div>
             </Card>
           </div>

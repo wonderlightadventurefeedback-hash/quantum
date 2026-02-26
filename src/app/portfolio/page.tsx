@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -10,8 +11,8 @@ import { aiPortfolioImprovementInsights } from "@/ai/flows/ai-portfolio-improvem
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
-import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
-import { collection, doc, getDoc } from "firebase/firestore"
+import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from "@/firebase"
+import { collection, doc } from "firebase/firestore"
 import { useRouter } from "next/navigation"
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))']
@@ -28,7 +29,14 @@ export default function PortfolioPage() {
   const [isMounted, setIsMounted] = React.useState(false)
   const [insights, setInsights] = React.useState<string | null>(null)
   const [livePrices, setLivePrices] = React.useState<Record<string, number>>({})
-  const [userBalance, setUserBalance] = React.useState<number>(0)
+
+  const userProfileRef = useMemoFirebase(() => {
+    if (!db || !user) return null
+    return doc(db, 'users', user.uid)
+  }, [db, user])
+
+  const { data: userProfile } = useDoc(userProfileRef)
+  const balance = userProfile?.balance ?? 50000
 
   const holdingsQuery = useMemoFirebase(() => {
     if (!db || !user) return null
@@ -39,20 +47,7 @@ export default function PortfolioPage() {
 
   React.useEffect(() => {
     setIsMounted(true);
-    async function fetchUserData() {
-      if (!db || !user) return
-      try {
-        const userRef = doc(db, 'users', user.uid)
-        const userSnap = await getDoc(userRef)
-        if (userSnap.exists()) {
-          setUserBalance(userSnap.data().balance || 0)
-        }
-      } catch (err) {
-        console.error("User data fetch failed:", err)
-      }
-    }
-    fetchUserData()
-  }, [db, user])
+  }, [])
 
   const fetchPrices = React.useCallback(async () => {
     if (!holdings || holdings.length === 0) {
@@ -71,9 +66,7 @@ export default function PortfolioPage() {
               const data = await res.json()
               if (data.c) prices[h.symbol] = data.c
             }
-          } catch (e) {
-            // Price fetch failed for this stock, fallback to avg price
-          }
+          } catch (e) { }
         })
       )
       setLivePrices(prices)
@@ -169,7 +162,7 @@ export default function PortfolioPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card className="glass-card bg-primary/5 border-primary/20 p-6 shadow-sm">
-            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Portfolio Value</span>
+            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Total Demo Value</span>
             <div className="text-3xl font-bold">₹{portfolioStats.totalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
           </Card>
           <Card className="glass-card bg-muted/30 p-6 shadow-sm">
@@ -182,14 +175,14 @@ export default function PortfolioPage() {
             </div>
           </Card>
           <Card className="glass-card p-6 shadow-sm">
-            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Virtual Cash</span>
+            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Demo Balance</span>
             <div className="text-3xl font-bold flex items-center gap-2">
               <Wallet className="size-6 text-primary" />
-              ₹{userBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              ₹{balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </div>
           </Card>
           <Card className="glass-card p-6 shadow-sm">
-            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Demo Holdings</span>
+            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Demo Assets</span>
             <div className="text-3xl font-bold">{holdings?.length || 0} Assets</div>
           </Card>
         </div>

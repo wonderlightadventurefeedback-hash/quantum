@@ -26,7 +26,6 @@ import {
   Zap, 
   Wallet, 
   CheckCircle2,
-  History,
   TrendingUp,
   TrendingDown,
   Activity,
@@ -35,16 +34,23 @@ import {
 } from "lucide-react"
 import { MOCK_USER } from "@/lib/mock-data"
 import { useToast } from "@/hooks/use-toast"
-import { useUser, useFirestore } from "@/firebase"
-import { doc, getDoc } from "firebase/firestore"
+import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase"
+import { doc } from "firebase/firestore"
 import { cn } from "@/lib/utils"
 
 export default function SettingsPage() {
   const { toast } = useToast()
   const { user } = useUser()
   const db = useFirestore()
-  const [isLoading, setIsLoading] = React.useState(false)
-  const [balance, setBalance] = React.useState(50000)
+  const [isSaving, setIsSaving] = React.useState(false)
+
+  const userProfileRef = useMemoFirebase(() => {
+    if (!db || !user) return null
+    return doc(db, 'users', user.uid)
+  }, [db, user])
+
+  const { data: userProfile } = useDoc(userProfileRef)
+  const balance = userProfile?.balance ?? 50000
 
   const MOCK_TRADING_HISTORY = [
     { id: 1, asset: "AAPL", type: "UP", outcome: "WIN", amount: "₹500.00", result: "+₹400.00", time: "2 mins ago" },
@@ -53,19 +59,10 @@ export default function SettingsPage() {
     { id: 4, asset: "RELIANCE", type: "UP", outcome: "WIN", amount: "₹200.00", result: "+₹160.00", time: "3 hours ago" },
   ]
 
-  React.useEffect(() => {
-    async function fetchBalance() {
-      if (!db || !user) return
-      const snap = await getDoc(doc(db, 'users', user.uid))
-      if (snap.exists()) setBalance(snap.data().balance || 50000)
-    }
-    fetchBalance()
-  }, [db, user])
-
   const handleSave = (section: string) => {
-    setIsLoading(true)
+    setIsSaving(true)
     setTimeout(() => {
-      setIsLoading(false)
+      setIsSaving(false)
       toast({
         title: "Settings Updated",
         description: `Your ${section} settings have been saved successfully.`,
@@ -123,7 +120,7 @@ export default function SettingsPage() {
               <CardContent className="pt-16 px-10 pb-10 space-y-10">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                   <div>
-                    <h2 className="text-3xl font-headline font-bold text-foreground">{user?.displayName || MOCK_USER.name}</h2>
+                    <h2 className="text-3xl font-headline font-bold text-foreground">{userProfile?.displayName || user?.displayName || MOCK_USER.name}</h2>
                     <div className="flex items-center gap-3 mt-1 text-muted-foreground font-medium">
                       <span>Pro Trader • Demo Level</span>
                       <div className="size-1 bg-muted-foreground/30 rounded-full" />
@@ -133,9 +130,9 @@ export default function SettingsPage() {
                   <div className="flex flex-wrap gap-4">
                     <div className="bg-muted/30 px-6 py-3 rounded-2xl border border-border/50 text-center min-w-[120px]">
                       <div className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1 flex items-center justify-center gap-1.5">
-                        <Wallet className="size-3 text-primary" /> Balance
+                        <Wallet className="size-3 text-primary" /> Demo Balance
                       </div>
-                      <div className="text-lg font-black font-headline">₹{balance.toLocaleString()}</div>
+                      <div className="text-lg font-black font-headline">₹{balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
                     </div>
                     <div className="bg-muted/30 px-6 py-3 rounded-2xl border border-border/50 text-center min-w-[120px]">
                       <div className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1 flex items-center justify-center gap-1.5">
@@ -152,7 +149,7 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                {/* Performance Analytics Component */}
+                {/* Performance Analytics */}
                 <div className="space-y-6 pt-4">
                   <h3 className="text-sm font-black uppercase tracking-[0.2em] text-primary border-l-2 border-primary pl-4">Performance Analytics</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -183,7 +180,7 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                {/* Trading History Component */}
+                {/* Trading History */}
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-black uppercase tracking-[0.2em] text-primary border-l-2 border-primary pl-4">Recent History</h3>
@@ -244,11 +241,11 @@ export default function SettingsPage() {
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="name" className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Full Name</Label>
-                        <Input id="name" defaultValue={user?.displayName || MOCK_USER.name} className="h-12 bg-muted/30 border-none rounded-xl font-bold" />
+                        <Input id="name" defaultValue={userProfile?.displayName || user?.displayName || MOCK_USER.name} className="h-12 bg-muted/30 border-none rounded-xl font-bold" />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="email" className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Email Address</Label>
-                        <Input id="email" defaultValue={user?.email || MOCK_USER.email} className="h-12 bg-muted/30 border-none rounded-xl font-bold" />
+                        <Input id="email" defaultValue={userProfile?.email || user?.email || MOCK_USER.email} className="h-12 bg-muted/30 border-none rounded-xl font-bold" disabled />
                       </div>
                     </div>
                   </div>
@@ -264,14 +261,14 @@ export default function SettingsPage() {
                 </div>
               </CardContent>
               <CardFooter className="bg-muted/10 px-10 py-6 border-t border-border/50">
-                <Button className="ml-auto gap-2 h-12 px-8 rounded-xl font-bold shadow-xl shadow-primary/20" onClick={() => handleSave("profile")} disabled={isLoading}>
-                  {isLoading ? <><Zap className="size-4 animate-spin" /> Updating...</> : <><Save className="size-4" /> Save Professional Profile</>}
+                <Button className="ml-auto gap-2 h-12 px-8 rounded-xl font-bold shadow-xl shadow-primary/20" onClick={() => handleSave("profile")} disabled={isSaving}>
+                  {isSaving ? <><Zap className="size-4 animate-spin" /> Updating...</> : <><Save className="size-4" /> Save Professional Profile</>}
                 </Button>
               </CardFooter>
             </Card>
           </TabsContent>
 
-          {/* Notifications Tab */}
+          {/* Other Tabs */}
           <TabsContent value="notifications">
             <Card className="glass-card rounded-[2rem] border-none shadow-xl">
               <CardHeader className="px-8 pt-8">
@@ -294,13 +291,6 @@ export default function SettingsPage() {
                     </div>
                     <Switch defaultChecked />
                   </div>
-                  <div className="flex items-center justify-between p-5 rounded-2xl bg-muted/30 border border-border/50">
-                    <div className="space-y-1">
-                      <Label className="text-base font-bold">Learning Milestones</Label>
-                      <p className="text-xs text-muted-foreground">Get notified when new course content matches your strategy.</p>
-                    </div>
-                    <Switch />
-                  </div>
                 </div>
               </CardContent>
               <CardFooter className="px-8 pb-8">
@@ -309,7 +299,6 @@ export default function SettingsPage() {
             </Card>
           </TabsContent>
 
-          {/* Preferences Tab */}
           <TabsContent value="preferences">
             <Card className="glass-card rounded-[2rem] border-none shadow-xl">
               <CardHeader className="px-8 pt-8">
@@ -327,32 +316,9 @@ export default function SettingsPage() {
                       <SelectContent>
                         <SelectItem value="inr">INR - Indian Rupee</SelectItem>
                         <SelectItem value="usd">USD - US Dollar</SelectItem>
-                        <SelectItem value="eur">EUR - Euro</SelectItem>
-                        <SelectItem value="btc">BTC - Bitcoin</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Display Language</Label>
-                    <Select defaultValue="en">
-                      <SelectTrigger className="h-12 bg-muted/30 border-none rounded-xl font-bold">
-                        <SelectValue placeholder="Select language" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="en">English (Global)</SelectItem>
-                        <SelectItem value="hi">Hindi</SelectItem>
-                        <SelectItem value="es">Spanish</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between p-5 rounded-2xl bg-primary/5 border border-primary/20">
-                  <div className="space-y-1">
-                    <Label className="text-base font-bold text-primary">Advanced One-Click Trading</Label>
-                    <p className="text-xs text-muted-foreground">Enable instant order execution without confirmation dialogs.</p>
-                  </div>
-                  <Switch defaultChecked />
                 </div>
               </CardContent>
               <CardFooter className="px-8 pb-8">
@@ -361,7 +327,6 @@ export default function SettingsPage() {
             </Card>
           </TabsContent>
 
-          {/* Security Tab */}
           <TabsContent value="security">
             <Card className="glass-card rounded-[2rem] border-none shadow-xl">
               <CardHeader className="px-8 pt-8">
@@ -381,18 +346,6 @@ export default function SettingsPage() {
                       </div>
                     </div>
                     <Button variant="outline" className="rounded-xl border-2 font-bold">Enable 2FA</Button>
-                  </div>
-                  <div className="flex items-center justify-between p-6 rounded-2xl bg-muted/30 border border-border/50 group hover:border-primary/30 transition-colors">
-                    <div className="flex items-center gap-5">
-                      <div className="size-12 rounded-2xl bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Mail className="size-6 text-primary" />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-base font-bold">Login Notification Email</Label>
-                        <p className="text-xs text-muted-foreground">Receive a security alert for every new device login.</p>
-                      </div>
-                    </div>
-                    <Switch defaultChecked />
                   </div>
                 </div>
               </CardContent>

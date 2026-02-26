@@ -22,14 +22,26 @@ import {
 } from "lucide-react"
 import { LineChart, Line, ResponsiveContainer } from "recharts"
 import { MOCK_USER, MOCK_STOCKS, MOCK_INDICES, MOCK_NEWS, Stock } from "@/lib/mock-data"
+import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase"
+import { doc } from "firebase/firestore"
 
 const FINNHUB_API_KEY = "d6g3c49r01qqnmbqk10gd6g3c49r01qqnmbqk110";
 
 export default function DashboardOverview() {
   const { toast } = useToast()
   const router = useRouter()
+  const { user } = useUser()
+  const db = useFirestore()
   const [liveStocks, setLiveStocks] = React.useState<Stock[]>(MOCK_STOCKS)
   const [isLoading, setIsLoading] = React.useState(true)
+
+  const userProfileRef = useMemoFirebase(() => {
+    if (!db || !user) return null
+    return doc(db, 'users', user.uid)
+  }, [db, user])
+
+  const { data: userProfile } = useDoc(userProfileRef)
+  const balance = userProfile?.balance ?? 50000
 
   const fetchLivePrices = async () => {
     try {
@@ -49,7 +61,7 @@ export default function DashboardOverview() {
               }
             }
           } catch (e) {
-            // Silently fail individual stock fetch and proceed to fallback
+            // Silently fail individual stock fetch
           }
           
           const drift = (Math.random() - 0.5) * 0.5
@@ -86,7 +98,6 @@ export default function DashboardOverview() {
   }
 
   const handleIndexClick = (name: string) => {
-    // Navigate to trade page with index name as search query
     router.push(`/trade?q=${encodeURIComponent(name.split(' ')[0])}`)
   }
 
@@ -240,9 +251,9 @@ export default function DashboardOverview() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
           <div className="lg:col-span-1 space-y-8">
             <Card className="glass-card bg-primary/5 border-primary/20 p-6 space-y-4 hover:shadow-primary/10 transition-shadow">
-              <h2 className="font-headline font-bold text-lg">Your Portfolio</h2>
+              <h2 className="font-headline font-bold text-lg">Your Demo Portfolio</h2>
               <div>
-                <div className="text-3xl font-bold">₹{MOCK_USER.balance.toLocaleString()}</div>
+                <div className="text-3xl font-bold">₹{balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
                 <div className="text-xs text-green-500 font-bold flex items-center gap-1 mt-1">
                   <TrendingUp className="size-3" /> +12.5% Returns
                 </div>

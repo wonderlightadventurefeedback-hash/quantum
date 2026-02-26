@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -9,14 +10,8 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { 
-  TrendingUp, 
-  TrendingDown, 
   Timer, 
   Zap, 
-  History, 
-  Loader2, 
-  ChevronDown, 
-  Trophy, 
   AlertCircle,
   ArrowUpCircle,
   ArrowDownCircle,
@@ -24,7 +19,8 @@ import {
   Wallet,
   Activity,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  Trophy
 } from "lucide-react"
 import { 
   Area, 
@@ -32,15 +28,14 @@ import {
   XAxis, 
   YAxis, 
   CartesianGrid, 
-  Tooltip, 
   ResponsiveContainer, 
   ReferenceLine 
 } from "recharts"
 import { aiStockPredictionExplanation } from "@/ai/flows/ai-stock-prediction-explanation-flow"
-import { MOCK_STOCKS, Stock } from "@/lib/mock-data"
+import { MOCK_STOCKS } from "@/lib/mock-data"
 import { useToast } from "@/hooks/use-toast"
-import { useUser, useFirestore, updateDocumentNonBlocking } from "@/firebase"
-import { doc, getDoc, increment, serverTimestamp } from "firebase/firestore"
+import { useUser, useFirestore, useDoc, useMemoFirebase, updateDocumentNonBlocking } from "@/firebase"
+import { doc, increment, serverTimestamp } from "firebase/firestore"
 import { cn } from "@/lib/utils"
 
 const generateLiveData = (basePrice: number) => {
@@ -67,23 +62,22 @@ export default function PredictionArenaPage() {
   const [prediction, setPrediction] = React.useState<"UP" | "DOWN" | null>(null)
   const [entryPrice, setEntryPrice] = React.useState(0)
   const [tradeResult, setTradeResult] = React.useState<any>(null)
-  const [userBalance, setUserBalance] = React.useState(50000)
-  const [isAnalyzing, setIsAnalyzing] = React.useState(false)
+
+  const userProfileRef = useMemoFirebase(() => {
+    if (!db || !user) return null
+    return doc(db, 'users', user.uid)
+  }, [db, user])
+
+  const { data: userProfile } = useDoc(userProfileRef)
+  const balance = userProfile?.balance ?? 50000
 
   const TRADE_DURATION = 15;
-  const PAYOUT = 1.8; // 80% Profit
+  const PAYOUT = 1.8;
 
   React.useEffect(() => {
     setIsMounted(true)
     setChartData(generateLiveData(selectedStock.price))
-    
-    async function fetchBalance() {
-      if (!db || !user) return
-      const snap = await getDoc(doc(db, 'users', user.uid))
-      if (snap.exists()) setUserBalance(snap.data().balance || 50000)
-    }
-    fetchBalance()
-  }, [selectedStock, db, user])
+  }, [selectedStock])
 
   React.useEffect(() => {
     if (!isMounted) return
@@ -107,7 +101,7 @@ export default function PredictionArenaPage() {
       toast({ title: "Invalid Amount", variant: "destructive" })
       return
     }
-    if (amount > userBalance) {
+    if (amount > balance) {
       toast({ title: "Insufficient Demo Capital", variant: "destructive" })
       return
     }
@@ -119,13 +113,11 @@ export default function PredictionArenaPage() {
     setTradeResult(null)
 
     const userRef = doc(db, 'users', user.uid)
-    // Non-blocking update
     updateDocumentNonBlocking(userRef, { 
       balance: increment(-amount),
       updatedAt: serverTimestamp()
     })
     
-    setUserBalance(prev => prev - amount)
     toast({ title: "Trade Executed", description: `Virtual ${dir} position opened @ ₹${currentPrice}` })
   }
 
@@ -150,10 +142,8 @@ export default function PredictionArenaPage() {
         balance: increment(winAmount),
         updatedAt: serverTimestamp()
       })
-      setUserBalance(prev => prev + winAmount)
     }
 
-    setIsAnalyzing(true)
     try {
       const response = await aiStockPredictionExplanation({
         stockSymbol: selectedStock.symbol,
@@ -166,7 +156,6 @@ export default function PredictionArenaPage() {
     } catch (e) {
       setTradeResult({ win: isWin, explanation: "AI Analyst busy, but your virtual result was recorded." })
     } finally {
-      setIsAnalyzing(false)
       setIsTrading(false)
     }
   }
@@ -185,17 +174,17 @@ export default function PredictionArenaPage() {
             </div>
             <div>
               <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-headline font-black uppercase tracking-tighter">Olymp Speculation</h1>
-                <Badge className="bg-primary/20 text-primary border-none font-black text-[9px] uppercase tracking-[0.2em]">Live Arena</Badge>
+                <h1 className="text-2xl font-headline font-black uppercase tracking-tighter">Live Speculation</h1>
+                <Badge className="bg-primary/20 text-primary border-none font-black text-[9px] uppercase tracking-[0.2em]">Demo Arena</Badge>
               </div>
-              <p className="text-muted-foreground text-xs font-medium mt-1">High-frequency paper trading with instant settlement.</p>
+              <p className="text-muted-foreground text-xs font-medium mt-1">High-frequency paper trading with instant virtual settlement.</p>
             </div>
           </div>
           
           <div className="flex items-center gap-4">
             <div className="bg-muted/30 px-6 py-2 rounded-2xl border border-border/50">
               <div className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">Demo Balance</div>
-              <div className="text-xl font-black font-headline text-primary">₹{userBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+              <div className="text-xl font-black font-headline text-primary">₹{balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
             </div>
             <div className="h-10 w-px bg-border mx-2" />
             <Button variant="outline" className="rounded-xl border-2 font-bold h-12" onClick={() => router.push('/dashboard')}>
@@ -240,7 +229,7 @@ export default function PredictionArenaPage() {
                   <div className="font-black text-lg tracking-tight">{selectedStock.name}</div>
                   <div className="flex items-center gap-2">
                     <span className="size-2 bg-green-500 rounded-full animate-pulse"></span>
-                    <span className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">Market Open • 80% Profit</span>
+                    <span className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">Demo Market • 80% Profit</span>
                   </div>
                 </div>
               </div>
@@ -323,10 +312,10 @@ export default function PredictionArenaPage() {
                         </div>
                         <div className="space-y-2">
                           <h3 className="text-4xl font-black font-headline uppercase tracking-tighter">
-                            {tradeResult.win ? "Profit Secured!" : "Trade Expired"}
+                            {tradeResult.win ? "Virtual Profit!" : "Trade Expired"}
                           </h3>
                           <p className="text-muted-foreground font-medium">
-                            {tradeResult.win ? `You earned ₹${(parseFloat(tradeAmount) * 0.8).toFixed(2)} virtual profit.` : "The market moved against your prediction."}
+                            {tradeResult.win ? `You earned ₹${(parseFloat(tradeAmount) * 0.8).toFixed(2)} demo profit.` : "The demo market moved against your prediction."}
                           </p>
                         </div>
                         <div className="w-full bg-muted/30 p-6 rounded-2xl text-left border-l-4 border-primary">
@@ -368,17 +357,6 @@ export default function PredictionArenaPage() {
                     {["100", "500", "1000", "5000"].map(amt => (
                       <Button key={amt} variant="outline" className="rounded-xl font-black text-[10px] h-10 border-white/5 hover:bg-white/5" onClick={() => setTradeAmount(amt)}>
                         ₹{amt}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <span className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em] px-1">Expiration</span>
-                  <div className="grid grid-cols-3 gap-2">
-                    {["15s", "30s", "60s"].map(t => (
-                      <Button key={t} variant="outline" className={cn("rounded-xl font-black text-[10px] h-12 border-white/5", t === "15s" ? "border-primary bg-primary/10 text-primary" : "hover:bg-white/5")}>
-                        {t}
                       </Button>
                     ))}
                   </div>
