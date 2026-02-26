@@ -1,6 +1,6 @@
 'use server';
 /**
- * @fileOverview An AI financial advisor chatbot powered by high-performance Ollama/OpenAI intelligence via SiliconFlow.
+ * @fileOverview An AI financial advisor chatbot powered by high-performance intelligence via SiliconFlow.
  * This flow provides personalized advice based on real-time market data from Finnhub.
  *
  * - aiFinancialStrategyAdvisor - A function that handles the AI financial advisor chat process.
@@ -74,10 +74,10 @@ const aiFinancialStrategyAdvisorFlow = ai.defineFlow(
     outputSchema: AiFinancialAdvisorOutputSchema,
   },
   async (input) => {
+    // API Key provided by user for SiliconFlow/Ollama connection
     const API_KEY = process.env.OPENAI_API_KEY || 'ef844e3b8eac407990679dffbd62147c.I9mEPUXANRbOARAI150CNX2a';
 
     try {
-      // Using OpenAI library to communicate with the high-performance Ollama/OpenAI compatible SiliconFlow endpoint
       const openai = new OpenAI({
         apiKey: API_KEY,
         baseURL: 'https://api.siliconflow.cn/v1'
@@ -86,7 +86,7 @@ const aiFinancialStrategyAdvisorFlow = ai.defineFlow(
       const messages: any[] = [
         {
           role: 'system',
-          content: `You are FinIntel AI, a high-performance Financial Strategy Advisor powered by custom ChatGPT-grade intelligence.
+          content: `You are FinIntel AI, a high-performance Financial Strategy Advisor directly connected to OpenAI through ChatGPT.
 Your core mission is to provide data-driven, professional, and actionable financial advice covering ALL areas of personal and professional finance.
 
 AREAS OF EXPERTISE:
@@ -148,7 +148,7 @@ KEY GUIDELINES:
       ];
 
       const response = await openai.chat.completions.create({
-        model: 'deepseek-ai/DeepSeek-V3', // Using high-performance DeepSeek model via SiliconFlow
+        model: 'deepseek-ai/DeepSeek-V3', // High-performance model via SiliconFlow
         messages,
         tools: tools as any,
         tool_choice: 'auto',
@@ -184,13 +184,13 @@ KEY GUIDELINES:
           messages,
         });
 
-        return { response: secondResponse.choices[0].message.content || "I processed the data but couldn't generate a text response." };
+        return { response: secondResponse.choices[0].message.content || "I processed the market data but could not generate a textual response. Please try asking in a different way." };
       }
 
-      return { response: responseMessage.content || "I'm here to help with your financial questions." };
+      return { response: responseMessage.content || "I'm here to help with your stock market and finance questions." };
     } catch (error: any) {
       console.error("Advisor Flow Error:", error);
-      return { response: "I encountered an error while communicating with my premium intelligence layer. Please check your configuration or try again shortly." };
+      return { response: "I'm having difficulty connecting to my ChatGPT intelligence layer right now. Please ensure your API key is active or try again in a few moments." };
     }
   }
 );

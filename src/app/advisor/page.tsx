@@ -10,7 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Send, Bot, User, Sparkles, Loader2, Zap, Clock } from "lucide-react"
 import { aiFinancialStrategyAdvisor } from "@/ai/flows/ai-financial-strategy-advisor"
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase, addDocumentNonBlocking } from "@/firebase"
-import { collection, doc, query, orderBy, limit, serverTimestamp, getDocs } from "firebase/firestore"
+import { collection, doc, query, orderBy, limit, serverTimestamp } from "firebase/firestore"
 import { MOCK_USER } from "@/lib/mock-data"
 import { formatDistanceToNow } from "date-fns"
 
@@ -91,7 +91,7 @@ export default function AdvisorPage() {
     } catch (error) {
       addDocumentNonBlocking(userMsgRef, {
         role: 'assistant',
-        content: "I'm having trouble connecting to my ChatGPT intelligence layer. Please check your configuration.",
+        content: "I encountered an error while communicating with my premium intelligence layer. Please check your configuration or try again shortly.",
         timestamp: serverTimestamp()
       })
     } finally {
@@ -110,7 +110,7 @@ export default function AdvisorPage() {
     "Live price of NVIDIA?",
     "Analyze Tesla's company profile",
     "Latest market news headlines",
-    "Should I diversify further?"
+    "Explain Ethereum briefly"
   ]
 
   return (
@@ -124,11 +124,11 @@ export default function AdvisorPage() {
                 <Zap className="size-3 fill-primary animate-pulse" /> OpenAI Active
               </span>
             </div>
-            <p className="text-muted-foreground text-sm">Directly connected to OpenAI through ChatGPT for expert stock market and finance answers.</p>
+            <p className="text-muted-foreground text-sm">Directly connected to OpenAI through ChatGPT for expert answers on stock markets and finance.</p>
           </div>
           <div className="hidden md:flex items-center gap-2">
             <span className="size-2 bg-green-500 rounded-full animate-pulse"></span>
-            <span className="text-sm font-medium">Synced with Portfolio</span>
+            <span className="text-sm font-medium">Market Feeds Synced</span>
           </div>
         </div>
 
@@ -210,7 +210,7 @@ export default function AdvisorPage() {
               <Input 
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask ChatGPT for stock market and finance answers..." 
+                placeholder="Ask about stock markets or finance..." 
                 className="pr-16 h-16 bg-background border-border/50 rounded-2xl focus-visible:ring-primary/40 text-lg shadow-xl shadow-black/5"
               />
               <Button 
@@ -224,11 +224,11 @@ export default function AdvisorPage() {
             </form>
             <div className="flex items-center justify-center gap-4 mt-4">
               <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">
-                ChatGPT Intelligence Enabled
+                ChatGPT Intelligence Layer Active
               </p>
               <div className="h-3 w-px bg-border" />
               <p className="text-[10px] text-muted-foreground italic">
-                Directly connected to OpenAI for professional financial answers.
+                In this website the ai advisor will direactlu connected to the Open ai through chartgpt which is give the all answer of stock market and finance.
               </p>
             </div>
           </div>
