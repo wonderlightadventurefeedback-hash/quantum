@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -14,7 +15,7 @@ import {
   createUserWithEmailAndPassword,
   updateProfile
 } from "firebase/auth"
-import { Sparkles, Loader2, Mail, Lock, User } from "lucide-react"
+import { Sparkles, Loader2, Mail, Lock, User, ArrowLeft } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { Separator } from "@/components/ui/separator"
 
@@ -53,7 +54,6 @@ export default function LoginPage() {
         title: "Welcome to FinIntel AI",
         description: "Successfully signed in with Google.",
       })
-      // Redirect handled by useEffect
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -103,7 +103,6 @@ export default function LoginPage() {
           description: "Successfully signed in.",
         })
       }
-      // Redirect handled by useEffect
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -128,6 +127,7 @@ export default function LoginPage() {
       <div className="absolute inset-0 bg-gradient-to-b from-[#0d1117] via-[#0f1715] to-[#0d1117]" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#00d09c]/5 rounded-full blur-[120px]" />
 
+      {/* Top Left Branding */}
       <div className="absolute top-8 left-8 flex items-center gap-3 z-10">
         <div className="w-10 h-10 rounded-xl bg-[#00d09c] flex items-center justify-center">
           <span className="font-headline font-bold text-white text-xl">FI</span>
@@ -135,6 +135,20 @@ export default function LoginPage() {
         <span className="font-headline font-bold text-2xl tracking-tight text-[#00d09c]">
           FinIntel AI
         </span>
+      </div>
+
+      {/* Back Button */}
+      <div className="absolute top-8 right-8 z-10">
+        <Button 
+          variant="ghost" 
+          className="text-gray-400 hover:text-white hover:bg-white/5 gap-2"
+          asChild
+        >
+          <Link href="/">
+            <ArrowLeft className="size-4" />
+            Back to Home
+          </Link>
+        </Button>
       </div>
 
       <Card className="w-full max-w-md bg-[#161b22]/40 backdrop-blur-xl border-[#30363d] shadow-2xl z-10 overflow-hidden">
