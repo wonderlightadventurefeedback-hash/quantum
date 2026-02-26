@@ -53,6 +53,10 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(true)
   const [theme, setTheme] = React.useState<"light" | "dark">("dark")
+  const [isHeaderVisible, setIsHeaderVisible] = React.useState(true)
+  
+  const scrollContainerRef = React.useRef<HTMLDivElement>(null)
+  const lastScrollY = React.useRef(0)
 
   // Authentication Guard
   React.useEffect(() => {
@@ -64,6 +68,30 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     const isDark = document.documentElement.classList.contains("dark")
     setTheme(isDark ? "dark" : "light")
+  }, [])
+
+  // Smart Header Scroll Logic
+  React.useEffect(() => {
+    const container = scrollContainerRef.current
+    if (!container) return
+
+    const handleScroll = () => {
+      const currentScrollY = container.scrollTop
+      
+      // Hide if scrolling down and past a threshold
+      if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
+        setIsHeaderVisible(false)
+      } 
+      // Show if scrolling up
+      else if (currentScrollY < lastScrollY.current) {
+        setIsHeaderVisible(true)
+      }
+      
+      lastScrollY.current = currentScrollY
+    }
+
+    container.addEventListener('scroll', handleScroll, { passive: true })
+    return () => container.removeEventListener('scroll', handleScroll)
   }, [])
 
   const toggleTheme = () => {
@@ -217,66 +245,77 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-        {/* Header */}
-        <header className="h-20 border-b border-border bg-background/80 backdrop-blur-md flex items-center justify-between px-8 z-40">
-          <div className="flex items-center gap-6">
-            <Button variant="ghost" size="icon" suppressHydrationWarning onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
-              <Menu className="size-5" />
-            </Button>
-            <form onSubmit={handleSearch} className="relative w-64 md:w-96 hidden md:block">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-              <Input 
-                placeholder="Search stocks, news, lessons..." 
-                className="pl-10 bg-muted/50 border-none focus-visible:ring-primary/50" 
-              />
-            </form>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" suppressHydrationWarning onClick={toggleTheme} className="text-muted-foreground hover:text-primary">
-              {theme === "light" ? <Moon className="size-5" /> : <Sun className="size-5" />}
-            </Button>
-            <Button variant="ghost" size="icon" suppressHydrationWarning className="relative text-muted-foreground" onClick={() => handleHeaderAction("Notifications")}>
-              <Bell className="size-5" />
-              <span className="absolute top-2.5 right-2.5 size-2 bg-primary rounded-full ring-2 ring-background"></span>
-            </Button>
-            <Button variant="ghost" size="icon" suppressHydrationWarning className="text-muted-foreground" onClick={() => handleHeaderAction("Settings")}>
-              <Settings className="size-5" />
-            </Button>
-          </div>
-        </header>
-
-        {/* Realtime Market Ticker */}
-        <div className="bg-primary/5 border-b border-border h-10 flex items-center overflow-hidden shrink-0">
-          <div className="flex items-center gap-2 px-4 bg-background border-r border-border h-full z-10 font-bold text-[10px] text-primary uppercase tracking-widest shrink-0">
-            <Zap className="size-3 fill-primary animate-pulse" /> Market Pulse
-          </div>
-          <div className="flex animate-marquee hover:[animation-play-state:paused] whitespace-nowrap">
-            {[...MOCK_NEWS, ...MOCK_NEWS, ...MOCK_NEWS].map((news, i) => (
-              <div key={i} className="flex items-center gap-6 px-4 group cursor-pointer" onClick={() => toast({ title: news.title, description: `Source: ${news.source}` })}>
-                <div className="flex items-center gap-2 text-[11px] font-medium">
-                  <span className="text-muted-foreground">{news.time}</span>
-                  <span className="group-hover:text-primary transition-colors">{news.title}</span>
-                  {news.sentiment === "POSITIVE" ? (
-                    <TrendingUp className="size-3 text-green-500" />
-                  ) : (
-                    <TrendingDown className="size-3 text-red-500" />
-                  )}
-                  <span className={cn(
-                    "font-bold",
-                    news.sentiment === "POSITIVE" ? "text-green-500" : "text-red-500"
-                  )}>
-                    {news.score}%
-                  </span>
-                </div>
-                <span className="text-border">|</span>
+        <div 
+          ref={scrollContainerRef} 
+          className="flex-1 overflow-y-auto custom-scrollbar bg-background text-foreground"
+        >
+          {/* Sticky Header Wrapper */}
+          <div className={cn(
+            "sticky top-0 z-40 transition-transform duration-300 ease-in-out",
+            isHeaderVisible ? "translate-y-0" : "-translate-y-full"
+          )}>
+            {/* Header */}
+            <header className="h-20 border-b border-border bg-background/80 backdrop-blur-md flex items-center justify-between px-8">
+              <div className="flex items-center gap-6">
+                <Button variant="ghost" size="icon" suppressHydrationWarning onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
+                  <Menu className="size-5" />
+                </Button>
+                <form onSubmit={handleSearch} className="relative w-64 md:w-96 hidden md:block">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                  <Input 
+                    placeholder="Search stocks, news, lessons..." 
+                    className="pl-10 bg-muted/50 border-none focus-visible:ring-primary/50" 
+                  />
+                </form>
               </div>
-            ))}
-          </div>
-        </div>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="icon" suppressHydrationWarning onClick={toggleTheme} className="text-muted-foreground hover:text-primary">
+                  {theme === "light" ? <Moon className="size-5" /> : <Sun className="size-5" />}
+                </Button>
+                <Button variant="ghost" size="icon" suppressHydrationWarning className="relative text-muted-foreground" onClick={() => handleHeaderAction("Notifications")}>
+                  <Bell className="size-5" />
+                  <span className="absolute top-2.5 right-2.5 size-2 bg-primary rounded-full ring-2 ring-background"></span>
+                </Button>
+                <Button variant="ghost" size="icon" suppressHydrationWarning className="text-muted-foreground" onClick={() => handleHeaderAction("Settings")}>
+                  <Settings className="size-5" />
+                </Button>
+              </div>
+            </header>
 
-        {/* Page Content */}
-        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-background text-foreground">
-          {children}
+            {/* Realtime Market Ticker */}
+            <div className="bg-primary/5 border-b border-border h-10 flex items-center overflow-hidden shrink-0">
+              <div className="flex items-center gap-2 px-4 bg-background border-r border-border h-full z-10 font-bold text-[10px] text-primary uppercase tracking-widest shrink-0">
+                <Zap className="size-3 fill-primary animate-pulse" /> Market Pulse
+              </div>
+              <div className="flex animate-marquee hover:[animation-play-state:paused] whitespace-nowrap">
+                {[...MOCK_NEWS, ...MOCK_NEWS, ...MOCK_NEWS].map((news, i) => (
+                  <div key={i} className="flex items-center gap-6 px-4 group cursor-pointer" onClick={() => toast({ title: news.title, description: `Source: ${news.source}` })}>
+                    <div className="flex items-center gap-2 text-[11px] font-medium">
+                      <span className="text-muted-foreground">{news.time}</span>
+                      <span className="group-hover:text-primary transition-colors">{news.title}</span>
+                      {news.sentiment === "POSITIVE" ? (
+                        <TrendingUp className="size-3 text-green-500" />
+                      ) : (
+                        <TrendingDown className="size-3 text-red-500" />
+                      )}
+                      <span className={cn(
+                        "font-bold",
+                        news.sentiment === "POSITIVE" ? "text-green-500" : "text-red-500"
+                      )}>
+                        {news.score}%
+                      </span>
+                    </div>
+                    <span className="text-border">|</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Page Content Container */}
+          <div className="p-8">
+            {children}
+          </div>
         </div>
       </main>
     </div>
