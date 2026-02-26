@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -47,8 +46,8 @@ import {
 import { MOCK_STOCKS } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
-import { useUser, useFirestore } from "@/firebase"
-import { doc, setDoc, serverTimestamp, getDoc, updateDoc, increment } from "firebase/firestore"
+import { useUser, useFirestore, updateDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase"
+import { doc, serverTimestamp, getDoc, increment } from "firebase/firestore"
 
 const FINNHUB_API_KEY = "d6g3c49r01qqnmbqk10gd6g3c49r01qqnmbqk110";
 
@@ -213,23 +212,36 @@ export default function StockDetailsPage() {
 
     try {
       if (type === "BUY") {
-        await updateDoc(holdingRef, { 
+        // Use non-blocking set with merge
+        setDocumentNonBlocking(holdingRef, { 
           symbol, 
           quantity: increment(orderQty), 
           averagePrice: stock.price, 
           lastUpdated: serverTimestamp() 
-        }).catch(async () => {
-          await setDoc(holdingRef, { symbol, quantity: orderQty, averagePrice: stock.price, lastUpdated: serverTimestamp() })
+        }, { merge: true })
+        
+        updateDocumentNonBlocking(userRef, { 
+          balance: increment(-totalCost),
+          updatedAt: serverTimestamp()
         })
-        await updateDoc(userRef, { balance: increment(-totalCost) })
+        
         setUserBalance(prev => prev - totalCost)
       } else {
         const snap = await getDoc(holdingRef);
         if (!snap.exists() || snap.data().quantity < orderQty) {
           throw new Error("Insufficient holdings");
         }
-        await updateDoc(holdingRef, { quantity: increment(-orderQty), lastUpdated: serverTimestamp() })
-        await updateDoc(userRef, { balance: increment(totalCost) })
+        
+        updateDocumentNonBlocking(holdingRef, { 
+          quantity: increment(-orderQty), 
+          lastUpdated: serverTimestamp() 
+        })
+        
+        updateDocumentNonBlocking(userRef, { 
+          balance: increment(totalCost),
+          updatedAt: serverTimestamp()
+        })
+        
         setUserBalance(prev => prev + totalCost)
       }
       toast({ title: `${type} Successful`, description: `${orderQty} units of ${symbol} processed.` })
@@ -258,13 +270,13 @@ export default function StockDetailsPage() {
     setTradeTimer(TRADE_DURATION)
     setTradeResult(null)
 
-    try {
-      await updateDoc(doc(db, 'users', user.uid), { balance: increment(-amount) })
-      setUserBalance(prev => prev - amount)
-    } catch (err) {
-      setIsTradingLive(false)
-      return
-    }
+    const userRef = doc(db, 'users', user.uid)
+    updateDocumentNonBlocking(userRef, { 
+      balance: increment(-amount),
+      updatedAt: serverTimestamp()
+    })
+    setUserBalance(prev => prev - amount)
+    
     toast({ title: "Trade Open", description: `Predicted ${dir} for ${symbol} @ ${stock.price.toFixed(2)}` })
   }
 
@@ -279,7 +291,11 @@ export default function StockDetailsPage() {
       setTradeResult(isWin ? "WIN" : "LOSS")
       setIsTradingLive(false)
       if (isWin && db && user) {
-        updateDoc(doc(db, 'users', user.uid), { balance: increment(amount * PAYOUT_RATIO) })
+        const userRef = doc(db, 'users', user.uid)
+        updateDocumentNonBlocking(userRef, { 
+          balance: increment(amount * PAYOUT_RATIO),
+          updatedAt: serverTimestamp()
+        })
         setUserBalance(prev => prev + (amount * PAYOUT_RATIO))
         toast({ title: "PROFIT! Secured virtual returns." })
       } else {

@@ -39,8 +39,8 @@ import {
 import { aiStockPredictionExplanation } from "@/ai/flows/ai-stock-prediction-explanation-flow"
 import { MOCK_STOCKS, Stock } from "@/lib/mock-data"
 import { useToast } from "@/hooks/use-toast"
-import { useUser, useFirestore } from "@/firebase"
-import { doc, getDoc, updateDoc, increment, serverTimestamp } from "firebase/firestore"
+import { useUser, useFirestore, updateDocumentNonBlocking } from "@/firebase"
+import { doc, getDoc, increment, serverTimestamp } from "firebase/firestore"
 import { cn } from "@/lib/utils"
 
 const generateLiveData = (basePrice: number) => {
@@ -119,9 +119,13 @@ export default function PredictionArenaPage() {
     setTradeResult(null)
 
     const userRef = doc(db, 'users', user.uid)
-    await updateDoc(userRef, { balance: increment(-amount) })
+    // Non-blocking update
+    updateDocumentNonBlocking(userRef, { 
+      balance: increment(-amount),
+      updatedAt: serverTimestamp()
+    })
+    
     setUserBalance(prev => prev - amount)
-
     toast({ title: "Trade Executed", description: `Virtual ${dir} position opened @ ₹${currentPrice}` })
   }
 
@@ -141,7 +145,11 @@ export default function PredictionArenaPage() {
     const winAmount = amount * PAYOUT
 
     if (isWin && db && user) {
-      await updateDoc(doc(db, 'users', user.uid), { balance: increment(winAmount) })
+      const userRef = doc(db, 'users', user.uid)
+      updateDocumentNonBlocking(userRef, { 
+        balance: increment(winAmount),
+        updatedAt: serverTimestamp()
+      })
       setUserBalance(prev => prev + winAmount)
     }
 

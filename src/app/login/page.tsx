@@ -46,12 +46,14 @@ export default function LoginPage() {
     
     if (!snap.exists()) {
       await setDoc(userRef, {
+        id: user.uid,
         email: user.email,
         displayName: name || user.displayName || 'Demo User',
         balance: 50000,
         learningProgress: 0,
         predictionAccuracy: 0,
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       })
     }
   }
