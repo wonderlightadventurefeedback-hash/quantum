@@ -21,7 +21,7 @@ import {
   Moon,
   Sun,
   LogOut,
-  LogIn,
+  ArrowLeftRight,
   Loader2
 } from "lucide-react"
 
@@ -36,6 +36,7 @@ import { signOut } from "firebase/auth"
 
 const navItems = [
   { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Trade", href: "/trade", icon: ArrowLeftRight },
   { name: "Learn", href: "/learn", icon: BookOpen },
   { name: "Prediction Arena", href: "/predict", icon: TrendingUp },
   { name: "News Intel", href: "/news", icon: Newspaper },
@@ -78,11 +79,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     const handleScroll = () => {
       const currentScrollY = container.scrollTop
       
-      // Minimum scroll threshold to trigger hiding (100px)
       if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
         setIsHeaderVisible(false)
       } 
-      // Show immediately when scrolling up
       else if (currentScrollY < lastScrollY.current) {
         setIsHeaderVisible(true)
       }
@@ -162,13 +161,11 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
-      {/* Sidebar */}
       <aside className={cn(
         "bg-card border-r border-border transition-all duration-300 z-50",
         isSidebarOpen ? "w-64" : "w-20"
       )}>
         <div className="flex flex-col h-full">
-          {/* Logo */}
           <Link href="/" className="flex items-center gap-3 px-6 h-20">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0">
               <span className="font-headline font-bold text-white">FI</span>
@@ -180,7 +177,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             )}
           </Link>
 
-          {/* Navigation */}
           <nav className="flex-1 px-3 space-y-1">
             {navItems.map((item) => {
               const isActive = pathname === item.href
@@ -203,7 +199,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             })}
           </nav>
 
-          {/* User Section */}
           <div className="p-4 border-t border-border">
             <div className="flex flex-col gap-2">
               <Button
@@ -243,18 +238,15 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         <div 
           ref={scrollContainerRef} 
           className="flex-1 overflow-y-auto custom-scrollbar bg-background text-foreground"
         >
-          {/* Sticky Header Wrapper - Handles the transform animation */}
           <div className={cn(
             "sticky top-0 z-40 transition-all duration-500 ease-in-out transform",
             isHeaderVisible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0 pointer-events-none"
           )}>
-            {/* Header */}
             <header className="h-20 border-b border-border bg-background/95 backdrop-blur-md flex items-center justify-between px-8">
               <div className="flex items-center gap-6">
                 <Button variant="ghost" size="icon" suppressHydrationWarning onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
@@ -282,7 +274,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               </div>
             </header>
 
-            {/* Realtime Market Ticker */}
             <div className="bg-primary/5 border-b border-border h-10 flex items-center overflow-hidden shrink-0">
               <div className="flex items-center gap-2 px-4 bg-background border-r border-border h-full z-10 font-bold text-[10px] text-primary uppercase tracking-widest shrink-0">
                 <Zap className="size-3 fill-primary animate-pulse" /> Market Pulse
@@ -312,7 +303,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
 
-          {/* Page Content Container */}
           <div className="p-8">
             {children}
           </div>
