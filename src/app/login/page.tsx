@@ -45,8 +45,9 @@ export default function LoginPage() {
     const userRef = doc(db, 'users', user.uid)
     const snap = await getDoc(userRef)
     
-    // Robust initialization: Set balance to 50,000 if it's a new user or the field is missing
-    if (!snap.exists() || snap.data().balance === undefined) {
+    // Robust initialization: Set balance to 50,000 if it's a new user or the field is missing/incorrect
+    const data = snap.data()
+    if (!snap.exists() || data?.balance === undefined || (typeof data.balance === 'number' && data.balance < 0)) {
       const existingData = snap.exists() ? snap.data() : {}
       await setDoc(userRef, {
         id: user.uid,
