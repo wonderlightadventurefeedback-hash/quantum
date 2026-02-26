@@ -15,16 +15,6 @@ const FINNHUB_API_KEY = process.env.NEXT_PUBLIC_FINNHUB_API_KEY || 'd6g3c49r01qq
 
 // --- Tools for Real-Time Finance Data ---
 
-async function getStockQuote(symbol: string) {
-  try {
-    const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol.toUpperCase()}&token=${FINNHUB_API_KEY}`);
-    if (!res.ok) return { error: "Failed to fetch quote" };
-    return res.json();
-  } catch (e) {
-    return { error: "Service unavailable" };
-  }
-}
-
 async function getMarketNews() {
   try {
     const res = await fetch(`https://finnhub.io/api/v1/news?category=general&token=${FINNHUB_API_KEY}`);
@@ -93,8 +83,10 @@ KEY GUIDELINES:
         },
         body: JSON.stringify({
           messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: input.userQuery }
+            { 
+              role: 'user', 
+              content: `${systemPrompt}\n\nUSER QUESTION: ${input.userQuery}` 
+            }
           ],
           web_access: false
         })
