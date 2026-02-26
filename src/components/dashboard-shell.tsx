@@ -78,11 +78,11 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     const handleScroll = () => {
       const currentScrollY = container.scrollTop
       
-      // Hide if scrolling down and past a threshold
+      // Minimum scroll threshold to trigger hiding (100px)
       if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
         setIsHeaderVisible(false)
       } 
-      // Show if scrolling up
+      // Show immediately when scrolling up
       else if (currentScrollY < lastScrollY.current) {
         setIsHeaderVisible(true)
       }
@@ -249,13 +249,13 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           ref={scrollContainerRef} 
           className="flex-1 overflow-y-auto custom-scrollbar bg-background text-foreground"
         >
-          {/* Sticky Header Wrapper */}
+          {/* Sticky Header Wrapper - Handles the transform animation */}
           <div className={cn(
-            "sticky top-0 z-40 transition-transform duration-300 ease-in-out",
-            isHeaderVisible ? "translate-y-0" : "-translate-y-full"
+            "sticky top-0 z-40 transition-all duration-500 ease-in-out transform",
+            isHeaderVisible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0 pointer-events-none"
           )}>
             {/* Header */}
-            <header className="h-20 border-b border-border bg-background/80 backdrop-blur-md flex items-center justify-between px-8">
+            <header className="h-20 border-b border-border bg-background/95 backdrop-blur-md flex items-center justify-between px-8">
               <div className="flex items-center gap-6">
                 <Button variant="ghost" size="icon" suppressHydrationWarning onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
                   <Menu className="size-5" />
