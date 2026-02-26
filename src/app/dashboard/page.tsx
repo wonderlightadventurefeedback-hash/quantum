@@ -35,6 +35,7 @@ export default function DashboardOverview() {
   const db = useFirestore()
   const [liveStocks, setLiveStocks] = React.useState<Stock[]>(MOCK_STOCKS)
   const [isLoading, setIsLoading] = React.useState(true)
+  const [isMounted, setIsMounted] = React.useState(false)
 
   const userProfileRef = useMemoFirebase(() => {
     if (!db || !user) return null
@@ -42,7 +43,7 @@ export default function DashboardOverview() {
   }, [db, user])
 
   const { data: userProfile } = useDoc(userProfileRef)
-  const balance = userProfile?.balance ?? 50000
+  const balance = typeof userProfile?.balance === 'number' ? userProfile.balance : 50000
 
   const fetchLivePrices = async () => {
     try {
@@ -61,25 +62,22 @@ export default function DashboardOverview() {
                 }
               }
             }
-          } catch (e) {
-            // Silently fail individual stock fetch
-          }
+          } catch (e) {}
           return stock;
         })
       )
       setLiveStocks(updatedStocks)
-    } catch (error) {
-      // General error catch
-    } finally {
+    } catch (error) {} finally {
       setIsLoading(false)
     }
   }
 
   React.useEffect(() => {
+    setIsMounted(true)
     fetchLivePrices()
     const apiInterval = setInterval(() => fetchLivePrices(), 30000)
     
-    // Smooth ticker simulation for "Real-Time" feel
+    // Smooth ticker simulation for "Real-Time" feel anchored to live data
     const tickerInterval = setInterval(() => {
       setLiveStocks(prev => prev.map(s => {
         const drift = (Math.random() - 0.5) * (s.price * 0.0004)
@@ -108,6 +106,8 @@ export default function DashboardOverview() {
   const handleIndexClick = (name: string) => {
     router.push(`/trade?q=${encodeURIComponent(name.split(' ')[0])}`)
   }
+
+  if (!isMounted) return null
 
   return (
     <DashboardShell>
@@ -180,7 +180,7 @@ export default function DashboardOverview() {
             <div className="flex items-center gap-3">
               <h2 className="text-xl font-headline font-bold">Stocks in Focus</h2>
               <Badge className="bg-primary/10 text-primary border-none text-[10px] font-black uppercase tracking-widest px-2 py-0.5">
-                <Zap className="size-3 mr-1 fill-primary inline" /> Live Terminal
+                <Zap className="size-3 mr-1 fill-primary inline" /> Live Pulse
               </Badge>
             </div>
             <div className="flex items-center gap-4">

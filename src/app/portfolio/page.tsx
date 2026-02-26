@@ -37,7 +37,7 @@ export default function PortfolioPage() {
   }, [db, user])
 
   const { data: userProfile } = useDoc(userProfileRef)
-  const balance = userProfile?.balance ?? 50000
+  const balance = typeof userProfile?.balance === 'number' ? userProfile.balance : 50000
 
   const holdingsQuery = useMemoFirebase(() => {
     if (!db || !user) return null
@@ -46,7 +46,6 @@ export default function PortfolioPage() {
 
   const { data: holdings, isLoading: holdingsLoading } = useCollection(holdingsQuery)
 
-  // Real-time Activity for Portfolio
   const activityQuery = useMemoFirebase(() => {
     if (!db || !user) return null
     return query(collection(db, 'users', user.uid, 'activity'), orderBy('timestamp', 'desc'), limit(5))
@@ -80,7 +79,6 @@ export default function PortfolioPage() {
       )
       setLivePrices(prices)
     } catch (error) {
-      console.error("Failed to fetch prices:", error)
     } finally {
       setIsFetching(false)
     }
@@ -285,7 +283,6 @@ export default function PortfolioPage() {
           </Card>
         </div>
 
-        {/* Portfolio Unified Activity Feed */}
         <Card className="glass-card border-none shadow-xl rounded-[2.5rem] overflow-hidden">
           <CardHeader className="bg-muted/10 px-8 py-6 border-b border-border/50 flex flex-row items-center justify-between">
             <CardTitle className="text-xl font-headline font-bold flex items-center gap-2">

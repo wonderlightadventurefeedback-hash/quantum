@@ -141,7 +141,7 @@ export default function StockDetailsPage() {
   }, [db, user])
 
   const { data: userProfile } = useDoc(userProfileRef)
-  const balance = typeof userProfile?.balance === 'number' && userProfile.balance >= 0 ? userProfile.balance : 50000
+  const balance = typeof userProfile?.balance === 'number' ? userProfile.balance : 50000
 
   // Live Prediction Mode State
   const [isLiveMode, setIsLiveMode] = React.useState(false)
@@ -160,24 +160,29 @@ export default function StockDetailsPage() {
     setSimulatedData(generateMarketData(40, stock.price, "1D"));
   }, [])
 
-  // High-frequency price simulation
+  // High-frequency price simulation anchored to official stock price
   React.useEffect(() => {
     if (!isMounted) return
     const interval = setInterval(() => {
       setSimulatedData(prev => {
         if (prev.length === 0) return generateMarketData(40, stock.price, "1D");
         const last = prev[prev.length - 1]
-        const drift = (Math.random() - 0.48) * (stock.price * 0.002)
-        const nextPrice = +(last.price + drift).toFixed(2)
+        
+        // Re-anchor drift towards the official stock price to prevent wild divergence
+        const distance = stock.price - last.price
+        const anchorPull = distance * 0.1
+        const randomDrift = (Math.random() - 0.5) * (stock.price * 0.001)
+        
+        const nextPrice = +(last.price + anchorPull + randomDrift).toFixed(2)
         
         const nextPoint: OHLCData = {
-          time: last.time, // simplified
+          time: last.time, 
           open: last.price,
           close: nextPrice,
-          high: Math.max(last.price, nextPrice) + Math.random() * 0.5,
-          low: Math.min(last.price, nextPrice) - Math.random() * 0.5,
+          high: Math.max(last.price, nextPrice) + Math.random() * 0.2,
+          low: Math.min(last.price, nextPrice) - Math.random() * 0.2,
           body: [Math.min(last.price, nextPrice), Math.max(last.price, nextPrice)],
-          wick: [Math.min(last.price, nextPrice) - 0.5, Math.max(last.price, nextPrice) + 0.5],
+          wick: [Math.min(last.price, nextPrice) - 0.2, Math.max(last.price, nextPrice) + 0.2],
           price: nextPrice
         }
         
@@ -210,7 +215,7 @@ export default function StockDetailsPage() {
 
   React.useEffect(() => {
     fetchLiveQuote()
-    const interval = setInterval(fetchLiveQuote, 30000)
+    const interval = setInterval(fetchLiveQuote, 20000)
     return () => clearInterval(interval)
   }, [fetchLiveQuote])
 
@@ -222,7 +227,6 @@ export default function StockDetailsPage() {
       return
     }
     
-    // Use the HIGH-FREQUENCY simulated price for "REAL-TIME" execution filling
     const executionPrice = currentSimulatedPrice
     const totalValue = orderQty * executionPrice
     const currentBalance = balance
@@ -230,7 +234,7 @@ export default function StockDetailsPage() {
     if (type === "BUY" && totalValue > currentBalance) {
       toast({ 
         title: "Insufficient Demo Funds", 
-        description: `This virtual purchase costs ₹${totalValue.toLocaleString()}. Your demo balance is ₹${currentBalance.toLocaleString()}.`, 
+        description: `Virtual purchase costs ₹${totalValue.toLocaleString()}. Your demo balance is ₹${currentBalance.toLocaleString()}.`, 
         variant: "destructive" 
       })
       return
@@ -257,7 +261,6 @@ export default function StockDetailsPage() {
           updatedAt: serverTimestamp()
         }, { merge: true })
 
-        // Log Activity
         addDocumentNonBlocking(activityRef, {
           type: "ORDER_BUY",
           symbol,
@@ -269,12 +272,12 @@ export default function StockDetailsPage() {
           status: "COMPLETED"
         })
         
-        toast({ title: "Virtual Buy Success", description: `Added ${orderQty} shares of ${symbol} to your demo portfolio @ ₹${executionPrice}.` })
+        toast({ title: "Virtual Buy Success", description: `Added ${orderQty} shares of ${symbol} @ ₹${executionPrice}.` })
       } else {
         const snap = await getDoc(holdingRef);
         const currentQty = snap.exists() ? snap.data().quantity : 0
         if (!snap.exists() || currentQty < orderQty) {
-          throw new Error(`You don't own enough shares to sell this quantity. Available: ${currentQty}`);
+          throw new Error(`Insufficient shares. Available: ${currentQty}`);
         }
         
         setDocumentNonBlocking(holdingRef, { 
@@ -288,7 +291,6 @@ export default function StockDetailsPage() {
           updatedAt: serverTimestamp()
         }, { merge: true })
 
-        // Log Activity
         addDocumentNonBlocking(activityRef, {
           type: "ORDER_SELL",
           symbol,
@@ -359,7 +361,6 @@ export default function StockDetailsPage() {
         toast({ variant: "destructive", title: "TRADE EXPIRED", description: "Market moved against your prediction." })
       }
 
-      // Log Live Prediction Activity
       if (db && user) {
         const activityRef = collection(db, 'users', user.uid, 'activity');
         addDocumentNonBlocking(activityRef, {
@@ -556,7 +557,7 @@ export default function StockDetailsPage() {
                             <div className="space-y-4">
                               <div className="flex justify-between items-center px-1">
                                 <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Stake Amount</span>
-                                <span className="text-[10px] font-black text-primary">Potential Return: 80%</span>
+                                <span className="text-[10px] font-black text-primary">Return: 80%</span>
                               </div>
                               <div className="relative">
                                 <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-primary text-xl">₹</span>
@@ -633,7 +634,7 @@ export default function StockDetailsPage() {
                 </div>
                 <div className="mt-4 p-6 rounded-2xl bg-primary/10 border border-primary/20 shadow-sm">
                   <div className="text-[10px] font-black uppercase text-primary tracking-[0.2em] mb-1.5 flex items-center gap-2">
-                    <Wallet className="size-3" /> Demo Funds Available
+                    <Wallet className="size-3" /> Available Demo Balance
                   </div>
                   <div className="text-2xl font-black text-primary tracking-tight">₹{balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                 </div>
