@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -189,18 +190,18 @@ export default function LandingPage() {
       </div>
 
       {/* Hero Section */}
-      <section className="pt-20 pb-48 lg:pt-32 lg:pb-64 bg-transparent overflow-hidden relative z-10">
+      <section className="pt-16 pb-32 lg:pt-24 lg:pb-48 bg-transparent overflow-hidden relative z-10">
         <div className="container mx-auto px-4 text-center max-w-4xl">
-          <div className="inline-block px-4 py-1.5 mb-8 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-widest animate-in fade-in slide-in-from-top-4 duration-500">
+          <div className="inline-block px-4 py-1.5 mb-8 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-widest animate-in fade-in slide-in-from-top-12 duration-1000">
             Intelligent Investing for Everyone
           </div>
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-headline font-bold text-foreground mb-8 leading-[1.1] animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-headline font-bold text-foreground mb-8 leading-[1.1] animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-200">
             Grow your wealth
           </h1>
-          <p className="text-lg md:text-xl text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed animate-in fade-in slide-in-from-bottom-4 duration-1000">
+          <p className="text-lg md:text-xl text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-500">
             Trusted by millions of smart investors. The simplest, most transparent way to invest in stocks, mutual funds, and global indices.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-in fade-in zoom-in-95 duration-1000 delay-700">
             <Link href="/login">
               <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg px-12 h-16 rounded-2xl shadow-xl shadow-primary/20 transition-all hover:scale-105 active:scale-95">
                 Get started
@@ -217,7 +218,7 @@ export default function LandingPage() {
       <section id="about" className="py-32 bg-muted/20 relative z-10 border-y border-border/50">
         <div className="container mx-auto px-4 max-w-6xl">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
-            <div className="space-y-8 text-left">
+            <div className="space-y-8 text-left animate-in fade-in slide-in-from-left-12 duration-1000">
               <div className="space-y-4">
                 <h2 className="text-4xl md:text-5xl font-headline font-bold text-foreground leading-tight">
                   Invest everywhere, <span className="text-primary italic">anytime.</span>
@@ -239,7 +240,7 @@ export default function LandingPage() {
                 </div>
               </div>
             </div>
-            <div className="relative lg:ml-auto">
+            <div className="relative lg:ml-auto animate-in fade-in slide-in-from-right-12 duration-1000 delay-300">
               <div className="absolute inset-0 bg-primary/20 blur-[100px] rounded-full opacity-50" />
               <div className="relative rounded-[2.5rem] overflow-hidden border border-border shadow-2xl transition-transform hover:scale-[1.02] duration-700">
                 <img 
@@ -257,7 +258,7 @@ export default function LandingPage() {
       {/* Contact Section */}
       <section id="contact" className="py-32 bg-background relative z-10">
         <div className="container mx-auto px-4 max-w-6xl">
-          <div className="rounded-[3rem] border border-border shadow-2xl overflow-hidden bg-card/40 backdrop-blur-xl">
+          <div className="rounded-[3rem] border border-border shadow-2xl overflow-hidden bg-card/40 backdrop-blur-xl animate-in fade-in slide-in-from-bottom-12 duration-1000">
             <div className="grid grid-cols-1 md:grid-cols-2">
               <div className="bg-primary p-12 lg:p-16 text-primary-foreground flex flex-col justify-between">
                 <div className="space-y-6">

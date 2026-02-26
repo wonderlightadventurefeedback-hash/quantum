@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -38,12 +39,12 @@ export default function DashboardOverview() {
 
   return (
     <DashboardShell>
-      <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-1000">
         
         {/* Market Indices Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-in fade-in slide-in-from-top-4 duration-1000 delay-200">
           {MOCK_INDICES.map((index) => (
-            <Card key={index.name} className="glass-card hover:bg-muted/10 cursor-pointer border-none shadow-sm">
+            <Card key={index.name} className="glass-card hover:bg-muted/10 cursor-pointer border-none shadow-sm transition-all hover:scale-[1.02]">
               <CardContent className="p-4 flex flex-col justify-between h-full">
                 <div className="flex justify-between items-start">
                   <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{index.name}</span>
@@ -69,7 +70,7 @@ export default function DashboardOverview() {
         </div>
 
         {/* Investment Categories */}
-        <div className="space-y-4">
+        <div className="space-y-4 animate-in fade-in slide-in-from-left-4 duration-1000 delay-400">
           <h2 className="text-xl font-headline font-bold flex items-center gap-2">
             Invest in <ChevronRight className="size-5 text-primary" />
           </h2>
@@ -95,7 +96,7 @@ export default function DashboardOverview() {
         </div>
 
         {/* Stocks in Focus Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-600">
           
           {/* Top Gainers / Losers */}
           <div className="lg:col-span-2 space-y-6">
@@ -150,7 +151,7 @@ export default function DashboardOverview() {
 
           {/* User Portfolio Summary & News */}
           <div className="space-y-8">
-            <Card className="glass-card bg-primary/5 border-primary/20 p-6 space-y-4">
+            <Card className="glass-card bg-primary/5 border-primary/20 p-6 space-y-4 hover:shadow-primary/10 transition-shadow">
               <h2 className="font-headline font-bold text-lg">Your Portfolio</h2>
               <div>
                 <div className="text-3xl font-bold">${MOCK_USER.balance.toLocaleString()}</div>
@@ -187,8 +188,8 @@ export default function DashboardOverview() {
         </div>
 
         {/* Global Market Explorer Call to Action */}
-        <Card className="glass-card bg-gradient-to-r from-primary/10 via-background to-background border-primary/20 overflow-hidden relative">
-          <div className="absolute right-[-5%] top-[-20%] opacity-10">
+        <Card className="glass-card bg-gradient-to-r from-primary/10 via-background to-background border-primary/20 overflow-hidden relative group">
+          <div className="absolute right-[-5%] top-[-20%] opacity-10 transition-transform group-hover:scale-110 duration-700">
             <Globe size={300} className="text-primary" />
           </div>
           <CardContent className="p-10 relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
@@ -196,7 +197,7 @@ export default function DashboardOverview() {
               <h2 className="text-2xl font-headline font-bold">Explore Global Opportunities</h2>
               <p className="text-muted-foreground max-w-md">Access 50+ global markets and invest in world-leading companies with zero commission for the first 30 days.</p>
             </div>
-            <Button size="lg" className="rounded-full px-8 gap-2 font-bold shadow-xl shadow-primary/20" onClick={() => navigateToExplore('US Stocks')}>
+            <Button size="lg" className="rounded-full px-8 gap-2 font-bold shadow-xl shadow-primary/20 transition-all hover:scale-105" onClick={() => navigateToExplore('US Stocks')}>
               Open Global Account <ArrowRight className="size-4" />
             </Button>
           </CardContent>
