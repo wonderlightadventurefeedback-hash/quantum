@@ -21,7 +21,10 @@ import {
   Zap,
   Layout,
   Loader2,
-  BookmarkCheck
+  BookmarkCheck,
+  TrendingUp,
+  BarChart2,
+  LineChart as LineChartIcon
 } from "lucide-react"
 import { 
   AreaChart, 
@@ -30,7 +33,10 @@ import {
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  ResponsiveContainer 
+  ResponsiveContainer,
+  Bar,
+  ComposedChart,
+  Cell
 } from "recharts"
 import { MOCK_STOCKS, MOCK_USER } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
@@ -68,10 +74,22 @@ const RangeBar = ({ low, high, current, labelLow, labelHigh }: { low: number, hi
 }
 
 const generateChartData = (basePrice: number) => {
-  return Array.from({ length: 100 }, (_, i) => ({
-    time: i,
-    price: basePrice + (Math.random() - 0.5) * (basePrice * 0.05),
-  }))
+  return Array.from({ length: 40 }, (_, i) => {
+    const open = basePrice + (Math.random() - 0.5) * (basePrice * 0.04);
+    const close = basePrice + (Math.random() - 0.5) * (basePrice * 0.04);
+    const high = Math.max(open, close) + Math.random() * (basePrice * 0.01);
+    const low = Math.min(open, close) - Math.random() * (basePrice * 0.01);
+    return {
+      time: i,
+      open,
+      high,
+      low,
+      close,
+      price: close,
+      isUp: close >= open,
+      candle: [low, open, close, high] // For candle visualization if needed
+    };
+  })
 }
 
 export default function StockDetailPage() {
@@ -89,6 +107,7 @@ export default function StockDetailPage() {
   const [orderType, setOrderType] = React.useState("Delivery")
   const [qty, setQty] = React.useState("1")
   const [price, setPrice] = React.useState(initialStock.price.toString())
+  const [chartType, setChartType] = React.useState<'area' | 'candle'>('area')
   
   const chartData = React.useMemo(() => generateChartData(stock.price), [stock.price])
   const priceChange = (stock.price * (stock.change / 100)).toFixed(2)
@@ -251,34 +270,76 @@ export default function StockDetailPage() {
               </div>
 
               <div className="h-[450px] w-full glass-card p-4 rounded-[2.5rem] relative group/chart overflow-hidden shadow-2xl border-primary/10">
-                <div className="absolute top-6 left-6 z-10 opacity-0 group-hover/chart:opacity-100 transition-opacity">
-                  <Badge variant="outline" className="bg-background/80 backdrop-blur-md font-bold">Real-time Trading Feed</Badge>
+                <div className="absolute top-6 left-6 z-10 flex items-center gap-2">
+                  <Badge variant="outline" className="bg-background/80 backdrop-blur-md font-bold">Real-time Feed</Badge>
+                  <div className="flex p-0.5 bg-muted/50 rounded-lg border border-border/50">
+                    <button 
+                      onClick={() => setChartType('area')}
+                      className={cn(
+                        "p-1.5 rounded-md transition-all",
+                        chartType === 'area' ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
+                      )}
+                    >
+                      <LineChartIcon className="size-4" />
+                    </button>
+                    <button 
+                      onClick={() => setChartType('candle')}
+                      className={cn(
+                        "p-1.5 rounded-md transition-all",
+                        chartType === 'candle' ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
+                      )}
+                    >
+                      <BarChart2 className="size-4" />
+                    </button>
+                  </div>
                 </div>
+                
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData}>
-                    <defs>
-                      <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.1} />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: '16px', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                      itemStyle={{ color: 'hsl(var(--primary))' }}
-                      labelStyle={{ fontWeight: 'bold', color: 'hsl(var(--muted-foreground))' }}
-                      formatter={(value: any) => [`₹${parseFloat(value).toFixed(2)}`, "Price"]}
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="price" 
-                      stroke="hsl(var(--primary))" 
-                      strokeWidth={4}
-                      fillOpacity={1} 
-                      fill="url(#colorPrice)" 
-                      animationDuration={2000}
-                    />
-                  </AreaChart>
+                  {chartType === 'area' ? (
+                    <AreaChart data={chartData}>
+                      <defs>
+                        <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.1} />
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: '16px', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                        itemStyle={{ color: 'hsl(var(--primary))' }}
+                        labelStyle={{ fontWeight: 'bold', color: 'hsl(var(--muted-foreground))' }}
+                        formatter={(value: any) => [`₹${parseFloat(value).toFixed(2)}`, "Price"]}
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="price" 
+                        stroke="hsl(var(--primary))" 
+                        strokeWidth={4}
+                        fillOpacity={1} 
+                        fill="url(#colorPrice)" 
+                        animationDuration={1500}
+                      />
+                    </AreaChart>
+                  ) : (
+                    <ComposedChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.1} />
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: '16px' }}
+                        formatter={(value: any, name: string) => [`₹${parseFloat(value).toFixed(2)}`, name]}
+                        labelStyle={{ display: 'none' }}
+                      />
+                      <Bar dataKey="high" barSize={1}>
+                        {chartData.map((entry, index) => (
+                          <Cell key={`cell-wick-${index}`} fill={entry.isUp ? 'hsl(var(--primary))' : 'hsl(var(--destructive))'} />
+                        ))}
+                      </Bar>
+                      <Bar dataKey="close" barSize={8}>
+                        {chartData.map((entry, index) => (
+                          <Cell key={`cell-body-${index}`} fill={entry.isUp ? 'hsl(var(--primary))' : 'hsl(var(--destructive))'} />
+                        ))}
+                      </Bar>
+                    </ComposedChart>
+                  )}
                 </ResponsiveContainer>
                 
                 <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 p-1.5 bg-background/80 backdrop-blur-xl rounded-[2rem] border border-border shadow-2xl">
