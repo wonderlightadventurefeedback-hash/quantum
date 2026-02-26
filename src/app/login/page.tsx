@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { useAuth, useUser } from "@/firebase"
 import { signInWithPopup, GoogleAuthProvider } from "firebase/auth"
-import { LogIn, Sparkles, Loader2 } from "lucide-react"
+import { Sparkles, Loader2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 export default function LoginPage() {
@@ -19,7 +19,7 @@ export default function LoginPage() {
 
   React.useEffect(() => {
     if (user && !loading) {
-      router.push('/')
+      router.push('/dashboard')
     }
   }, [user, loading, router])
 
@@ -33,7 +33,7 @@ export default function LoginPage() {
         title: "Welcome to FinIntel AI",
         description: "Successfully signed in with Google.",
       })
-      router.push('/')
+      router.push('/dashboard')
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -47,34 +47,39 @@ export default function LoginPage() {
 
   if (loading || user) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center bg-background">
-        <Loader2 className="animate-spin size-8 text-primary" />
+      <div className="h-screen w-screen flex items-center justify-center bg-[#0d1117]">
+        <Loader2 className="animate-spin size-8 text-[#00d09c]" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/20 via-background to-background p-4">
-      <div className="absolute top-8 left-8 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
+    <div className="min-h-screen w-full flex items-center justify-center bg-[#0d1117] relative overflow-hidden">
+      {/* Background Gradient Effect */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#0d1117] via-[#0f1715] to-[#0d1117]" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#00d09c]/5 rounded-full blur-[120px]" />
+
+      {/* Top Left Branding */}
+      <div className="absolute top-8 left-8 flex items-center gap-3 z-10">
+        <div className="w-10 h-10 rounded-xl bg-[#00d09c] flex items-center justify-center">
           <span className="font-headline font-bold text-white text-xl">FI</span>
         </div>
-        <span className="font-headline font-bold text-2xl tracking-tight text-primary">
+        <span className="font-headline font-bold text-2xl tracking-tight text-[#00d09c]">
           FinIntel AI
         </span>
       </div>
 
-      <Card className="w-full max-w-md glass-card border-primary/20 bg-card/40 backdrop-blur-xl">
-        <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-3xl font-headline font-bold">Welcome Back</CardTitle>
-          <CardDescription className="text-muted-foreground">
+      <Card className="w-full max-w-md bg-[#161b22]/40 backdrop-blur-xl border-[#30363d] shadow-2xl z-10 py-8">
+        <CardHeader className="space-y-4 text-center">
+          <CardTitle className="text-4xl font-headline font-bold text-white">Welcome Back</CardTitle>
+          <CardDescription className="text-gray-400 text-base max-w-[280px] mx-auto leading-relaxed">
             Sign in to access your AI-powered portfolio and market intel.
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4 pt-4">
+        <CardContent className="grid gap-6 pt-4">
           <Button 
             variant="outline" 
-            className="h-14 gap-3 text-lg font-medium border-primary/20 hover:bg-primary/5 hover:border-primary/40 transition-all" 
+            className="h-14 gap-3 text-lg font-medium border-[#30363d] bg-transparent text-white hover:bg-[#ffffff05] hover:border-[#484f58] transition-all rounded-xl" 
             onClick={handleGoogleSignIn}
             disabled={isLoggingIn}
           >
@@ -103,9 +108,9 @@ export default function LoginPage() {
             Sign in with Google
           </Button>
         </CardContent>
-        <CardFooter className="flex flex-col gap-4 pb-8">
-          <div className="text-xs text-center text-muted-foreground flex items-center justify-center gap-2">
-            <Sparkles className="size-3 text-primary" />
+        <CardFooter className="flex justify-center pb-0">
+          <div className="text-xs text-gray-500 flex items-center gap-2">
+            <Sparkles className="size-3 text-[#00d09c]" />
             Join 10,000+ smart investors today.
           </div>
         </CardFooter>
