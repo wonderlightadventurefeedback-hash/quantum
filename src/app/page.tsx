@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -106,7 +105,7 @@ export default function LandingPage() {
           from_email: formData.email,
           subject: formData.subject,
           message: formData.message,
-          to_name: 'FinIntel Support'
+          to_name: 'QuantumF Support'
         },
         EMAILJS_PUBLIC_KEY
       )
@@ -163,10 +162,10 @@ export default function LandingPage() {
           <div className="flex items-center gap-12">
             <Link href="/" className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <span className="font-headline font-bold text-white text-lg">FI</span>
+                <span className="font-headline font-bold text-white text-lg">QF</span>
               </div>
               <span className="font-headline font-bold text-2xl tracking-tight text-foreground">
-                FinIntel
+                QuantumF
               </span>
             </Link>
             
@@ -255,7 +254,7 @@ export default function LandingPage() {
                   Invest everywhere, <span className="text-primary italic">anytime.</span>
                 </h2>
                 <p className="text-lg text-muted-foreground leading-relaxed">
-                  Stay on top of the markets with our real-time tracking, AI-powered predictions, and personalized news sentiment analysis. Whether you are at home or on the go, FinIntel keeps you ahead of the curve.
+                  Stay on top of the markets with our real-time tracking, AI-powered predictions, and personalized news sentiment analysis. Whether you are at home or on the go, QuantumF keeps you ahead of the curve.
                 </p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4">
@@ -276,7 +275,7 @@ export default function LandingPage() {
               <div className="relative rounded-[2.5rem] overflow-hidden border border-border shadow-2xl transition-transform hover:scale-[1.02] duration-700">
                 <img 
                   src="https://picsum.photos/seed/dashboard-view/800/800" 
-                  alt="FinIntel Dashboard Interface" 
+                  alt="QuantumF Dashboard Interface" 
                   className="w-full h-auto object-cover"
                   data-ai-hint="dashboard design"
                 />
@@ -318,7 +317,7 @@ export default function LandingPage() {
                     <div className="size-10 rounded-full bg-white/10 flex items-center justify-center transition-colors group-hover:bg-white/20">
                       <Mail size={18} />
                     </div>
-                    <span className="text-sm font-medium">support@finintel.ai</span>
+                    <span className="text-sm font-medium">support@quantumf.ai</span>
                   </div>
                   <div className="flex items-center gap-4 group cursor-pointer">
                     <div className="size-10 rounded-full bg-white/10 flex items-center justify-center transition-colors group-hover:bg-white/20">
@@ -398,9 +397,9 @@ export default function LandingPage() {
             <div className="flex flex-col items-center md:items-start gap-4 animate-in fade-in slide-in-from-left-4 duration-1000">
               <Link href="/" className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-                  <span className="font-headline font-bold text-white text-[11px]">FI</span>
+                  <span className="font-headline font-bold text-white text-[11px]">QF</span>
                 </div>
-                <span className="font-headline font-bold text-2xl text-foreground">FinIntel</span>
+                <span className="font-headline font-bold text-2xl text-foreground">QuantumF</span>
               </Link>
               <p className="text-sm text-muted-foreground text-center md:text-left max-w-xs">
                 Built with precision for the next generation of professional traders and long-term investors.
@@ -414,7 +413,7 @@ export default function LandingPage() {
             </div>
             <div className="text-center md:text-right space-y-2 animate-in fade-in slide-in-from-right-4 duration-1000 delay-400">
               <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest">
-                © 2024 FinIntel AI Platform
+                © 2024 QuantumF Platform
               </p>
               <div className="flex justify-center md:justify-end gap-4 text-primary">
                 <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors cursor-pointer">

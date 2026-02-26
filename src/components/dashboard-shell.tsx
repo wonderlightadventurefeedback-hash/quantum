@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -202,7 +201,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     return (
       <div className="h-screen w-screen flex flex-col items-center justify-center bg-background gap-4">
         <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center animate-pulse">
-          <span className="font-headline font-bold text-white text-xl">FI</span>
+          <span className="font-headline font-bold text-white text-xl">QF</span>
         </div>
         <Loader2 className="animate-spin size-6 text-primary/60" />
       </div>
@@ -345,7 +344,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
             <div className="bg-primary/5 border-b border-border h-10 flex items-center overflow-hidden shrink-0">
               <div className="flex items-center gap-2 px-4 bg-background border-r border-border h-full z-10 font-bold text-[10px] text-primary uppercase tracking-widest shrink-0">
-                <Zap className="size-3 fill-primary animate-pulse" /> Market Pulse
+                <span className="size-3 flex items-center justify-center bg-primary rounded-full"><Zap className="size-2 text-white fill-white animate-pulse" /></span> Market Pulse
               </div>
               <div className="flex animate-marquee hover:[animation-play-state:paused] whitespace-nowrap">
                 {[...MOCK_NEWS, ...MOCK_NEWS].map((news, i) => (

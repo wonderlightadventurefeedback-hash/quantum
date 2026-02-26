@@ -53,7 +53,7 @@ export default function AdvisorPage() {
       setMessages(history.map(m => ({ role: m.role, content: m.content, timestamp: m.timestamp })))
     } else if (history && history.length === 0 && !isHistoryLoading) {
       setMessages([
-        { role: 'assistant', content: "Hello! I'm **FinIntel AI**. In this website the ai advisor will direactlu connected to the Open ai through chartgpt which is give the all answer of stock market and finance. How can I help you today?" }
+        { role: 'assistant', content: "Hello! I'm **QuantumF AI**. In this website the ai advisor is direactly connected to the OpenAI through ChatGPT to give expert answers on the stock market and finance. How can I help you today?" }
       ])
     }
   }, [history, isHistoryLoading])
@@ -91,7 +91,7 @@ export default function AdvisorPage() {
     } catch (error) {
       addDocumentNonBlocking(userMsgRef, {
         role: 'assistant',
-        content: "I encountered an error while communicating with my premium intelligence layer. Please check your configuration or try again shortly.",
+        content: "I'm having difficulty connecting to my ChatGPT intelligence layer right now. Please ensure your configuration is active or try again in a few moments.",
         timestamp: serverTimestamp()
       })
     } finally {
@@ -119,12 +119,12 @@ export default function AdvisorPage() {
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-headline font-bold">FinIntel Advisor</h1>
+              <h1 className="text-3xl font-headline font-bold">QuantumF Advisor</h1>
               <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-black text-primary uppercase tracking-widest">
                 <Zap className="size-3 fill-primary animate-pulse" /> ChatGPT Active
               </span>
             </div>
-            <p className="text-muted-foreground text-sm">In this website the ai advisor will direactlu connected to the Open ai through chartgpt which is give the all answer of stock market and finance.</p>
+            <p className="text-muted-foreground text-sm">In this website the ai advisor is direactly connected to the OpenAI through ChatGPT to provide expert answers for all stock market and financial questions.</p>
           </div>
           <div className="hidden md:flex items-center gap-2">
             <span className="size-2 bg-green-500 rounded-full animate-pulse"></span>
@@ -230,7 +230,7 @@ export default function AdvisorPage() {
               </p>
               <div className="h-3 w-px bg-border" />
               <p className="text-[10px] text-muted-foreground italic">
-                In this website the ai advisor will direactlu connected to the Open ai through chartgpt which is give the all answer of stock market and finance when the user will ask some question.
+                In this website the ai advisor is direactly connected to the OpenAI through ChatGPT to provide expert answers for all stock market and financial questions.
               </p>
             </div>
           </div>

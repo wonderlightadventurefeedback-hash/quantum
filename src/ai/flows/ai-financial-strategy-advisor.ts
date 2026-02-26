@@ -61,7 +61,7 @@ const aiFinancialStrategyAdvisorFlow = ai.defineFlow(
       const news = await getMarketNews();
       const newsSummary = Array.isArray(news) ? news.map((n: any) => n.headline).join(' | ') : "N/A";
 
-      const systemPrompt = `You are FinIntel AI, a high-performance Financial Strategy Advisor directly connected to ChatGPT intelligence. 
+      const systemPrompt = `You are QuantumF, a high-performance Financial Strategy Advisor directly connected to OpenAI intelligence. 
 Your core mission is to provide data-driven, professional, and actionable financial advice covering stock markets and personal finance.
 
 CURRENT MARKET CONTEXT:

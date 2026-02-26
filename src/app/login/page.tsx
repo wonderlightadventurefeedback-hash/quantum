@@ -67,7 +67,7 @@ export default function LoginPage() {
       const result = await signInWithPopup(auth, provider)
       await initializeDemoUser(result.user, result.user.displayName || '')
       toast({
-        title: "Welcome to FinIntel AI",
+        title: "Welcome to QuantumF",
         description: "Successfully signed in. ₹50,000 demo capital ready.",
       })
     } catch (error: any) {
@@ -137,10 +137,10 @@ export default function LoginPage() {
       <div className="w-full max-w-6xl fixed top-8 left-1/2 -translate-x-1/2 flex items-center justify-between px-6 z-20">
         <Link href="/" className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
-            <span className="font-headline font-bold text-white text-xl">FI</span>
+            <span className="font-headline font-bold text-white text-xl">QF</span>
           </div>
           <span className="font-headline font-bold text-2xl tracking-tight text-foreground hidden sm:block">
-            FinIntel AI <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full ml-2">DEMO</span>
+            QuantumF <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full ml-2">DEMO</span>
           </span>
         </Link>
         <Button variant="outline" className="text-muted-foreground hover:text-foreground hover:bg-muted border-2 rounded-xl gap-2 h-11" asChild>
@@ -241,7 +241,7 @@ export default function LoginPage() {
             className="text-sm font-bold text-primary hover:underline transition-all"
             onClick={() => setIsSignUp(!isSignUp)}
           >
-            {isSignUp ? "Already a member? Sign in" : "New to FinIntel? Create demo account"}
+            {isSignUp ? "Already a member? Sign in" : "New to QuantumF? Create demo account"}
           </button>
         </CardFooter>
       </Card>
