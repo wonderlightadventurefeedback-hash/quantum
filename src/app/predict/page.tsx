@@ -34,8 +34,8 @@ import {
 import { aiStockPredictionExplanation } from "@/ai/flows/ai-stock-prediction-explanation-flow"
 import { MOCK_STOCKS } from "@/lib/mock-data"
 import { useToast } from "@/hooks/use-toast"
-import { useUser, useFirestore, useDoc, useMemoFirebase, updateDocumentNonBlocking } from "@/firebase"
-import { doc, increment, serverTimestamp } from "firebase/firestore"
+import { useUser, useFirestore, useDoc, useMemoFirebase, updateDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase"
+import { doc, increment, serverTimestamp, collection } from "firebase/firestore"
 import { cn } from "@/lib/utils"
 
 const generateLiveData = (basePrice: number) => {
@@ -132,9 +132,12 @@ export default function PredictionArenaPage() {
   }, [isTrading, tradeTimer])
 
   const settleTrade = async () => {
+    if (!prediction) return;
+    
     const isWin = (prediction === "UP" && currentPrice > entryPrice) || (prediction === "DOWN" && currentPrice < entryPrice)
     const amount = parseFloat(tradeAmount)
     const winAmount = amount * PAYOUT
+    const profit = isWin ? (amount * 0.8) : -amount
 
     if (isWin && db && user) {
       const userRef = doc(db, 'users', user.uid)
@@ -144,6 +147,7 @@ export default function PredictionArenaPage() {
       })
     }
 
+    let aiReview = "AI Analyst busy, but your virtual result was recorded.";
     try {
       const response = await aiStockPredictionExplanation({
         stockSymbol: selectedStock.symbol,
@@ -152,12 +156,31 @@ export default function PredictionArenaPage() {
         aiPrediction: Math.random() > 0.5 ? "UP" : "DOWN",
         actualResult: currentPrice > entryPrice ? "UP" : "DOWN"
       })
-      setTradeResult({ win: isWin, explanation: response.explanation })
+      aiReview = response.explanation;
+      setTradeResult({ win: isWin, explanation: aiReview })
     } catch (e) {
-      setTradeResult({ win: isWin, explanation: "AI Analyst busy, but your virtual result was recorded." })
-    } finally {
-      setIsTrading(false)
+      setTradeResult({ win: isWin, explanation: aiReview })
     }
+
+    // Save trade record to Firestore history
+    if (db && user) {
+      const predictionsRef = collection(db, 'users', user.uid, 'stock_predictions');
+      addDocumentNonBlocking(predictionsRef, {
+        stockId: selectedStock.symbol,
+        predictionTimestamp: serverTimestamp(),
+        userPredictedDirection: prediction,
+        actualDirection: currentPrice > entryPrice ? "UP" : "DOWN",
+        userPredictionMatched: isWin,
+        amount: amount,
+        profit: profit,
+        startPrice: entryPrice,
+        endPrice: currentPrice,
+        aiExplanation: aiReview,
+        predictionHorizon: `${TRADE_DURATION}s`
+      });
+    }
+
+    setIsTrading(false)
   }
 
   if (!isMounted) return null

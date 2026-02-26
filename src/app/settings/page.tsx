@@ -30,13 +30,16 @@ import {
   TrendingDown,
   Activity,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  Loader2,
+  Clock
 } from "lucide-react"
 import { MOCK_USER } from "@/lib/mock-data"
 import { useToast } from "@/hooks/use-toast"
-import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase"
-import { doc } from "firebase/firestore"
+import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase"
+import { doc, collection, query, orderBy, limit } from "firebase/firestore"
 import { cn } from "@/lib/utils"
+import { formatDistanceToNow } from "date-fns"
 
 export default function SettingsPage() {
   const { toast } = useToast()
@@ -52,12 +55,44 @@ export default function SettingsPage() {
   const { data: userProfile } = useDoc(userProfileRef)
   const balance = userProfile?.balance ?? 50000
 
-  const MOCK_TRADING_HISTORY = [
-    { id: 1, asset: "AAPL", type: "UP", outcome: "WIN", amount: "₹500.00", result: "+₹400.00", time: "2 mins ago" },
-    { id: 2, asset: "NVDA", type: "DOWN", outcome: "WIN", amount: "₹1,000.00", result: "+₹800.00", time: "15 mins ago" },
-    { id: 3, asset: "TSLA", type: "UP", outcome: "LOSS", amount: "₹500.00", result: "-₹500.00", time: "1 hour ago" },
-    { id: 4, asset: "RELIANCE", type: "UP", outcome: "WIN", amount: "₹200.00", result: "+₹160.00", time: "3 hours ago" },
-  ]
+  // Fetch Real Trade History
+  const predictionsQuery = useMemoFirebase(() => {
+    if (!db || !user) return null
+    return query(
+      collection(db, 'users', user.uid, 'stock_predictions'),
+      orderBy('predictionTimestamp', 'desc'),
+      limit(10)
+    )
+  }, [db, user])
+
+  const { data: tradeHistory, isLoading: historyLoading } = useCollection(predictionsQuery)
+
+  const performanceStats = React.useMemo(() => {
+    if (!tradeHistory) return { netProfit: 0, netLoss: 0, activeTrades: 0, accuracy: 0 }
+    
+    let profit = 0;
+    let loss = 0;
+    let wins = 0;
+    
+    tradeHistory.forEach(trade => {
+      const p = trade.profit || 0;
+      if (p > 0) {
+        profit += p;
+        wins++;
+      } else {
+        loss += Math.abs(p);
+      }
+    })
+
+    const accuracy = tradeHistory.length > 0 ? Math.round((wins / tradeHistory.length) * 100) : 0;
+
+    return { 
+      netProfit: profit, 
+      netLoss: loss, 
+      activeTrades: tradeHistory.length,
+      accuracy: accuracy
+    }
+  }, [tradeHistory])
 
   const handleSave = (section: string) => {
     setIsSaving(true)
@@ -120,11 +155,11 @@ export default function SettingsPage() {
               <CardContent className="pt-16 px-10 pb-10 space-y-10">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                   <div>
-                    <h2 className="text-3xl font-headline font-bold text-foreground">{userProfile?.displayName || user?.displayName || MOCK_USER.name}</h2>
+                    <h2 className="text-3xl font-headline font-bold text-foreground">{userProfile?.displayName || user?.displayName || 'Demo User'}</h2>
                     <div className="flex items-center gap-3 mt-1 text-muted-foreground font-medium">
                       <span>Pro Trader • Demo Level</span>
                       <div className="size-1 bg-muted-foreground/30 rounded-full" />
-                      <span>Joined Feb 2024</span>
+                      <span>Live Terminal Access</span>
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-4">
@@ -138,7 +173,7 @@ export default function SettingsPage() {
                       <div className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1 flex items-center justify-center gap-1.5">
                         <Zap className="size-3 text-yellow-500" /> Accuracy
                       </div>
-                      <div className="text-lg font-black font-headline">{MOCK_USER.predictionAccuracy}%</div>
+                      <div className="text-lg font-black font-headline">{performanceStats.accuracy}%</div>
                     </div>
                     <div className="bg-muted/30 px-6 py-3 rounded-2xl border border-border/50 text-center min-w-[120px]">
                       <div className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1 flex items-center justify-center gap-1.5">
@@ -151,14 +186,14 @@ export default function SettingsPage() {
 
                 {/* Performance Analytics */}
                 <div className="space-y-6 pt-4">
-                  <h3 className="text-sm font-black uppercase tracking-[0.2em] text-primary border-l-2 border-primary pl-4">Performance Analytics</h3>
+                  <h3 className="text-sm font-black uppercase tracking-[0.2em] text-primary border-l-2 border-primary pl-4">Real-Time Performance</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <Card className="bg-primary/5 border-primary/20 p-6 rounded-2xl shadow-sm">
                       <div className="flex items-center justify-between mb-4">
                         <TrendingUp className="size-5 text-primary" />
                         <Badge className="bg-primary/20 text-primary border-none text-[10px]">Net Profit</Badge>
                       </div>
-                      <div className="text-2xl font-black text-primary">₹12,450.00</div>
+                      <div className="text-2xl font-black text-primary">₹{performanceStats.netProfit.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
                       <p className="text-[10px] text-muted-foreground mt-1 uppercase font-bold tracking-wider">Total virtual gains</p>
                     </Card>
                     <Card className="bg-destructive/5 border-destructive/20 p-6 rounded-2xl shadow-sm">
@@ -166,16 +201,16 @@ export default function SettingsPage() {
                         <TrendingDown className="size-5 text-destructive" />
                         <Badge variant="destructive" className="bg-destructive/20 text-destructive border-none text-[10px]">Net Loss</Badge>
                       </div>
-                      <div className="text-2xl font-black text-destructive">₹4,200.00</div>
+                      <div className="text-2xl font-black text-destructive">₹{performanceStats.netLoss.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
                       <p className="text-[10px] text-muted-foreground mt-1 uppercase font-bold tracking-wider">Total virtual drawdown</p>
                     </Card>
                     <Card className="bg-muted/30 border-border/50 p-6 rounded-2xl shadow-sm">
                       <div className="flex items-center justify-between mb-4">
                         <Activity className="size-5 text-muted-foreground" />
-                        <Badge variant="secondary" className="text-[10px]">Active trades</Badge>
+                        <Badge variant="secondary" className="text-[10px]">History</Badge>
                       </div>
-                      <div className="text-2xl font-black">14</div>
-                      <p className="text-[10px] text-muted-foreground mt-1 uppercase font-bold tracking-wider">Trades closed this session</p>
+                      <div className="text-2xl font-black">{performanceStats.activeTrades}</div>
+                      <p className="text-[10px] text-muted-foreground mt-1 uppercase font-bold tracking-wider">Trades recorded in history</p>
                     </Card>
                   </div>
                 </div>
@@ -183,8 +218,11 @@ export default function SettingsPage() {
                 {/* Trading History */}
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-black uppercase tracking-[0.2em] text-primary border-l-2 border-primary pl-4">Recent History</h3>
-                    <Button variant="link" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground p-0 h-auto">View All Trades</Button>
+                    <h3 className="text-sm font-black uppercase tracking-[0.2em] text-primary border-l-2 border-primary pl-4">Live History</h3>
+                    <div className="flex items-center gap-2">
+                      {historyLoading && <Loader2 className="size-3 animate-spin text-primary" />}
+                      <span className="text-[10px] font-black uppercase text-muted-foreground">Showing last 10 sessions</span>
+                    </div>
                   </div>
                   <div className="rounded-2xl border border-border/50 overflow-hidden">
                     <div className="overflow-x-auto">
@@ -199,33 +237,40 @@ export default function SettingsPage() {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-border/30">
-                          {MOCK_TRADING_HISTORY.map((trade) => (
+                          {historyLoading ? (
+                            <tr><td colSpan={5} className="p-12 text-center"><Loader2 className="animate-spin mx-auto text-primary" /></td></tr>
+                          ) : !tradeHistory || tradeHistory.length === 0 ? (
+                            <tr><td colSpan={5} className="p-12 text-center text-muted-foreground italic">No arena activity found. Start a session in the Prediction Arena to see real results.</td></tr>
+                          ) : tradeHistory.map((trade) => (
                             <tr key={trade.id} className="hover:bg-muted/10 transition-colors group">
                               <td className="px-6 py-4">
                                 <div className="flex items-center gap-2">
                                   <div className="size-6 rounded bg-muted flex items-center justify-center font-black text-[10px] text-primary">
-                                    {trade.asset[0]}
+                                    {trade.stockId?.[0] || '?'}
                                   </div>
                                   <div className="flex flex-col">
-                                    <span className="font-bold">{trade.asset}</span>
-                                    <span className="text-[9px] text-muted-foreground uppercase">{trade.time}</span>
+                                    <span className="font-bold">{trade.stockId}</span>
+                                    <span className="text-[9px] text-muted-foreground uppercase flex items-center gap-1">
+                                      <Clock className="size-2" />
+                                      {trade.predictionTimestamp ? formatDistanceToNow(trade.predictionTimestamp.toDate(), { addSuffix: true }) : 'just now'}
+                                    </span>
                                   </div>
                                 </div>
                               </td>
                               <td className="px-6 py-4">
-                                <div className={cn("flex items-center gap-1.5 font-bold text-xs", trade.type === "UP" ? "text-primary" : "text-destructive")}>
-                                  {trade.type === "UP" ? <ArrowUpRight className="size-3" /> : <ArrowDownRight className="size-3" />}
-                                  {trade.type}
+                                <div className={cn("flex items-center gap-1.5 font-bold text-xs", trade.userPredictedDirection === "UP" ? "text-primary" : "text-destructive")}>
+                                  {trade.userPredictedDirection === "UP" ? <ArrowUpRight className="size-3" /> : <ArrowDownRight className="size-3" />}
+                                  {trade.userPredictedDirection}
                                 </div>
                               </td>
-                              <td className="px-6 py-4 font-medium text-muted-foreground">{trade.amount}</td>
+                              <td className="px-6 py-4 font-medium text-muted-foreground">₹{(trade.amount || 0).toLocaleString()}</td>
                               <td className="px-6 py-4">
-                                <Badge className={cn("text-[9px] font-black uppercase tracking-tighter rounded-md h-5", trade.outcome === "WIN" ? "bg-primary/20 text-primary border-none" : "bg-destructive/20 text-destructive border-none")}>
-                                  {trade.outcome}
+                                <Badge className={cn("text-[9px] font-black uppercase tracking-tighter rounded-md h-5", trade.userPredictionMatched ? "bg-primary/20 text-primary border-none" : "bg-destructive/20 text-destructive border-none")}>
+                                  {trade.userPredictionMatched ? 'WIN' : 'LOSS'}
                                 </Badge>
                               </td>
-                              <td className={cn("px-6 py-4 text-right font-black", trade.outcome === "WIN" ? "text-primary" : "text-destructive")}>
-                                {trade.result}
+                              <td className={cn("px-6 py-4 text-right font-black", trade.profit > 0 ? "text-primary" : "text-destructive")}>
+                                {trade.profit > 0 ? "+" : ""}₹{(trade.profit || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                               </td>
                             </tr>
                           ))}
@@ -241,11 +286,11 @@ export default function SettingsPage() {
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="name" className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Full Name</Label>
-                        <Input id="name" defaultValue={userProfile?.displayName || user?.displayName || MOCK_USER.name} className="h-12 bg-muted/30 border-none rounded-xl font-bold" />
+                        <Input id="name" defaultValue={userProfile?.displayName || user?.displayName || ''} className="h-12 bg-muted/30 border-none rounded-xl font-bold" />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="email" className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Email Address</Label>
-                        <Input id="email" defaultValue={userProfile?.email || user?.email || MOCK_USER.email} className="h-12 bg-muted/30 border-none rounded-xl font-bold" disabled />
+                        <Input id="email" defaultValue={userProfile?.email || user?.email || ''} className="h-12 bg-muted/30 border-none rounded-xl font-bold" disabled />
                       </div>
                     </div>
                   </div>
