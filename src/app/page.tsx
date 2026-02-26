@@ -1,46 +1,26 @@
-
 "use client"
 
 import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { DashboardShell } from "@/components/dashboard-shell"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { 
   TrendingUp, 
   TrendingDown, 
-  Wallet, 
-  LineChart as LineChartIcon,
-  BookOpen,
-  ArrowRight
+  ArrowRight,
+  PieChart,
+  Briefcase,
+  Globe,
+  CircleDollarSign,
+  Search,
+  ChevronRight
 } from "lucide-react"
-import { 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  AreaChart,
-  Area
-} from "recharts"
-import { MOCK_USER, MOCK_STOCKS, MOCK_NEWS } from "@/lib/mock-data"
-
-const data = [
-  { name: "Mon", value: 2400 },
-  { name: "Tue", value: 2600 },
-  { name: "Wed", value: 2500 },
-  { name: "Thu", value: 2800 },
-  { name: "Fri", value: 3100 },
-  { name: "Sat", value: 2900 },
-  { name: "Sun", value: 3200 },
-]
+import { MOCK_USER, MOCK_STOCKS, MOCK_INDICES, MOCK_NEWS } from "@/lib/mock-data"
 
 export default function OverviewPage() {
   const { toast } = useToast()
@@ -55,202 +35,164 @@ export default function OverviewPage() {
 
   return (
     <DashboardShell>
-      <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-        {/* Welcome Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-headline font-bold">Good morning, {MOCK_USER.name}</h1>
-            <p className="text-muted-foreground">Here's what's happening in the markets today.</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button variant="outline" className="gap-2" onClick={() => handleAction("Deposit Initiated", "Redirecting to secure payment gateway...")}>
-              <Wallet className="size-4" /> Deposit
-            </Button>
-            <Button className="gap-2" onClick={() => handleAction("Quick Trade", "Trade execution panel opening...")}>
-              <TrendingUp className="size-4" /> Quick Trade
-            </Button>
+      <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        
+        {/* Market Indices Row */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {MOCK_INDICES.map((index) => (
+            <Card key={index.name} className="glass-card hover:bg-muted/10 cursor-pointer border-none shadow-sm">
+              <CardContent className="p-4 flex flex-col justify-between h-full">
+                <div className="flex justify-between items-start">
+                  <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{index.name}</span>
+                  <div className={cn(
+                    "text-[10px] font-bold px-1.5 py-0.5 rounded",
+                    index.trend === "UP" ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
+                  )}>
+                    {index.percent}
+                  </div>
+                </div>
+                <div className="mt-2">
+                  <div className="text-xl font-headline font-bold">{index.value}</div>
+                  <div className={cn(
+                    "text-xs font-medium",
+                    index.trend === "UP" ? "text-green-500" : "text-red-500"
+                  )}>
+                    {index.change}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Investment Categories */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-headline font-bold flex items-center gap-2">
+            Invest in <ChevronRight className="size-5 text-primary" />
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {[
+              { label: "Stocks", icon: Briefcase, color: "text-blue-500", bg: "bg-blue-500/10" },
+              { label: "Mutual Funds", icon: PieChart, color: "text-green-500", bg: "bg-green-500/10" },
+              { label: "US Stocks", icon: Globe, color: "text-indigo-500", bg: "bg-indigo-500/10" },
+              { label: "Fixed Deposits", icon: CircleDollarSign, color: "text-orange-500", bg: "bg-orange-500/10" },
+            ].map((cat) => (
+              <button 
+                key={cat.label}
+                className="group flex flex-col items-center gap-3 p-6 rounded-2xl glass-card transition-all hover:border-primary/50"
+                onClick={() => handleAction(`Exploring ${cat.label}`, "Fetching best options for you...")}
+              >
+                <div className={cn("size-14 rounded-full flex items-center justify-center transition-transform group-hover:scale-110", cat.bg)}>
+                  <cat.icon className={cn("size-7", cat.color)} />
+                </div>
+                <span className="font-bold text-sm">{cat.label}</span>
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="glass-card">
-            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-sm font-medium">Portfolio Balance</CardTitle>
-              <Wallet className="size-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">${MOCK_USER.balance.toLocaleString()}</div>
-              <p className="text-xs text-green-500 mt-1 flex items-center gap-1">
-                <TrendingUp className="size-3" /> +12.5% from last month
-              </p>
-            </CardContent>
-          </Card>
-          <Card className="glass-card">
-            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-sm font-medium">Prediction Accuracy</CardTitle>
-              <LineChartIcon className="size-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{MOCK_USER.predictionAccuracy}%</div>
-              <Progress value={MOCK_USER.predictionAccuracy} className="h-1 mt-3" />
-            </CardContent>
-          </Card>
-          <Card className="glass-card">
-            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-sm font-medium">Learning Progress</CardTitle>
-              <BookOpen className="size-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{MOCK_USER.learningProgress}%</div>
-              <Progress value={MOCK_USER.learningProgress} className="h-1 mt-3" />
-            </CardContent>
-          </Card>
-          <Card className="glass-card">
-            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-sm font-medium">Market Sentiment</CardTitle>
-              <TrendingUp className="size-4 text-primary" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">Bullish</div>
-              <p className="text-xs text-muted-foreground mt-1">Based on AI News Analysis</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Main Charts Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="lg:col-span-2 glass-card">
-            <CardHeader>
-              <CardTitle className="text-lg">Portfolio Performance</CardTitle>
-              <CardDescription>Visualizing your growth over the last 7 days.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={data}>
-                    <defs>
-                      <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: 'hsl(var(--muted-foreground))', fontSize: 12}} />
-                    <YAxis axisLine={false} tickLine={false} tick={{fill: 'hsl(var(--muted-foreground))', fontSize: 12}} />
-                    <Tooltip 
-                      contentStyle={{backgroundColor: 'hsl(var(--card))', borderRadius: '8px', border: '1px solid hsl(var(--border))'}}
-                      itemStyle={{color: 'hsl(var(--primary))'}}
-                    />
-                    <Area type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
-                  </AreaChart>
-                </ResponsiveContainer>
+        {/* Stocks in Focus Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+          
+          {/* Top Gainers / Losers */}
+          <div className="lg:col-span-2 space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-headline font-bold">Stocks in Focus</h2>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" className="rounded-full text-xs">Top Gainers</Button>
+                <Button variant="ghost" size="sm" className="rounded-full text-xs text-muted-foreground">Top Losers</Button>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card className="glass-card">
-            <CardHeader>
-              <CardTitle className="text-lg">Watchlist</CardTitle>
-              <CardDescription>Trending stocks in your radar.</CardDescription>
-            </CardHeader>
-            <CardContent>
+            </div>
+            
+            <Card className="glass-card border-none shadow-none bg-transparent">
               <div className="space-y-4">
                 {MOCK_STOCKS.map((stock) => (
                   <div 
                     key={stock.symbol} 
-                    className="flex items-center justify-between group cursor-pointer"
+                    className="flex items-center justify-between p-4 rounded-xl hover:bg-muted/20 transition-colors cursor-pointer border border-transparent hover:border-border"
                     onClick={() => handleAction(`Viewing ${stock.symbol}`, `Current price: $${stock.price}`)}
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-xs">
+                    <div className="flex items-center gap-4">
+                      <div className="size-10 rounded-xl bg-muted/50 flex items-center justify-center font-bold text-primary">
                         {stock.symbol[0]}
                       </div>
                       <div>
-                        <div className="font-bold text-sm">{stock.symbol}</div>
-                        <div className="text-xs text-muted-foreground">{stock.name}</div>
+                        <div className="font-bold text-sm">{stock.name}</div>
+                        <div className="text-xs text-muted-foreground">{stock.symbol}</div>
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="text-sm font-bold">${stock.price}</div>
                       <div className={cn(
-                        "text-xs flex items-center justify-end gap-1",
+                        "text-xs font-bold",
                         stock.change > 0 ? "text-green-500" : "text-red-500"
                       )}>
-                        {stock.change > 0 ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
                         {stock.change > 0 ? "+" : ""}{stock.change}%
                       </div>
                     </div>
                   </div>
                 ))}
-                <Button 
-                  variant="ghost" 
-                  className="w-full text-xs text-primary" 
-                  size="sm"
-                  onClick={() => handleAction("Market Explorer", "Redirecting to global market overview...")}
-                >
-                  View full market <ArrowRight className="size-3 ml-2" />
+                <Button variant="ghost" className="w-full text-primary font-bold text-sm gap-2">
+                  View more stocks <ArrowRight className="size-4" />
                 </Button>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            </Card>
+          </div>
 
-        {/* Bottom Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="glass-card">
-            <CardHeader>
-              <CardTitle className="text-lg">Top AI News</CardTitle>
-            </CardHeader>
-            <CardContent>
+          {/* User Portfolio Summary & News */}
+          <div className="space-y-8">
+            <Card className="glass-card bg-primary/5 border-primary/20 p-6 space-y-4">
+              <h2 className="font-headline font-bold text-lg">Your Portfolio</h2>
+              <div>
+                <div className="text-3xl font-bold">${MOCK_USER.balance.toLocaleString()}</div>
+                <div className="text-xs text-green-500 font-bold flex items-center gap-1 mt-1">
+                  <TrendingUp className="size-3" /> +12.5% Returns
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <Button variant="outline" className="text-xs h-9 rounded-lg" onClick={() => router.push('/portfolio')}>Analyze</Button>
+                <Button className="text-xs h-9 rounded-lg" onClick={() => handleAction("Quick Buy", "Opening execution panel...")}>Invest More</Button>
+              </div>
+            </Card>
+
+            <div className="space-y-4">
+              <h2 className="text-lg font-headline font-bold">Top Market News</h2>
               <div className="space-y-4">
-                {MOCK_NEWS.map((item) => (
-                  <div key={item.id} className="border-b border-border pb-4 last:border-0 last:pb-0">
-                    <div className="flex justify-between items-start gap-4">
-                      <h4 className="text-sm font-medium line-clamp-2">{item.title}</h4>
-                      <Badge variant={item.sentiment === 'POSITIVE' ? 'default' : item.sentiment === 'NEGATIVE' ? 'destructive' : 'secondary'}>
-                        {item.sentiment}
-                      </Badge>
+                {MOCK_NEWS.slice(0, 3).map((item) => (
+                  <div key={item.id} className="group cursor-pointer border-b border-border/50 pb-4 last:border-0" onClick={() => router.push('/news')}>
+                    <div className="flex justify-between items-start gap-3">
+                      <h4 className="text-xs font-bold leading-tight group-hover:text-primary transition-colors">{item.title}</h4>
+                      <Badge variant="outline" className="text-[9px] h-4 py-0 shrink-0">{item.sentiment}</Badge>
                     </div>
-                    <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2 mt-2 text-[10px] text-muted-foreground uppercase font-medium">
                       <span>{item.source}</span>
                       <span>•</span>
                       <span>{item.time}</span>
                     </div>
                   </div>
                 ))}
-                <Link href="/news">
-                  <Button variant="link" className="w-full text-xs" size="sm">Go to News Intel</Button>
-                </Link>
               </div>
-            </CardContent>
-          </Card>
-          <Card className="glass-card bg-primary/5 border-primary/20">
-            <CardHeader>
-              <CardTitle className="text-lg">AI Financial Goal</CardTitle>
-              <CardDescription>Personalized path to financial freedom.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-4">
-                <div className="size-12 rounded-2xl bg-primary flex items-center justify-center shrink-0">
-                  <LineChartIcon className="size-6 text-white" />
-                </div>
-                <div>
-                  <h4 className="font-bold">Diversify Tech Holdings</h4>
-                  <p className="text-sm text-muted-foreground">Your portfolio is 60% tech. Consider adding defensive stocks.</p>
-                </div>
-              </div>
-              <div className="p-4 rounded-xl bg-background/50 border border-border">
-                <div className="flex justify-between text-sm mb-2">
-                  <span>Goal Completion</span>
-                  <span className="font-bold">42%</span>
-                </div>
-                <Progress value={42} className="h-2" />
-              </div>
-              <Button className="w-full" onClick={() => router.push('/advisor')}>View Advisor Advice</Button>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
+
         </div>
+
+        {/* Global Market Explorer Call to Action */}
+        <Card className="glass-card bg-gradient-to-r from-primary/10 via-background to-background border-primary/20 overflow-hidden relative">
+          <div className="absolute right-[-5%] top-[-20%] opacity-10">
+            <Globe size={300} className="text-primary" />
+          </div>
+          <CardContent className="p-10 relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="space-y-2 text-center md:text-left">
+              <h2 className="text-2xl font-headline font-bold">Explore Global Opportunities</h2>
+              <p className="text-muted-foreground max-w-md">Access 50+ global markets and invest in world-leading companies with zero commission for the first 30 days.</p>
+            </div>
+            <Button size="lg" className="rounded-full px-8 gap-2 font-bold shadow-xl shadow-primary/20">
+              Open Global Account <ArrowRight className="size-4" />
+            </Button>
+          </CardContent>
+        </Card>
+
       </div>
     </DashboardShell>
   )

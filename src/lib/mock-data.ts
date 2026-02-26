@@ -7,6 +7,13 @@ export const MOCK_USER = {
   predictionAccuracy: 78,
 };
 
+export const MOCK_INDICES = [
+  { name: "NIFTY 50", value: "22,415.85", change: "+125.40", percent: "+0.56%", trend: "UP" },
+  { name: "SENSEX", value: "73,806.15", change: "+412.10", percent: "+0.54%", trend: "UP" },
+  { name: "BANK NIFTY", value: "47,286.40", change: "-85.20", percent: "-0.18%", trend: "DOWN" },
+  { name: "IT INDEX", value: "35,120.90", change: "+210.15", percent: "+0.60%", trend: "UP" },
+];
+
 export const MOCK_STOCKS = [
   { symbol: "AAPL", name: "Apple Inc.", price: 189.43, change: 1.25, trend: "UP" },
   { symbol: "TSLA", name: "Tesla, Inc.", price: 238.12, change: -2.4, trend: "DOWN" },
