@@ -1,58 +1,1038 @@
-
 {
   "entities": {
-    "UserProfile": {
-      "title": "User Profile",
-      "description": "User account information and preferences.",
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
       "type": "object",
+      "description": "Represents a user of the FinIntel AI platform, storing profile information and linking to all user-specific data.",
       "properties": {
-        "displayName": { "type": "string" },
-        "email": { "type": "string", "format": "email" },
-        "photoURL": { "type": "string" },
-        "balance": { "type": "number", "description": "User's current portfolio balance." },
-        "learningProgress": { "type": "integer", "min": 0, "max": 100 },
-        "predictionAccuracy": { "type": "integer", "min": 0, "max": 100 }
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address, used for communication and as a unique login identifier.",
+          "format": "email"
+        },
+        "username": {
+          "type": "string",
+          "description": "A unique display name or handle for the user."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the user account was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp of the last update to the user's profile information.",
+          "format": "date-time"
+        },
+        "lastLoginAt": {
+          "type": "string",
+          "description": "Timestamp of the user's last successful login.",
+          "format": "date-time"
+        },
+        "avatarUrl": {
+          "type": "string",
+          "description": "URL to the user's profile picture or avatar.",
+          "format": "uri"
+        },
+        "web3WalletAddress": {
+          "type": "string",
+          "description": "The user's Web3 wallet address, if connected (e.g., MetaMask)."
+        }
       },
-      "required": ["email"]
+      "required": [
+        "id",
+        "email",
+        "username",
+        "createdAt",
+        "updatedAt",
+        "lastLoginAt"
+      ]
     },
-    "WatchlistItem": {
-      "title": "Watchlist Item",
-      "description": "A stock symbol added to a user's watchlist.",
+    "LearningModule": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "LearningModule",
       "type": "object",
+      "description": "Represents a structured section or category of financial learning content (e.g., 'Stock Market Basics').",
       "properties": {
-        "symbol": { "type": "string" },
-        "addedAt": { "type": "string", "format": "date-time" }
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the LearningModule entity."
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the learning module."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description of the module's content."
+        },
+        "order": {
+          "type": "number",
+          "description": "The sequential order of the module within the overall learning path."
+        }
       },
-      "required": ["symbol", "addedAt"]
+      "required": [
+        "id",
+        "title",
+        "description",
+        "order"
+      ]
+    },
+    "Lesson": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Lesson",
+      "type": "object",
+      "description": "Represents an individual lesson within a learning module, containing educational content.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Lesson entity."
+        },
+        "learningModuleId": {
+          "type": "string",
+          "description": "Reference to the LearningModule this lesson belongs to. (Relationship: LearningModule 1:N Lesson)"
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the lesson."
+        },
+        "content": {
+          "type": "string",
+          "description": "The main educational content of the lesson, possibly in Markdown or HTML format."
+        },
+        "order": {
+          "type": "number",
+          "description": "The sequential order of the lesson within its learning module."
+        }
+      },
+      "required": [
+        "id",
+        "learningModuleId",
+        "title",
+        "content",
+        "order"
+      ]
+    },
+    "Quiz": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Quiz",
+      "type": "object",
+      "description": "Represents a quiz associated with a lesson to test user comprehension.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Quiz entity."
+        },
+        "lessonId": {
+          "type": "string",
+          "description": "Reference to the Lesson this quiz is associated with. (Relationship: Lesson 1:N Quiz)"
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the quiz."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description or instructions for the quiz."
+        }
+      },
+      "required": [
+        "id",
+        "lessonId",
+        "title",
+        "description"
+      ]
+    },
+    "Question": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Question",
+      "type": "object",
+      "description": "Represents an individual question within a quiz, including options and the correct answer.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Question entity."
+        },
+        "quizId": {
+          "type": "string",
+          "description": "Reference to the Quiz this question belongs to. (Relationship: Quiz 1:N Question)"
+        },
+        "questionText": {
+          "type": "string",
+          "description": "The text of the quiz question."
+        },
+        "options": {
+          "type": "array",
+          "description": "An array of possible answer options for the question.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "correctOptionIndex": {
+          "type": "number",
+          "description": "The zero-based index of the correct answer within the 'options' array."
+        }
+      },
+      "required": [
+        "id",
+        "quizId",
+        "questionText",
+        "options",
+        "correctOptionIndex"
+      ]
+    },
+    "UserLessonProgress": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserLessonProgress",
+      "type": "object",
+      "description": "Tracks a specific user's progress for a particular lesson, including completion status and quiz scores.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserLessonProgress entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User. (Relationship: User 1:N UserLessonProgress)"
+        },
+        "lessonId": {
+          "type": "string",
+          "description": "Reference to the Lesson. (Relationship: Lesson 1:N UserLessonProgress)"
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the user's progress for the lesson ('not_started', 'in_progress', 'completed').",
+          "items": {
+            "type": "string"
+          }
+        },
+        "completedAt": {
+          "type": "string",
+          "description": "Timestamp when the user completed the lesson.",
+          "format": "date-time"
+        },
+        "lastAccessedAt": {
+          "type": "string",
+          "description": "Timestamp when the user last accessed or interacted with this lesson.",
+          "format": "date-time"
+        },
+        "quizScore": {
+          "type": "number",
+          "description": "The score obtained by the user on the quiz associated with this lesson (e.g., percentage or number of correct answers)."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "lessonId",
+        "status",
+        "lastAccessedAt"
+      ]
+    },
+    "UserModuleProgress": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserModuleProgress",
+      "type": "object",
+      "description": "Aggregates a user's progress across an entire learning module, providing an overall completion percentage.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserModuleProgress entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User. (Relationship: User 1:N UserModuleProgress)"
+        },
+        "learningModuleId": {
+          "type": "string",
+          "description": "Reference to the LearningModule. (Relationship: LearningModule 1:N UserModuleProgress)"
+        },
+        "progressPercentage": {
+          "type": "number",
+          "description": "The overall completion percentage for the module (0-100)."
+        },
+        "completed": {
+          "type": "boolean",
+          "description": "Indicates if the entire learning module has been completed by the user."
+        },
+        "completedAt": {
+          "type": "string",
+          "description": "Timestamp when the user completed the entire module.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "learningModuleId",
+        "progressPercentage",
+        "completed"
+      ]
+    },
+    "Stock": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Stock",
+      "type": "object",
+      "description": "Represents basic metadata for a financial stock or security.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Stock entity, typically its ticker symbol (e.g., 'AAPL')."
+        },
+        "symbol": {
+          "type": "string",
+          "description": "The ticker symbol of the stock (e.g., 'AAPL')."
+        },
+        "companyName": {
+          "type": "string",
+          "description": "The full company name associated with the stock."
+        },
+        "exchange": {
+          "type": "string",
+          "description": "The stock exchange where the stock is traded (e.g., 'NASDAQ', 'NYSE')."
+        },
+        "currency": {
+          "type": "string",
+          "description": "The currency in which the stock is traded (e.g., 'USD')."
+        },
+        "sector": {
+          "type": "string",
+          "description": "The industry sector the company belongs to (e.g., 'Technology', 'Finance')."
+        },
+        "industry": {
+          "type": "string",
+          "description": "The specific industry within its sector (e.g., 'Software - Infrastructure', 'Investment Banking & Brokerage')."
+        }
+      },
+      "required": [
+        "id",
+        "symbol",
+        "companyName",
+        "exchange",
+        "currency",
+        "sector",
+        "industry"
+      ]
+    },
+    "StockPrediction": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "StockPrediction",
+      "type": "object",
+      "description": "Records a user's stock prediction, the AI's prediction, and the actual market outcome for a specific stock.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the StockPrediction event."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who made the prediction. (Relationship: User 1:N StockPrediction)"
+        },
+        "stockId": {
+          "type": "string",
+          "description": "Reference to the Stock being predicted (using its symbol as ID). (Relationship: Stock 1:N StockPrediction)"
+        },
+        "predictionTimestamp": {
+          "type": "string",
+          "description": "Timestamp when the user and AI predictions were made.",
+          "format": "date-time"
+        },
+        "predictionHorizon": {
+          "type": "string",
+          "description": "The time frame over which the prediction applies (e.g., '1-day', '1-week', '1-month')."
+        },
+        "userPredictedDirection": {
+          "type": "string",
+          "description": "The direction predicted by the user ('UP', 'DOWN', 'FLAT').",
+          "items": {
+            "type": "string"
+          }
+        },
+        "userConfidence": {
+          "type": "number",
+          "description": "The user's confidence level in their prediction (0-100%)."
+        },
+        "aiPredictedDirection": {
+          "type": "string",
+          "description": "The direction predicted by the AI model ('UP', 'DOWN', 'FLAT').",
+          "items": {
+            "type": "string"
+          }
+        },
+        "aiPredictionProbability": {
+          "type": "number",
+          "description": "The probability score of the AI's prediction (0 to 1)."
+        },
+        "actualDirection": {
+          "type": "string",
+          "description": "The actual market movement direction observed after the prediction horizon ('UP', 'DOWN', 'FLAT').",
+          "items": {
+            "type": "string"
+          }
+        },
+        "actualOutcomeTimestamp": {
+          "type": "string",
+          "description": "Timestamp when the actual market outcome was determined.",
+          "format": "date-time"
+        },
+        "userPredictionMatched": {
+          "type": "boolean",
+          "description": "Indicates if the user's prediction matched the actual market outcome."
+        },
+        "aiPredictionMatched": {
+          "type": "boolean",
+          "description": "Indicates if the AI's prediction matched the actual market outcome."
+        },
+        "aiExplanation": {
+          "type": "string",
+          "description": "AI-generated explanation for why the prediction (user's or AI's) matched or failed."
+        },
+        "startPrice": {
+          "type": "number",
+          "description": "The stock price at the beginning of the prediction horizon."
+        },
+        "endPrice": {
+          "type": "number",
+          "description": "The stock price at the end of the prediction horizon."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "stockId",
+        "predictionTimestamp",
+        "predictionHorizon",
+        "userPredictedDirection",
+        "userConfidence",
+        "aiPredictedDirection",
+        "aiPredictionProbability",
+        "startPrice"
+      ]
+    },
+    "NewsArticle": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "NewsArticle",
+      "type": "object",
+      "description": "Stores information about a financial news article, including sentiment analysis results.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the NewsArticle entity."
+        },
+        "title": {
+          "type": "string",
+          "description": "The headline or title of the news article."
+        },
+        "source": {
+          "type": "string",
+          "description": "The source or publisher of the news article (e.g., 'Reuters', 'Bloomberg')."
+        },
+        "url": {
+          "type": "string",
+          "description": "The URL to the full news article.",
+          "format": "uri"
+        },
+        "publishedAt": {
+          "type": "string",
+          "description": "Timestamp when the news article was published.",
+          "format": "date-time"
+        },
+        "sentiment": {
+          "type": "string",
+          "description": "The sentiment of the news article ('Positive', 'Negative', 'Neutral').",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sentimentScore": {
+          "type": "number",
+          "description": "A numerical score representing the sentiment intensity (e.g., -1.0 for very negative to 1.0 for very positive)."
+        },
+        "marketImpactScore": {
+          "type": "number",
+          "description": "A score indicating the potential market impact of the news (e.g., 1-10)."
+        },
+        "summary": {
+          "type": "string",
+          "description": "An AI-generated summary of the news article content."
+        },
+        "topics": {
+          "type": "array",
+          "description": "An array of keywords or topics associated with the news article.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "source",
+        "url",
+        "publishedAt",
+        "sentiment",
+        "sentimentScore",
+        "marketImpactScore",
+        "summary",
+        "topics"
+      ]
+    },
+    "Portfolio": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Portfolio",
+      "type": "object",
+      "description": "Represents a user's investment portfolio, a collection of financial holdings.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Portfolio entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who owns this portfolio. (Relationship: User 1:N Portfolio)"
+        },
+        "name": {
+          "type": "string",
+          "description": "A user-defined name for the portfolio (e.g., 'My Main Portfolio', 'Retirement Fund')."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the portfolio was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp of the last update to the portfolio details or holdings.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "name",
+        "createdAt",
+        "updatedAt"
+      ]
     },
     "Holding": {
-      "title": "Stock Holding",
-      "description": "Information about a stock owned by the user.",
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Holding",
       "type": "object",
+      "description": "Represents a single asset (e.g., a stock) held within a user's portfolio.",
       "properties": {
-        "symbol": { "type": "string" },
-        "quantity": { "type": "number" },
-        "averagePrice": { "type": "number" },
-        "lastUpdated": { "type": "string", "format": "date-time" }
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Holding entity."
+        },
+        "portfolioId": {
+          "type": "string",
+          "description": "Reference to the Portfolio this holding belongs to. (Relationship: Portfolio 1:N Holding)"
+        },
+        "stockId": {
+          "type": "string",
+          "description": "Reference to the Stock being held (using its symbol as ID). (Relationship: Stock 1:N Holding)"
+        },
+        "quantity": {
+          "type": "number",
+          "description": "The number of units (shares) of the stock held."
+        },
+        "averageCostBasis": {
+          "type": "number",
+          "description": "The average price at which the shares were acquired, used for profit/loss calculation."
+        },
+        "purchaseDate": {
+          "type": "string",
+          "description": "The date when the holding was first acquired.",
+          "format": "date-time"
+        }
       },
-      "required": ["symbol", "quantity", "averagePrice"]
+      "required": [
+        "id",
+        "portfolioId",
+        "stockId",
+        "quantity",
+        "averageCostBasis",
+        "purchaseDate"
+      ]
+    },
+    "PortfolioAnalysis": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PortfolioAnalysis",
+      "type": "object",
+      "description": "Stores a snapshot of AI-generated analysis and insights for a user's portfolio at a specific point in time.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the PortfolioAnalysis entity."
+        },
+        "portfolioId": {
+          "type": "string",
+          "description": "Reference to the Portfolio being analyzed. (Relationship: Portfolio 1:N PortfolioAnalysis)"
+        },
+        "analysisDate": {
+          "type": "string",
+          "description": "Timestamp when the portfolio analysis was performed.",
+          "format": "date-time"
+        },
+        "totalValue": {
+          "type": "number",
+          "description": "The total market value of all holdings in the portfolio at the time of analysis."
+        },
+        "assetAllocationJson": {
+          "type": "string",
+          "description": "JSON string representing asset allocation, e.g., '[{\"assetType\": \"Stocks\", \"percentage\": 70.0}, {\"assetType\": \"Bonds\", \"percentage\": 20.0}]'."
+        },
+        "riskExposureScore": {
+          "type": "number",
+          "description": "A calculated score indicating the portfolio's overall risk exposure (e.g., 1-10)."
+        },
+        "sectorDiversificationJson": {
+          "type": "string",
+          "description": "JSON string representing sector diversification, e.g., '[{\"sector\": \"Technology\", \"percentage\": 30.0}, {\"sector\": \"Finance\", \"percentage\": 25.0}]'."
+        },
+        "performanceMetricsJson": {
+          "type": "string",
+          "description": "JSON string representing key performance indicators for the portfolio, e.g., '{\"ytdReturn\": 0.15, \"lastMonthReturn\": 0.02}'."
+        },
+        "suggestedImprovements": {
+          "type": "array",
+          "description": "AI-generated suggestions for improving the portfolio's performance or risk profile.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "aiInsights": {
+          "type": "string",
+          "description": "A comprehensive AI-generated summary of portfolio insights and observations."
+        }
+      },
+      "required": [
+        "id",
+        "portfolioId",
+        "analysisDate",
+        "totalValue",
+        "assetAllocationJson",
+        "riskExposureScore",
+        "sectorDiversificationJson",
+        "performanceMetricsJson",
+        "suggestedImprovements",
+        "aiInsights"
+      ]
+    },
+    "ChatConversation": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ChatConversation",
+      "type": "object",
+      "description": "Represents a single conversation thread with the AI Financial Strategy Advisor chatbot.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ChatConversation entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who initiated this conversation. (Relationship: User 1:N ChatConversation)"
+        },
+        "title": {
+          "type": "string",
+          "description": "An optional, AI-generated summary title for the conversation thread (e.g., 'Retirement Planning', 'Market Volatility')."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the conversation was initiated.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp of the last message exchanged in the conversation.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ChatMessage": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ChatMessage",
+      "type": "object",
+      "description": "Represents an individual message exchanged within a ChatConversation with the AI advisor.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ChatMessage entity."
+        },
+        "conversationId": {
+          "type": "string",
+          "description": "Reference to the ChatConversation this message belongs to. (Relationship: ChatConversation 1:N ChatMessage)"
+        },
+        "sender": {
+          "type": "string",
+          "description": "Indicates who sent the message ('user' or 'ai').",
+          "items": {
+            "type": "string"
+          }
+        },
+        "content": {
+          "type": "string",
+          "description": "The text content of the message."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp when the message was sent.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "conversationId",
+        "sender",
+        "content",
+        "timestamp"
+      ]
     }
   },
   "auth": {
-    "providers": ["google.com", "password"]
+    "providers": [
+      "password",
+      "anonymous"
+    ]
   },
   "firestore": {
-    "/users/{userId}": {
-      "schema": "#/entities/UserProfile",
-      "description": "Public and private user profile data."
-    },
-    "/users/{userId}/watchlist/{symbol}": {
-      "schema": "#/entities/WatchlistItem",
-      "description": "Collection of stocks watched by the user."
-    },
-    "/users/{userId}/holdings/{symbol}": {
-      "schema": "#/entities/Holding",
-      "description": "Collection of stocks owned by the user."
-    }
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profile information. Accessible only by the user specified in the path, i.e., `request.auth.uid == userId`.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user, matching `request.auth.uid`."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/lesson_progress/{lessonId}",
+        "definition": {
+          "entityName": "UserLessonProgress",
+          "schema": {
+            "$ref": "#/backend/entities/UserLessonProgress"
+          },
+          "description": "Tracks a specific user's progress for a given lesson. Accessible only by the user specified in the path. Includes denormalized 'learningModuleId' for authorization independence and efficient lookup.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user, matching `request.auth.uid`."
+            },
+            {
+              "name": "lessonId",
+              "description": "The unique identifier of the lesson this progress tracks."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/module_progress/{learningModuleId}",
+        "definition": {
+          "entityName": "UserModuleProgress",
+          "schema": {
+            "$ref": "#/backend/entities/UserModuleProgress"
+          },
+          "description": "Aggregates a user's progress across an entire learning module. Accessible only by the user specified in the path.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user, matching `request.auth.uid`."
+            },
+            {
+              "name": "learningModuleId",
+              "description": "The unique identifier of the learning module this progress tracks."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/stock_predictions/{predictionId}",
+        "definition": {
+          "entityName": "StockPrediction",
+          "schema": {
+            "$ref": "#/backend/entities/StockPrediction"
+          },
+          "description": "Records a user's stock prediction. Accessible only by the user specified in the path. Includes 'stockId' for direct reference.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user, matching `request.auth.uid`."
+            },
+            {
+              "name": "predictionId",
+              "description": "The unique identifier for the specific stock prediction event."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/portfolios/{portfolioId}",
+        "definition": {
+          "entityName": "Portfolio",
+          "schema": {
+            "$ref": "#/backend/entities/Portfolio"
+          },
+          "description": "Represents a user's investment portfolio. Accessible only by the user specified in the path.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user, matching `request.auth.uid`."
+            },
+            {
+              "name": "portfolioId",
+              "description": "The unique identifier for the user's portfolio."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/portfolios/{portfolioId}/holdings/{holdingId}",
+        "definition": {
+          "entityName": "Holding",
+          "schema": {
+            "$ref": "#/backend/entities/Holding"
+          },
+          "description": "Represents a single asset holding within a user's portfolio. Accessible only by the user specified in the parent path. Inherits 'userId' and 'portfolioId' from the path for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user, matching `request.auth.uid`."
+            },
+            {
+              "name": "portfolioId",
+              "description": "The unique identifier for the user's portfolio."
+            },
+            {
+              "name": "holdingId",
+              "description": "The unique identifier for the specific holding."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/portfolios/{portfolioId}/analyses/{analysisId}",
+        "definition": {
+          "entityName": "PortfolioAnalysis",
+          "schema": {
+            "$ref": "#/backend/entities/PortfolioAnalysis"
+          },
+          "description": "Stores AI-generated analysis for a user's portfolio. Accessible only by the user specified in the parent path. Inherits 'userId' and 'portfolioId' from the path for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user, matching `request.auth.uid`."
+            },
+            {
+              "name": "portfolioId",
+              "description": "The unique identifier for the user's portfolio."
+            },
+            {
+              "name": "analysisId",
+              "description": "The unique identifier for the specific portfolio analysis snapshot."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/chat_conversations/{conversationId}",
+        "definition": {
+          "entityName": "ChatConversation",
+          "schema": {
+            "$ref": "#/backend/entities/ChatConversation"
+          },
+          "description": "Represents a single conversation thread with the AI Financial Strategy Advisor. Accessible only by the user specified in the path.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user, matching `request.auth.uid`."
+            },
+            {
+              "name": "conversationId",
+              "description": "The unique identifier for the chat conversation."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/chat_conversations/{conversationId}/messages/{messageId}",
+        "definition": {
+          "entityName": "ChatMessage",
+          "schema": {
+            "$ref": "#/backend/entities/ChatMessage"
+          },
+          "description": "Represents an individual message within a user's chat conversation. Accessible only by the user specified in the parent path. Inherits 'userId' and 'conversationId' from the path for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user, matching `request.auth.uid`."
+            },
+            {
+              "name": "conversationId",
+              "description": "The unique identifier for the chat conversation."
+            },
+            {
+              "name": "messageId",
+              "description": "The unique identifier for the specific message."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/learning_modules/{learningModuleId}",
+        "definition": {
+          "entityName": "LearningModule",
+          "schema": {
+            "$ref": "#/backend/entities/LearningModule"
+          },
+          "description": "Stores structured learning sections. Publicly readable by all users. Write access restricted to administrators.",
+          "params": [
+            {
+              "name": "learningModuleId",
+              "description": "The unique identifier for the learning module."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/learning_modules/{learningModuleId}/lessons/{lessonId}",
+        "definition": {
+          "entityName": "Lesson",
+          "schema": {
+            "$ref": "#/backend/entities/Lesson"
+          },
+          "description": "Stores individual lessons within a learning module. Publicly readable. Write access restricted to administrators. Includes denormalized 'learningModuleId' for authorization independence and efficient querying.",
+          "params": [
+            {
+              "name": "learningModuleId",
+              "description": "The unique identifier of the parent learning module."
+            },
+            {
+              "name": "lessonId",
+              "description": "The unique identifier for the lesson."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/learning_modules/{learningModuleId}/lessons/{lessonId}/quizzes/{quizId}",
+        "definition": {
+          "entityName": "Quiz",
+          "schema": {
+            "$ref": "#/backend/entities/Quiz"
+          },
+          "description": "Stores quizzes associated with lessons. Publicly readable. Write access restricted to administrators. Includes denormalized 'learningModuleId' and 'lessonId' for authorization independence and efficient querying.",
+          "params": [
+            {
+              "name": "learningModuleId",
+              "description": "The unique identifier of the parent learning module."
+            },
+            {
+              "name": "lessonId",
+              "description": "The unique identifier of the parent lesson."
+            },
+            {
+              "name": "quizId",
+              "description": "The unique identifier for the quiz."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/learning_modules/{learningModuleId}/lessons/{lessonId}/quizzes/{quizId}/questions/{questionId}",
+        "definition": {
+          "entityName": "Question",
+          "schema": {
+            "$ref": "#/backend/entities/Question"
+          },
+          "description": "Stores individual questions within a quiz. Publicly readable. Write access restricted to administrators. Includes denormalized 'learningModuleId', 'lessonId', and 'quizId' for authorization independence and efficient querying.",
+          "params": [
+            {
+              "name": "learningModuleId",
+              "description": "The unique identifier of the parent learning module."
+            },
+            {
+              "name": "lessonId",
+              "description": "The unique identifier of the parent lesson."
+            },
+            {
+              "name": "quizId",
+              "description": "The unique identifier of the parent quiz."
+            },
+            {
+              "name": "questionId",
+              "description": "The unique identifier for the question."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/stocks/{stockId}",
+        "definition": {
+          "entityName": "Stock",
+          "schema": {
+            "$ref": "#/backend/entities/Stock"
+          },
+          "description": "Stores basic metadata for financial stocks. Publicly readable by all users. Write access restricted to administrators/system.",
+          "params": [
+            {
+              "name": "stockId",
+              "description": "The unique identifier for the stock, typically its ticker symbol."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/news_articles/{articleId}",
+        "definition": {
+          "entityName": "NewsArticle",
+          "schema": {
+            "$ref": "#/backend/entities/NewsArticle"
+          },
+          "description": "Stores information about financial news articles. Publicly readable by all users. Write access restricted to administrators/system.",
+          "params": [
+            {
+              "name": "articleId",
+              "description": "The unique identifier for the news article."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/admin_roles/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "A collection used for Database Access Control (DBAC) to signify administrator roles. The existence of a document for a `userId` here grants admin privileges to that user. Read access is restricted to authenticated users to check their own role. Write access is restricted to existing administrators.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who is an administrator, matching `request.auth.uid`."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure for FinIntel AI is designed with a strong emphasis on Authorization Independence, Structural Segregation, and Query Accessibility (QAPs) to ensure robust security rules and efficient data retrieval. \n\n**Authorization Independence via Denormalization:**\n\n1.  **User-Owned Data:** For all entities directly owned by a user (e.g., `UserLessonProgress`, `StockPrediction`, `Portfolio`, `ChatConversation`), the primary authorization context (`userId`) is embedded directly into the document path (e.g., `/users/{userId}/...`). This ensures that security rules can evaluate `request.auth.uid == userId` without needing to perform a `get()` operation on a parent document to determine ownership. For example, a user's portfolio (`/users/{userId}/portfolios/{portfolioId}`) inherently belongs to `userId` from the path, making authorization atomic.\n2.  **Nested User-Owned Data:** For entities nested within a user's context (e.g., `Holding` within `Portfolio`, `ChatMessage` within `ChatConversation`), the ownership context (`userId`) and relevant parent ID (`portfolioId`, `conversationId`) are inherited from the parent path. This eliminates the need for `get()` calls to verify parent ownership for these subcollections. While the `Holding` document itself might contain `portfolioId` for data integrity, it's not strictly needed for authorization because the path itself validates `userId` and `portfolioId`. To further support potential rule complexity or backend queries, `userId` is often denormalized into subcollection documents as well, though the primary rule relies on the path.\n3.  **Public Content References in User Data:** For entities like `UserLessonProgress`, which tracks user interaction with a public `Lesson`, the `learningModuleId` is denormalized directly into the `UserLessonProgress` document. This allows rules or backend logic to quickly access context about the associated public content without needing a `get()` on the `/learning_modules/{moduleId}/lessons/{lessonId}` path, further enhancing independence.\n\n**Structural Segregation and QAPs:**\n\n1.  **Public vs. Private:** Data is segregated based on its security posture. Public, globally accessible content (e.g., `LearningModule`, `Lesson`, `Quiz`, `Question`, `Stock`, `NewsArticle`) resides in top-level collections (e.g., `/learning_modules`, `/stocks`). These are configured for public read access and administrative write access. This segregation ensures that `list` operations on these collections are naturally secure and efficient (QAPs) as they are intended for broad consumption.\n2.  **User-Specific Data:** All user-private data is organized under `/users/{userId}/...` paths. This clear structural segregation ensures that `list` operations on any of these subcollections (e.g., listing all `portfolios` for a `userId`) are automatically filtered by Firestore's security rules to only return documents owned by the `request.auth.uid`. A user can only query their own `stock_predictions` or `chat_conversations` because the `{userId}` in the path must match `request.auth.uid`, satisfying QAPs by preventing unauthorized data access during list operations without filtering after retrieval.\n3.  **Role-Based Access (DBAC):** Administrative roles are managed via a dedicated, simple collection (`/admin_roles/{userId}`). The existence of a document at `/admin_roles/$(request.auth.uid)` directly grants admin privileges within security rules, adhering to the 'existence over content' principle and avoiding custom claims.\n\nThis architecture minimizes rule complexity, eliminates the need for expensive and potentially insecure `get()` calls in rules, and provides a clear, debuggable authorization model for the FinIntel AI platform."
   }
 }

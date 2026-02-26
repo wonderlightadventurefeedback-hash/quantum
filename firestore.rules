@@ -1,0 +1,209 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * FinIntel AI Security Rules
+     * 
+     * Core Philosophy: 
+     * This ruleset implements a strict user-ownership model where private data is isolated under 
+     * /users/{userId} paths. Public educational content and market metadata are globally readable 
+     * but restricted to administrative write access.
+     * 
+     * Data Structure: 
+     * - /users/{userId}: Root for all user-specific profile, progress, portfolios, and chats.
+     * - /learning_modules, /stocks, /news_articles: Top-level collections for public consumption.
+     * - /admin_roles: A system-level collection where the existence of a UID grants global write access 
+     *   to public content.
+     * 
+     * Key Security Decisions: 
+     * - Denormalized Ownership: Rules primarily rely on the {userId} path parameter for rapid 
+     *   authorization without expensive cross-document lookups.
+     * - Prototyping Mode: Logic focuses on 'Who' (Authorization) and 'Consistency' (Relational Integrity) 
+     *   rather than strict 'What' (Data Types/Schema).
+     * - Admin Roles: Implemented via 'existence over content' in the /admin_roles collection.
+     */
+
+    // --- GLOBAL HELPER FUNCTIONS ---
+
+    /** @description Checks if the request is from a signed-in user. */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /** @description Checks if the authenticated user's UID matches the provided ID. */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /** @description Checks if the user is an owner and the document exists. Used for updates and deletes. */
+    function isExistingOwner(userId) {
+      return resource != null && isOwner(userId);
+    }
+
+    /** @description Checks if the authenticated user has an entry in the admin_roles collection. */
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/admin_roles/$(request.auth.uid));
+    }
+
+    // --- COLLECTION RULES ---
+
+    /**
+     * @description Rules for user profile documents.
+     * @path /users/{userId}
+     * @allow (get) Any user can get their own profile. (create) User with matching UID can initialize profile.
+     * @deny (list) Public listing of users. (update) Changing the document ID.
+     * @principle Ownership and Self-Creation.
+     */
+    match /users/{userId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+
+      /**
+       * @description Tracks lesson progress for a specific user.
+       * @path /users/{userId}/lesson_progress/{lessonId}
+       * @allow (create) Owner providing matching userId in data.
+       * @principle Path-based ownership with relational integrity.
+       */
+      match /lesson_progress/{lessonId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.userId == userId;
+        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isExistingOwner(userId);
+      }
+
+      /**
+       * @description Tracks module-wide progress for a user.
+       * @path /users/{userId}/module_progress/{moduleId}
+       */
+      match /module_progress/{moduleId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.userId == userId;
+        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isExistingOwner(userId);
+      }
+
+      /**
+       * @description User-specific stock predictions.
+       * @path /users/{userId}/stock_predictions/{predictionId}
+       */
+      match /stock_predictions/{predictionId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.userId == userId;
+        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isExistingOwner(userId);
+      }
+
+      /**
+       * @description User investment portfolios.
+       * @path /users/{userId}/portfolios/{portfolioId}
+       */
+      match /portfolios/{portfolioId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.userId == userId;
+        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isExistingOwner(userId);
+
+        /**
+         * @description Asset holdings within a portfolio. Inherits ownership via path.
+         * @path /users/{userId}/portfolios/{portfolioId}/holdings/{holdingId}
+         */
+        match /holdings/{holdingId} {
+          allow get, list: if isOwner(userId);
+          allow create: if isOwner(userId);
+          allow update: if isExistingOwner(userId);
+          allow delete: if isExistingOwner(userId);
+        }
+
+        /**
+         * @description AI analysis for a specific portfolio.
+         * @path /users/{userId}/portfolios/{portfolioId}/analyses/{analysisId}
+         */
+        match /analyses/{analysisId} {
+          allow get, list: if isOwner(userId);
+          allow create: if isOwner(userId);
+          allow update: if isExistingOwner(userId);
+          allow delete: if isExistingOwner(userId);
+        }
+      }
+
+      /**
+       * @description AI Chat conversation threads.
+       * @path /users/{userId}/chat_conversations/{conversationId}
+       */
+      match /chat_conversations/{conversationId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.userId == userId;
+        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isExistingOwner(userId);
+
+        /**
+         * @description Individual messages in a chat thread.
+         * @path /users/{userId}/chat_conversations/{conversationId}/messages/{messageId}
+         */
+        match /messages/{messageId} {
+          allow get, list: if isOwner(userId);
+          allow create: if isOwner(userId);
+          allow update: if isExistingOwner(userId);
+          allow delete: if isExistingOwner(userId);
+        }
+      }
+    }
+
+    /**
+     * @description Publicly readable learning content. Writes restricted to admins.
+     * @path /learning_modules/{moduleId}
+     * @allow (get, list) Public. (write) Admin only.
+     */
+    match /learning_modules/{moduleId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
+
+      match /lessons/{lessonId} {
+        allow get, list: if true;
+        allow create, update, delete: if isAdmin();
+
+        match /quizzes/{quizId} {
+          allow get, list: if true;
+          allow create, update, delete: if isAdmin();
+
+          match /questions/{questionId} {
+            allow get, list: if true;
+            allow create, update, delete: if isAdmin();
+          }
+        }
+      }
+    }
+
+    /**
+     * @description Financial stock metadata. Publicly readable.
+     * @path /stocks/{stockId}
+     */
+    match /stocks/{stockId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description Financial news articles. Publicly readable.
+     * @path /news_articles/{articleId}
+     */
+    match /news_articles/{articleId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description Internal roles for administrative access.
+     * @path /admin_roles/{userId}
+     * @allow (get) User checking their own status. (write) Existing admins only.
+     * @principle RBAC via existence.
+     */
+    match /admin_roles/{userId} {
+      allow get, list: if isOwner(userId) || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+  }
+}
