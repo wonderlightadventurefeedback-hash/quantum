@@ -27,7 +27,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase"
 import { doc } from "firebase/firestore"
 
-const FINNHUB_API_KEY = "d6g3c49r01qqnmbqk10gd6g3c49r01qqnmbqk110";
+const FINNHUB_API_KEY = process.env.NEXT_PUBLIC_FINNHUB_API_KEY;
 
 export default function TradePage() {
   const { toast } = useToast()
@@ -48,7 +48,7 @@ export default function TradePage() {
   const { data: userProfile } = useDoc(userProfileRef)
   const balance = userProfile?.balance ?? 50000
 
-  const fetchLivePrices = async (showToast = false) => {
+  const fetchLivePrices = React.useCallback(async (showToast = false) => {
     setIsRefreshing(true)
     try {
       const updatedStocks = await Promise.all(
@@ -77,7 +77,7 @@ export default function TradePage() {
     } catch (error) { } finally {
       setIsRefreshing(false)
     }
-  }
+  }, [toast])
 
   React.useEffect(() => {
     fetchLivePrices()
@@ -95,7 +95,7 @@ export default function TradePage() {
       clearInterval(interval)
       clearInterval(tickerInterval)
     }
-  }, [])
+  }, [fetchLivePrices])
 
   React.useEffect(() => {
     const q = searchParams.get("q")

@@ -22,11 +22,11 @@ import {
   Zap
 } from "lucide-react"
 import { LineChart, Line, ResponsiveContainer } from "recharts"
-import { MOCK_USER, MOCK_STOCKS, MOCK_INDICES, MOCK_NEWS, Stock } from "@/lib/mock-data"
+import { MOCK_STOCKS, MOCK_INDICES, MOCK_NEWS, Stock } from "@/lib/mock-data"
 import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase"
 import { doc } from "firebase/firestore"
 
-const FINNHUB_API_KEY = "d6g3c49r01qqnmbqk10gd6g3c49r01qqnmbqk110";
+const FINNHUB_API_KEY = process.env.NEXT_PUBLIC_FINNHUB_API_KEY;
 
 export default function DashboardOverview() {
   const { toast } = useToast()
@@ -45,7 +45,7 @@ export default function DashboardOverview() {
   const { data: userProfile } = useDoc(userProfileRef)
   const balance = typeof userProfile?.balance === 'number' ? userProfile.balance : 50000
 
-  const fetchLivePrices = async () => {
+  const fetchLivePrices = React.useCallback(async () => {
     try {
       const updatedStocks = await Promise.all(
         MOCK_STOCKS.map(async (stock) => {
@@ -70,7 +70,7 @@ export default function DashboardOverview() {
     } catch (error) {} finally {
       setIsLoading(false)
     }
-  }
+  }, []);
 
   React.useEffect(() => {
     setIsMounted(true)
@@ -89,7 +89,7 @@ export default function DashboardOverview() {
       clearInterval(apiInterval)
       clearInterval(tickerInterval)
     }
-  }, [])
+  }, [fetchLivePrices])
 
   const navigateToExplore = (category: string) => {
     if (category === "Live Trade") {

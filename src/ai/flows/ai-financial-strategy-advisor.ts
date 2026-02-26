@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview An AI financial advisor chatbot that provides personalized advice based on real-time market data.
@@ -10,7 +11,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-const FINNHUB_API_KEY = "d6g3c49r01qqnmbqk10gd6g3c49r01qqnmbqk110";
+const FINNHUB_API_KEY = process.env.NEXT_PUBLIC_FINNHUB_API_KEY;
 
 // --- Tools for Real-Time Finance Data ---
 

@@ -13,7 +13,6 @@ import {
   ShieldCheck,
   Globe,
   LayoutDashboard,
-  ChevronDown,
   Moon,
   Sun,
   Mail,
@@ -28,6 +27,10 @@ import emailjs from '@emailjs/browser'
 import CircularGallery from "@/components/circular-gallery"
 import { PlaceHolderImages } from "@/lib/placeholder-images"
 import PillNav from "@/components/pill-nav"
+
+const EMAILJS_SERVICE_ID = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID;
+const EMAILJS_TEMPLATE_ID = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID;
+const EMAILJS_PUBLIC_KEY = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY;
 
 export default function LandingPage() {
   const { user, loading } = useUser()
@@ -83,12 +86,21 @@ export default function LandingPage() {
       return
     }
 
+    if (!EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID || !EMAILJS_PUBLIC_KEY) {
+      toast({
+        variant: "destructive",
+        title: "System Error",
+        description: "Email service is not configured correctly.",
+      })
+      return;
+    }
+
     setIsSending(true)
 
     try {
       const result = await emailjs.send(
-        'service_hzskuno',
-        'template_acfg77l',
+        EMAILJS_SERVICE_ID,
+        EMAILJS_TEMPLATE_ID,
         {
           from_name: formData.name,
           from_email: formData.email,
@@ -96,7 +108,7 @@ export default function LandingPage() {
           message: formData.message,
           to_name: 'FinIntel Support'
         },
-        'Hh3sZ7CqkJ1I6EBIV'
+        EMAILJS_PUBLIC_KEY
       )
 
       if (result.status === 200) {

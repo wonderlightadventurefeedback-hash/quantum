@@ -11,7 +11,7 @@ import { Newspaper, TrendingUp, TrendingDown, RefreshCw, BarChart3, ShieldAlert,
 import { useToast } from "@/hooks/use-toast"
 import { formatDistanceToNow } from "date-fns"
 
-const FINNHUB_API_KEY = "d6g3c49r01qqnmbqk10gd6g3c49r01qqnmbqk110";
+const FINNHUB_API_KEY = process.env.NEXT_PUBLIC_FINNHUB_API_KEY;
 
 interface FinnhubNewsItem {
   id: number;
@@ -30,7 +30,7 @@ export default function NewsPage() {
   const [loading, setLoading] = React.useState(true)
   const [isRefreshing, setIsRefreshing] = React.useState(false)
 
-  const fetchNews = async (showToast = false) => {
+  const fetchNews = React.useCallback(async (showToast = false) => {
     setIsRefreshing(true)
     try {
       const response = await fetch(`https://finnhub.io/api/v1/news?category=general&token=${FINNHUB_API_KEY}`)
@@ -53,11 +53,11 @@ export default function NewsPage() {
       setLoading(false)
       setIsRefreshing(false)
     }
-  }
+  }, [toast]);
 
   React.useEffect(() => {
     fetchNews()
-  }, [])
+  }, [fetchNews])
 
   const handleReadMore = (url: string) => {
     window.open(url, "_blank")
@@ -140,7 +140,8 @@ export default function NewsPage() {
               news.map((item, i) => {
                 const sentiment = getSentiment(item.id);
                 const score = getScore(item.id);
-                const relativeTime = formatDistanceToNow(new Date(item.datetime * 1000), { addSuffix: true });
+                const datetime = item.datetime ? new Date(item.datetime * 1000) : new Date();
+                const relativeTime = formatDistanceToNow(datetime, { addSuffix: true });
 
                 return (
                   <Card key={item.id} className="glass-card overflow-hidden hover:border-primary/50 transition-colors group animate-in fade-in slide-in-from-bottom-2" style={{ animationDelay: `${i * 50}ms` }}>

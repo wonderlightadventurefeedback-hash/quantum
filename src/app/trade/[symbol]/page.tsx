@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -23,8 +24,6 @@ import {
   LineChart as LineChartIcon,
   CandlestickChart as CandleIcon,
   Loader2,
-  ArrowUpRight,
-  ArrowDownRight,
   Activity
 } from "lucide-react"
 import { 
@@ -46,7 +45,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useUser, useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase"
 import { doc, serverTimestamp, getDoc, increment, collection } from "firebase/firestore"
 
-const FINNHUB_API_KEY = "d6g3c49r01qqnmbqk10gd6g3c49r01qqnmbqk110";
+const FINNHUB_API_KEY = process.env.NEXT_PUBLIC_FINNHUB_API_KEY;
 
 type Timeframe = "1D" | "5D" | "1M" | "6M" | "YTD" | "1Y" | "5Y" | "Max";
 type ChartType = "AREA" | "CANDLE";
@@ -348,7 +347,7 @@ export default function StockDetailsPage() {
         status: "SETTLED"
       })
     }
-  }, [isTradingLive, tradeTimer])
+  }, [isTradingLive, tradeTimer, prediction, currentSimulatedPrice, entryPrice, tradeAmount, db, user, stock.name, symbol])
 
   if (!isMounted) return null;
 
