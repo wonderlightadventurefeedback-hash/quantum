@@ -53,9 +53,11 @@ export default function TradePage() {
                   trend: (data.dp || 0) >= 0 ? "UP" : "DOWN" as "UP" | "DOWN"
                 }
               }
+            } else {
+              throw new Error("API Limit reached")
             }
           } catch (e) {
-            // Silently handle individual network failures and proceed to fallback
+            // Silently handle individual failures with fallback drift
           }
           
           const drift = (Math.random() - 0.5) * 0.5
@@ -73,7 +75,7 @@ export default function TradePage() {
         })
       }
     } catch (error) {
-      // General error handling if needed
+      // General error handling
     } finally {
       setIsRefreshing(false)
     }
