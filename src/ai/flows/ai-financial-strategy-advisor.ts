@@ -1,7 +1,7 @@
 
 'use server';
 /**
- * @fileOverview An AI financial advisor chatbot that provides personalized advice based on real-time market data.
+ * @fileOverview An AI financial advisor chatbot powered by Google Gemini Pro that provides personalized advice based on real-time market data.
  *
  * - aiFinancialStrategyAdvisor - A function that handles the AI financial advisor chat process.
  * - AiFinancialAdvisorInput - The input type for the aiFinancialStrategyAdvisor function.
@@ -121,29 +121,37 @@ export async function aiFinancialStrategyAdvisor(input: AiFinancialAdvisorInput)
 
 const aiFinancialAdvisorPrompt = ai.definePrompt({
   name: 'aiFinancialAdvisorPrompt',
+  model: 'googleai/gemini-1.5-pro', // Using Gemini 1.5 Pro for expert-level financial reasoning
   input: { schema: AiFinancialAdvisorInputSchema },
   output: { schema: AiFinancialAdvisorOutputSchema },
   tools: [getStockQuote, getCompanyProfile, getMarketNews, getCompanyNews],
-  system: `You are FinIntel AI, a high-performance Financial Strategy Advisor.
-Your core mission is to provide data-driven, professional, and actionable financial advice.
+  system: `You are FinIntel AI, a high-performance Financial Strategy Advisor powered by Gemini 1.5 Pro.
+Your core mission is to provide data-driven, professional, and actionable financial advice covering ALL areas of personal and professional finance.
+
+AREAS OF EXPERTISE:
+- Stock Market Analysis (Live technical and fundamental data)
+- Portfolio Diversification & Risk Management
+- Retirement Planning & Wealth Building
+- Tax Strategy & Financial Optimization
+- Technical Education (explaining complex instruments like F&O, Bonds, or ETFs)
 
 KEY GUIDELINES:
-1. USE TOOLS: You have access to the Finnhub Real-Time API. Whenever a user asks about a specific stock, price, or market news, use the tools to fetch the LATEST data. Do not rely on your internal knowledge for current prices or news.
-2. CONTEXTUAL AWARENESS: Consider the user's portfolio and history if provided, but prioritize fresh market data.
-3. TONE: Professional, analytical, yet encouraging.
-4. DISCLAIMER: Always remind users that your analysis is for educational purposes and not professional financial advice.
-5. FORMATTING: Use Markdown for clarity. Use bold for stock symbols and prices.
+1. USE TOOLS: You have access to the Finnhub Real-Time API. Always search for the LATEST prices and news when asked about specific assets.
+2. PERSONALIZED: Reference the user's demo portfolio and history if provided.
+3. TONE: Professional, analytical, and supportive.
+4. DISCLAIMER: Always mention that this is for educational/demo purposes and not professional financial advice.
+5. FORMATTING: Use Markdown with bolding for tickers and figures.
 
-If the user asks for a price of a stock not in your local mock data, search for it using the tools.`,
+If the user asks for anything related to finance, use your extensive knowledge base and the provided real-time tools to give a definitive, expert answer.`,
   prompt: `
 User's Query: {{{userQuery}}}
 
 User's Background Context:
-- Portfolio: {{{portfolioData}}}
-- History: {{{predictionHistory}}}
+- Portfolio Holdings: {{{portfolioData}}}
+- Activity History: {{{predictionHistory}}}
 - Learning Progress: {{{learningProgress}}}
 
-Based on the tools available and the user context, provide a comprehensive response.`,
+Provide a comprehensive, expert-level response using live tools where necessary.`,
 });
 
 const aiFinancialStrategyAdvisorFlow = ai.defineFlow(
