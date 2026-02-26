@@ -18,7 +18,8 @@ import {
   CircleDollarSign,
   ChevronRight,
   Loader2,
-  Activity
+  Activity,
+  Zap
 } from "lucide-react"
 import { LineChart, Line, ResponsiveContainer } from "recharts"
 import { MOCK_USER, MOCK_STOCKS, MOCK_INDICES, MOCK_NEWS, Stock } from "@/lib/mock-data"
@@ -63,12 +64,7 @@ export default function DashboardOverview() {
           } catch (e) {
             // Silently fail individual stock fetch
           }
-          
-          const drift = (Math.random() - 0.5) * 0.5
-          return {
-            ...stock,
-            price: +(stock.price + drift).toFixed(2)
-          }
+          return stock;
         })
       )
       setLiveStocks(updatedStocks)
@@ -81,8 +77,20 @@ export default function DashboardOverview() {
 
   React.useEffect(() => {
     fetchLivePrices()
-    const interval = setInterval(() => fetchLivePrices(), 60000)
-    return () => clearInterval(interval)
+    const apiInterval = setInterval(() => fetchLivePrices(), 30000)
+    
+    // Smooth ticker simulation for "Real-Time" feel
+    const tickerInterval = setInterval(() => {
+      setLiveStocks(prev => prev.map(s => {
+        const drift = (Math.random() - 0.5) * (s.price * 0.0004)
+        return { ...s, price: +(s.price + drift).toFixed(2) }
+      }))
+    }, 4000)
+
+    return () => {
+      clearInterval(apiInterval)
+      clearInterval(tickerInterval)
+    }
   }, [])
 
   const navigateToExplore = (category: string) => {
@@ -169,7 +177,12 @@ export default function DashboardOverview() {
         {/* Stocks in Focus Section */}
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-600">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-headline font-bold">Stocks in Focus</h2>
+            <div className="flex items-center gap-3">
+              <h2 className="text-xl font-headline font-bold">Stocks in Focus</h2>
+              <Badge className="bg-primary/10 text-primary border-none text-[10px] font-black uppercase tracking-widest px-2 py-0.5">
+                <Zap className="size-3 mr-1 fill-primary inline" /> Live Terminal
+              </Badge>
+            </div>
             <div className="flex items-center gap-4">
                {isLoading && <Loader2 className="size-4 animate-spin text-primary" />}
                <Button variant="ghost" className="text-primary font-bold text-sm gap-2" onClick={() => navigateToExplore('Stocks')}>
@@ -226,9 +239,12 @@ export default function DashboardOverview() {
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex flex-col items-end">
-                            <div className="text-[15px] font-bold">₹{stock.price.toLocaleString()}</div>
+                            <div className="text-[15px] font-black tracking-tight text-foreground flex items-center gap-2">
+                              <span className="size-1.5 bg-primary rounded-full animate-pulse"></span>
+                              ₹{stock.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </div>
                             <div className={cn(
-                              "text-xs font-bold",
+                              "text-[10px] font-bold uppercase tracking-tighter",
                               stock.trend === "UP" ? "text-green-500" : "text-red-500"
                             )}>
                               {stock.trend === "UP" ? "+" : ""}{(stock.price * (stock.change / 100)).toFixed(2)} ({stock.change.toFixed(2)}%)

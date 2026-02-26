@@ -67,12 +67,7 @@ export default function TradePage() {
               }
             }
           } catch (e) { }
-          
-          const drift = (Math.random() - 0.5) * 0.5
-          return {
-            ...stock,
-            price: +(stock.price + drift).toFixed(2)
-          }
+          return stock;
         })
       )
       setLiveStocks(updatedStocks)
@@ -87,7 +82,19 @@ export default function TradePage() {
   React.useEffect(() => {
     fetchLivePrices()
     const interval = setInterval(() => fetchLivePrices(), 30000)
-    return () => clearInterval(interval)
+    
+    // Ticker simulation
+    const tickerInterval = setInterval(() => {
+      setLiveStocks(prev => prev.map(s => {
+        const drift = (Math.random() - 0.5) * (s.price * 0.0003)
+        return { ...s, price: +(s.price + drift).toFixed(2) }
+      }))
+    }, 5000)
+
+    return () => {
+      clearInterval(interval)
+      clearInterval(tickerInterval)
+    }
   }, [])
 
   React.useEffect(() => {
@@ -203,9 +210,12 @@ export default function TradePage() {
                             </td>
                             <td className="px-6 py-4 text-right">
                               <div className="flex flex-col items-end">
-                                <div className="text-[14px] font-bold">₹{stock.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                                <div className="text-[14px] font-black text-foreground flex items-center gap-2">
+                                  <span className="size-1 bg-primary rounded-full animate-pulse"></span>
+                                  ₹{stock.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </div>
                                 <div className={cn(
-                                  "text-[10px] font-bold flex items-center gap-1",
+                                  "text-[10px] font-bold flex items-center gap-1 uppercase tracking-tighter",
                                   stock.trend === "UP" ? "text-green-500" : "text-red-500"
                                 )}>
                                   {stock.trend === "UP" ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}

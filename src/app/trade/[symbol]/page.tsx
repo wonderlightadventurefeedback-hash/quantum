@@ -222,8 +222,10 @@ export default function StockDetailsPage() {
       return
     }
     
+    // Use the HIGH-FREQUENCY simulated price for "REAL-TIME" execution
+    const executionPrice = currentSimulatedPrice
+    const totalValue = orderQty * executionPrice
     const currentBalance = balance
-    const totalValue = orderQty * stock.price
 
     if (type === "BUY" && totalValue > currentBalance) {
       toast({ 
@@ -245,7 +247,7 @@ export default function StockDetailsPage() {
           symbol, 
           name: stock.name,
           quantity: increment(orderQty), 
-          averagePrice: stock.price, 
+          averagePrice: executionPrice, 
           lastUpdated: serverTimestamp() 
         }, { merge: true })
         
@@ -261,13 +263,13 @@ export default function StockDetailsPage() {
           symbol,
           name: stock.name,
           quantity: orderQty,
-          price: stock.price,
+          price: executionPrice,
           total: -totalValue,
           timestamp: serverTimestamp(),
           status: "COMPLETED"
         })
         
-        toast({ title: "Virtual Buy Success", description: `Added ${orderQty} shares of ${symbol} to your demo portfolio.` })
+        toast({ title: "Virtual Buy Success", description: `Added ${orderQty} shares of ${symbol} to your demo portfolio @ ₹${executionPrice}.` })
       } else {
         const snap = await getDoc(holdingRef);
         const currentQty = snap.exists() ? snap.data().quantity : 0
@@ -292,13 +294,13 @@ export default function StockDetailsPage() {
           symbol,
           name: stock.name,
           quantity: orderQty,
-          price: stock.price,
+          price: executionPrice,
           total: totalValue,
           timestamp: serverTimestamp(),
           status: "COMPLETED"
         })
         
-        toast({ title: "Virtual Sell Success", description: `Sold ${orderQty} shares of ${symbol}. Funds added to demo balance.` })
+        toast({ title: "Virtual Sell Success", description: `Sold ${orderQty} shares of ${symbol} @ ₹${executionPrice}.` })
       }
     } catch (e: any) {
       toast({ title: "Trade Error", description: e.message || "An error occurred", variant: "destructive" })
@@ -433,7 +435,10 @@ export default function StockDetailsPage() {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
               <div className="space-y-1">
                 <div className="flex items-baseline gap-3">
-                  <span className="text-6xl font-bold font-headline tracking-tighter">₹{currentSimulatedPrice.toFixed(2)}</span>
+                  <span className="text-6xl font-bold font-headline tracking-tighter flex items-center gap-4">
+                    <span className="size-3 bg-primary rounded-full animate-pulse"></span>
+                    ₹{currentSimulatedPrice.toFixed(2)}
+                  </span>
                   <span className="text-xl font-medium text-muted-foreground">INR</span>
                 </div>
                 <div className={cn("flex items-center gap-2 text-lg font-bold", isUp ? "text-green-500" : "text-red-500")}>
@@ -624,7 +629,7 @@ export default function StockDetailsPage() {
                 </div>
                 <div className="text-center py-4 bg-muted/20 rounded-2xl border border-border/50">
                   <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest block mb-1">Estimated Cost</span>
-                  <span className="text-xl font-black text-foreground">₹{(parseFloat(qty) * stock.price || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                  <span className="text-xl font-black text-foreground">₹{(parseFloat(qty) * currentSimulatedPrice || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                 </div>
                 <div className="mt-4 p-6 rounded-2xl bg-primary/10 border border-primary/20 shadow-sm">
                   <div className="text-[10px] font-black uppercase text-primary tracking-[0.2em] mb-1.5 flex items-center gap-2">
