@@ -1,7 +1,8 @@
+
 'use server';
 /**
- * @fileOverview An AI financial advisor chatbot powered by OpenAI GPT-4o (ChatGPT) 
- * that provides personalized advice based on real-time market data from Finnhub.
+ * @fileOverview An AI financial advisor chatbot powered by high-performance LLM intelligence
+ * (Ollama/OpenAI compatible) that provides personalized advice based on real-time market data.
  *
  * - aiFinancialStrategyAdvisor - A function that handles the AI financial advisor chat process.
  * - AiFinancialAdvisorInput - The input type for the aiFinancialStrategyAdvisor function.
@@ -74,22 +75,25 @@ const aiFinancialStrategyAdvisorFlow = ai.defineFlow(
     outputSchema: AiFinancialAdvisorOutputSchema,
   },
   async (input) => {
-    const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+    // Priority: Ollama/OpenAI Key provided by user
+    const API_KEY = process.env.OPENAI_API_KEY;
 
-    if (!OPENAI_API_KEY) {
-      return { response: "I'm currently missing my OpenAI Intelligence Key. To activate ChatGPT reasoning, please add **OPENAI_API_KEY** to your Vercel Environment Variables. In the meantime, I can still provide real-time data visualization on your dashboard!" };
+    if (!API_KEY) {
+      return { response: "I'm missing my intelligence credentials. Please ensure the API Key is set in the environment variables to activate my financial reasoning engine." };
     }
 
     try {
-      // Initialize OpenAI client inside the flow to prevent module-level evaluation crashes
+      // Initialize client inside flow to avoid startup crashes if key is missing
       const openai = new OpenAI({
-        apiKey: OPENAI_API_KEY,
+        apiKey: API_KEY,
+        // If using a specific Ollama endpoint, baseURL would go here. 
+        // Defaulting to OpenAI compatible structure.
       });
 
       const messages: any[] = [
         {
           role: 'system',
-          content: `You are FinIntel AI, a high-performance Financial Strategy Advisor powered by ChatGPT (GPT-4o).
+          content: `You are FinIntel AI, a high-performance Financial Strategy Advisor powered by advanced LLM intelligence.
 Your core mission is to provide data-driven, professional, and actionable financial advice covering ALL areas of personal and professional finance.
 
 AREAS OF EXPERTISE:
@@ -100,7 +104,7 @@ AREAS OF EXPERTISE:
 - Technical Education (explaining complex instruments like F&O, Bonds, or ETFs)
 
 KEY GUIDELINES:
-1. USE TOOLS: You have access to real-time market data. Always check latest prices if asked about symbols.
+1. USE TOOLS: You have access to real-time market data via Finnhub. Always check latest prices if asked about symbols.
 2. PERSONALIZED: Reference the user's portfolio context: ${input.portfolioData || 'No portfolio data provided'}.
 3. TONE: Professional, analytical, and supportive.
 4. DISCLAIMER: Always mention that this is for educational purposes and not professional financial advice.
@@ -135,9 +139,22 @@ KEY GUIDELINES:
               properties: { category: { type: 'string', enum: ['general', 'crypto'] } }
             }
           }
+        },
+        {
+          type: 'function',
+          function: {
+            name: 'get_company_profile',
+            description: 'Get company profile and industry information',
+            parameters: {
+              type: 'object',
+              properties: { symbol: { type: 'string' } },
+              required: ['symbol']
+            }
+          }
         }
       ];
 
+      // Use a standard robust model like gpt-4o for tool calling compatibility
       const response = await openai.chat.completions.create({
         model: 'gpt-4o',
         messages,
@@ -147,6 +164,7 @@ KEY GUIDELINES:
 
       const responseMessage = response.choices[0].message;
 
+      // Handle tool calls if the model decides to fetch live data
       if (responseMessage.tool_calls) {
         for (const toolCall of responseMessage.tool_calls) {
           const functionName = toolCall.function.name;
@@ -157,6 +175,8 @@ KEY GUIDELINES:
             toolResult = await getStockQuote(functionArgs.symbol);
           } else if (functionName === 'get_market_news') {
             toolResult = await getMarketNews(functionArgs.category);
+          } else if (functionName === 'get_company_profile') {
+            toolResult = await getCompanyProfile(functionArgs.symbol);
           }
 
           messages.push(responseMessage);
@@ -179,7 +199,7 @@ KEY GUIDELINES:
       return { response: responseMessage.content || "I'm here to help with your financial questions." };
     } catch (error: any) {
       console.error("Advisor Flow Error:", error);
-      return { response: "I encountered an error while communicating with ChatGPT. Please verify that your **OPENAI_API_KEY** is valid and has sufficient credits." };
+      return { response: "I encountered an error while communicating with my intelligence layer. Please check your API configuration or try again shortly." };
     }
   }
 );
