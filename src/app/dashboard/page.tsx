@@ -33,6 +33,10 @@ export default function DashboardOverview() {
     })
   }
 
+  const navigateToExplore = (category: string) => {
+    router.push(`/explore?category=${encodeURIComponent(category)}`)
+  }
+
   return (
     <DashboardShell>
       <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -80,7 +84,7 @@ export default function DashboardOverview() {
               <button 
                 key={cat.label}
                 className="group flex flex-col items-center gap-3 p-6 rounded-2xl glass-card transition-all hover:border-primary/50"
-                onClick={() => handleAction(`Exploring ${cat.label}`, "Fetching best options for you...")}
+                onClick={() => navigateToExplore(cat.label)}
               >
                 <div className={cn("size-14 rounded-full flex items-center justify-center transition-transform group-hover:scale-110", cat.bg)}>
                   <cat.icon className={cn("size-7", cat.color)} />
@@ -106,7 +110,7 @@ export default function DashboardOverview() {
             
             <Card className="glass-card border-none shadow-none bg-transparent">
               <div className="space-y-4">
-                {MOCK_STOCKS.map((stock) => (
+                {MOCK_STOCKS.filter(s => s.category === "Stocks").slice(0, 5).map((stock) => (
                   <div 
                     key={stock.symbol} 
                     className="flex items-center justify-between p-4 rounded-xl hover:bg-muted/20 transition-colors cursor-pointer border border-transparent hover:border-border"
@@ -132,7 +136,7 @@ export default function DashboardOverview() {
                     </div>
                   </div>
                 ))}
-                <Button variant="ghost" className="w-full text-primary font-bold text-sm gap-2">
+                <Button variant="ghost" className="w-full text-primary font-bold text-sm gap-2" onClick={() => navigateToExplore('Stocks')}>
                   View more stocks <ArrowRight className="size-4" />
                 </Button>
               </div>
@@ -187,7 +191,7 @@ export default function DashboardOverview() {
               <h2 className="text-2xl font-headline font-bold">Explore Global Opportunities</h2>
               <p className="text-muted-foreground max-w-md">Access 50+ global markets and invest in world-leading companies with zero commission for the first 30 days.</p>
             </div>
-            <Button size="lg" className="rounded-full px-8 gap-2 font-bold shadow-xl shadow-primary/20">
+            <Button size="lg" className="rounded-full px-8 gap-2 font-bold shadow-xl shadow-primary/20" onClick={() => navigateToExplore('US Stocks')}>
               Open Global Account <ArrowRight className="size-4" />
             </Button>
           </CardContent>

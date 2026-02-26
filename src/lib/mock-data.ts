@@ -15,11 +15,28 @@ export const MOCK_INDICES = [
 ];
 
 export const MOCK_STOCKS = [
-  { symbol: "AAPL", name: "Apple Inc.", price: 189.43, change: 1.25, trend: "UP" },
-  { symbol: "TSLA", name: "Tesla, Inc.", price: 238.12, change: -2.4, trend: "DOWN" },
-  { symbol: "NVDA", name: "NVIDIA Corp.", price: 485.50, change: 4.15, trend: "UP" },
-  { symbol: "MSFT", name: "Microsoft Corp.", price: 374.12, change: 0.85, trend: "UP" },
-  { symbol: "GOOGL", name: "Alphabet Inc.", price: 142.10, change: -0.15, trend: "DOWN" },
+  { symbol: "AAPL", name: "Apple Inc.", price: 189.43, change: 1.25, trend: "UP", category: "Stocks" },
+  { symbol: "TSLA", name: "Tesla, Inc.", price: 238.12, change: -2.4, trend: "DOWN", category: "Stocks" },
+  { symbol: "NVDA", name: "NVIDIA Corp.", price: 485.50, change: 4.15, trend: "UP", category: "Stocks" },
+  { symbol: "MSFT", name: "Microsoft Corp.", price: 374.12, change: 0.85, trend: "UP", category: "Stocks" },
+  { symbol: "GOOGL", name: "Alphabet Inc.", price: 142.10, change: -0.15, trend: "DOWN", category: "Stocks" },
+  { symbol: "AMZN", name: "Amazon.com", price: 175.35, change: 1.12, trend: "UP", category: "US Stocks" },
+  { symbol: "META", name: "Meta Platforms", price: 485.58, change: 2.34, trend: "UP", category: "US Stocks" },
+  { symbol: "BRK.B", name: "Berkshire Hathaway", price: 405.12, change: -0.45, trend: "DOWN", category: "US Stocks" },
+];
+
+export const MOCK_MUTUAL_FUNDS = [
+  { id: "mf1", name: "BlueChip Growth Fund", nav: 145.20, returns: "18.5%", risk: "High", category: "Mutual Funds" },
+  { id: "mf2", name: "Balanced Hybrid Fund", nav: 82.45, returns: "12.2%", risk: "Moderate", category: "Mutual Funds" },
+  { id: "mf3", name: "Tax Saver ELSS", nav: 210.10, returns: "22.1%", risk: "High", category: "Mutual Funds" },
+  { id: "mf4", name: "Liquid Debt Fund", nav: 34.50, returns: "6.8%", risk: "Low", category: "Mutual Funds" },
+];
+
+export const MOCK_FIXED_DEPOSITS = [
+  { id: "fd1", bank: "HDFC Bank", rate: "7.1%", tenure: "1-3 Years", category: "Fixed Deposits" },
+  { id: "fd2", bank: "ICICI Bank", rate: "7.25%", tenure: "2-5 Years", category: "Fixed Deposits" },
+  { id: "fd3", bank: "SBI Bank", rate: "6.8%", tenure: "Above 5 Years", category: "Fixed Deposits" },
+  { id: "fd4", bank: "Axis Bank", rate: "7.4%", tenure: "Standard", category: "Fixed Deposits" },
 ];
 
 export const MOCK_LEARNING_MODULES = [
