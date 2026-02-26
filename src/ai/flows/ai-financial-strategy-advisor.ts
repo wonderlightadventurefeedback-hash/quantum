@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview QuantumF AI Financial Advisor flow powered by RapidAPI ChatGPT integration.
@@ -52,7 +53,7 @@ const aiFinancialStrategyAdvisorFlow = ai.defineFlow(
     try {
       const marketNews = await getMarketContext();
 
-      const systemPrompt = `You are QuantumF AI, a high-performance Financial Strategy Advisor directly connected to OpenAI intelligence. 
+      const systemPrompt = `You are QuantumF AI, a high-performance Financial Strategy Advisor directly connected to OpenAI intelligence via ChatGPT. 
 Your mission is to provide professional, data-driven financial advice for QuantumF platform users.
 
 REAL-TIME CONTEXT:

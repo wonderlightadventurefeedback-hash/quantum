@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -7,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Send, Bot, User, Sparkles, Loader2, Zap, Clock, Info } from "lucide-react"
+import { Send, Bot, User, Sparkles, Loader2, Zap, Clock, Info, TrendingUp } from "lucide-react"
 import { aiFinancialStrategyAdvisor } from "@/ai/flows/ai-financial-strategy-advisor"
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase, addDocumentNonBlocking } from "@/firebase"
 import { collection, doc, query, orderBy, limit, serverTimestamp } from "firebase/firestore"
@@ -54,7 +55,7 @@ export default function AdvisorPage() {
       setMessages(history.map(m => ({ role: m.role, content: m.content, timestamp: m.timestamp })))
     } else if (history && history.length === 0 && !isHistoryLoading) {
       setMessages([
-        { role: 'assistant', content: "Hello! I am **QuantumF AI**, your direct connection to OpenAI's advanced intelligence. I provide expert strategies for stock markets, crypto, and personal finance. How can I help you optimize your wealth today?" }
+        { role: 'assistant', content: "Welcome to **QuantumF AI**. I am directly connected to OpenAI through ChatGPT to provide expert answers for all stock market and financial questions. How can I help you optimize your wealth today?" }
       ])
     }
   }, [history, isHistoryLoading])
@@ -116,7 +117,7 @@ export default function AdvisorPage() {
   return (
     <DashboardShell>
       <div className="h-[calc(100vh-12rem)] flex flex-col space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-        <div className="flex items-center justify-between px-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-4">
           <div className="space-y-1">
             <div className="flex items-center gap-3">
               <h1 className="text-3xl font-headline font-bold">QuantumF AI Advisor</h1>
@@ -125,10 +126,10 @@ export default function AdvisorPage() {
               </span>
             </div>
             <p className="text-muted-foreground text-sm max-w-2xl leading-relaxed">
-              Directly connected to OpenAI through ChatGPT to provide professional, data-driven answers for all stock market and financial inquiries.
+              Directly connected to OpenAI through ChatGPT to provide expert answers for all stock market and financial questions.
             </p>
           </div>
-          <div className="hidden lg:flex items-center gap-2 bg-green-500/10 border border-green-500/20 px-4 py-2 rounded-xl">
+          <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/20 px-4 py-2 rounded-xl">
             <span className="size-2 bg-green-500 rounded-full animate-pulse"></span>
             <span className="text-[10px] font-bold uppercase tracking-widest text-green-600">Intelligence Sync: Active</span>
           </div>
@@ -136,33 +137,33 @@ export default function AdvisorPage() {
 
         <Card className="flex-1 glass-card overflow-hidden flex flex-col border-none shadow-2xl relative">
           <ScrollArea className="flex-1 px-6 py-10 lg:px-12">
-            <div className="space-y-10 max-w-5xl mx-auto">
+            <div className="space-y-8 max-w-5xl mx-auto">
               {isHistoryLoading && messages.length === 0 ? (
                 <div className="h-full flex items-center justify-center py-20">
                   <Loader2 className="size-8 animate-spin text-primary" />
                 </div>
               ) : messages.map((msg, i) => (
                 <div key={i} className={cn(
-                  "flex gap-6 animate-in fade-in slide-in-from-bottom-2",
+                  "flex gap-4 animate-in fade-in slide-in-from-bottom-2",
                   msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'
                 )}>
                   <Avatar className={cn(
-                    "size-12 border-2 shrink-0 shadow-lg",
+                    "size-10 border-2 shrink-0 shadow-lg mt-1",
                     msg.role === 'assistant' ? 'border-primary/20 bg-primary' : 'border-muted bg-muted'
                   )}>
                     {msg.role === 'assistant' ? (
-                      <Bot className="text-white size-6" />
+                      <Bot className="text-white size-5" />
                     ) : (
                       <AvatarImage src={user?.photoURL || MOCK_USER.avatar} />
                     )}
                     <AvatarFallback className="bg-transparent">
-                      {msg.role === 'assistant' ? <Bot className="text-white size-6" /> : <User className="size-6" />}
+                      {msg.role === 'assistant' ? <Bot className="text-white size-5" /> : <User className="size-5" />}
                     </AvatarFallback>
                   </Avatar>
                   <div className={cn(
-                    "max-w-[80%] rounded-[2.5rem] px-8 py-6 text-[15px] leading-relaxed shadow-sm",
+                    "max-w-[85%] md:max-w-[70%] rounded-[2rem] px-6 py-4 text-[15px] leading-relaxed shadow-sm",
                     msg.role === 'user' 
-                      ? 'bg-primary text-primary-foreground rounded-tr-none' 
+                      ? 'bg-primary text-primary-foreground rounded-tr-none ml-auto' 
                       : 'bg-card border border-border/50 rounded-tl-none prose prose-sm dark:prose-invert max-w-none'
                   )}>
                     {msg.content.split('\n').map((line, idx) => (
@@ -170,8 +171,8 @@ export default function AdvisorPage() {
                     ))}
                     {msg.timestamp && (
                       <div className={cn(
-                        "mt-4 pt-4 border-t flex items-center gap-1.5 text-[9px] font-black uppercase opacity-40",
-                        msg.role === 'user' ? 'border-primary-foreground/10' : 'border-border'
+                        "mt-2 pt-2 border-t flex items-center gap-1.5 text-[9px] font-black uppercase opacity-40",
+                        msg.role === 'user' ? 'border-primary-foreground/10 justify-end' : 'border-border'
                       )}>
                         <Clock className="size-2" />
                         {formatDistanceToNow(msg.timestamp.toDate(), { addSuffix: true })}
@@ -181,11 +182,11 @@ export default function AdvisorPage() {
                 </div>
               ))}
               {isLoading && (
-                <div className="flex gap-6 animate-pulse">
-                  <Avatar className="size-12 border-2 border-primary/20 bg-primary shrink-0 shadow-lg">
-                    <Bot className="text-white size-6" />
+                <div className="flex gap-4 animate-pulse">
+                  <Avatar className="size-10 border-2 border-primary/20 bg-primary shrink-0 shadow-lg mt-1">
+                    <Bot className="text-white size-5" />
                   </Avatar>
-                  <div className="bg-card border border-border/50 rounded-[2.5rem] rounded-tl-none px-8 py-6 flex items-center gap-4">
+                  <div className="bg-card border border-border/50 rounded-[2rem] rounded-tl-none px-6 py-4 flex items-center gap-4">
                     <div className="flex gap-1.5">
                       <span className="size-2 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]"></span>
                       <span className="size-2 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]"></span>
@@ -200,7 +201,7 @@ export default function AdvisorPage() {
           </ScrollArea>
 
           {/* Quick Suggestions */}
-          <div className="px-12 py-4 border-t border-border/50 flex gap-3 overflow-x-auto no-scrollbar bg-muted/5 backdrop-blur-sm">
+          <div className="px-6 py-4 border-t border-border/50 flex gap-3 overflow-x-auto no-scrollbar bg-muted/5 backdrop-blur-sm">
             {suggestions.map((q) => (
               <Button 
                 key={q} 
@@ -215,13 +216,13 @@ export default function AdvisorPage() {
           </div>
 
           {/* Input Area */}
-          <div className="p-10 pt-4 bg-muted/10 border-t border-border/50 backdrop-blur-md">
+          <div className="p-6 md:p-8 pt-4 bg-muted/10 border-t border-border/50 backdrop-blur-md">
             <form onSubmit={handleSendMessage} className="relative max-w-5xl mx-auto">
               <Input 
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask about markets, portfolio strategies, or crypto..." 
-                className="pr-16 h-16 bg-background border-border/50 rounded-2xl focus-visible:ring-primary/40 text-lg shadow-2xl shadow-black/5"
+                className="pr-16 h-16 bg-background border-border/50 rounded-2xl focus-visible:ring-primary/40 text-lg shadow-xl shadow-black/5"
               />
               <Button 
                 type="submit" 
