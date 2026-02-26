@@ -26,7 +26,9 @@ import {
   Zap,
   Timer,
   Trophy,
-  AlertCircle
+  AlertCircle,
+  ArrowUpCircle,
+  ArrowDownCircle
 } from "lucide-react"
 import { 
   Area, 
@@ -77,13 +79,16 @@ export default function StockDetailsPage() {
   const [userBalance, setUserBalance] = React.useState<number>(0)
   const [isBuying, setIsBuying] = React.useState(false)
 
-  // Live Prediction Mode State
+  // Live Prediction Mode State (Pocket Option Style)
   const [isLiveMode, setIsLiveMode] = React.useState(false)
   const [isTradingLive, setIsTradingLive] = React.useState(false)
-  const [prediction, setPrediction] = React.useState<"UP" | "DOWN" | null>(null)
+  const [prediction, setPrediction] = React.useState<"HIGHER" | "LOWER" | null>(null)
+  const [entryPrice, setEntryPrice] = React.useState<number>(0)
   const [tradeTimer, setTradeTimer] = React.useState(0)
   const [tradeResult, setTradeResult] = React.useState<"WIN" | "LOSS" | null>(null)
   const [tradeAmount, setTradeAmount] = React.useState("100")
+  const TRADE_DURATION = 15; // 15 seconds for fast demo experience
+  const PAYOUT_RATIO = 1.8; // 80% profit
 
   const isUp = stock.change >= 0;
   const chartData = React.useMemo(() => isMounted ? generateAreaChartData(stock.price, isUp) : [], [stock.price, isUp, isMounted])
@@ -154,39 +159,57 @@ export default function StockDetailsPage() {
         await updateDoc(userRef, { balance: increment(-totalCost) })
         setUserBalance(prev => prev - totalCost)
       } else {
+        const snap = await getDoc(holdingRef);
+        if (!snap.exists() || snap.data().quantity < orderQty) {
+          throw new Error("Insufficient holdings");
+        }
         await updateDoc(holdingRef, { quantity: increment(-orderQty), lastUpdated: serverTimestamp() })
         await updateDoc(userRef, { balance: increment(totalCost) })
         setUserBalance(prev => prev + totalCost)
       }
       toast({ title: `${type} Successful`, description: `${orderQty} units of ${symbol} processed.` })
-    } catch (e) {
-      toast({ title: "Trade Failed", variant: "destructive" })
+    } catch (e: any) {
+      toast({ title: "Trade Failed", description: e.message || "An error occurred", variant: "destructive" })
     } finally {
       setIsBuying(false)
     }
   }
 
-  // Live Trade HUD Logic
-  const executeLiveTrade = async (dir: "UP" | "DOWN") => {
+  // Pocket Option Style Live Trade Logic
+  const executeLiveTrade = async (dir: "HIGHER" | "LOWER") => {
+    if (!db || !user || isTradingLive) return
+    
     const amount = parseFloat(tradeAmount)
+    if (amount <= 0 || isNaN(amount)) {
+      toast({ title: "Invalid Amount", description: "Please enter a valid trade amount.", variant: "destructive" })
+      return
+    }
+
     if (amount > userBalance) {
       toast({ title: "Insufficient Balance", description: "Increase your demo funds to trade.", variant: "destructive" })
       return
     }
-    if (isTradingLive) return
 
     setIsTradingLive(true)
     setPrediction(dir)
-    setTradeTimer(15) // 15 second trade
+    setEntryPrice(stock.price)
+    setTradeTimer(TRADE_DURATION)
     setTradeResult(null)
 
-    const userRef = doc(db!, 'users', user!.uid)
-    await updateDoc(userRef, { balance: increment(-amount) })
-    setUserBalance(prev => prev - amount)
+    // Deduct initial stake
+    const userRef = doc(db, 'users', user.uid)
+    try {
+      await updateDoc(userRef, { balance: increment(-amount) })
+      setUserBalance(prev => prev - amount)
+    } catch (err) {
+      setIsTradingLive(false)
+      toast({ title: "Execution Error", variant: "destructive" })
+      return
+    }
 
     toast({
-      title: "Live Trade Executed",
-      description: `Predicted ${dir} for ${symbol}. Settling in 15s...`,
+      title: "Trade Open",
+      description: `Predicted ${dir} for ${symbol} @ ${stock.price.toFixed(2)}`,
     })
   }
 
@@ -195,9 +218,17 @@ export default function StockDetailsPage() {
     if (isTradingLive && tradeTimer > 0) {
       interval = setInterval(() => setTradeTimer(t => t - 1), 1000)
     } else if (isTradingLive && tradeTimer === 0) {
-      // Settle Trade
-      const isWin = Math.random() > 0.45 // 55% win rate for demo feel
-      const winAmount = parseFloat(tradeAmount) * 1.8 // 80% profit
+      // Settle Trade logic
+      // In a real app, we'd fetch the exact price at T+15
+      // For demo, we simulate a slight movement from entry price
+      const drift = (Math.random() - 0.45) * 2; // Bias slightly to win for demo feel
+      const finalPrice = entryPrice + drift;
+      
+      const isHigher = finalPrice > entryPrice;
+      const isWin = (prediction === "HIGHER" && isHigher) || (prediction === "LOWER" && !isHigher);
+      
+      const amount = parseFloat(tradeAmount)
+      const winAmount = amount * PAYOUT_RATIO
       
       setTradeResult(isWin ? "WIN" : "LOSS")
       setIsTradingLive(false)
@@ -206,19 +237,19 @@ export default function StockDetailsPage() {
         updateDoc(doc(db, 'users', user.uid), { balance: increment(winAmount) })
         setUserBalance(prev => prev + winAmount)
         toast({
-          title: "TRADE WON! 🎉",
-          description: `₹${winAmount.toFixed(2)} credited to your demo account.`,
+          title: "PROFIT! +₹" + (winAmount - amount).toFixed(2),
+          description: "Market settled at " + finalPrice.toFixed(2),
         })
       } else {
         toast({
           variant: "destructive",
-          title: "Trade Expired",
-          description: "Market moved against your prediction.",
+          title: "TRADE EXPIRED",
+          description: "Market settled against your prediction at " + finalPrice.toFixed(2),
         })
       }
     }
     return () => clearInterval(interval)
-  }, [isTradingLive, tradeTimer, tradeAmount, db, user, toast])
+  }, [isTradingLive, tradeTimer, tradeAmount, db, user, toast, entryPrice, prediction, PAYOUT_RATIO])
 
   if (!isMounted) return null;
 
@@ -229,7 +260,7 @@ export default function StockDetailsPage() {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
           <div className="flex items-center gap-4">
-            <div className="size-14 rounded-2xl bg-foreground flex items-center justify-center text-background text-2xl font-black">
+            <div className="size-14 rounded-2xl bg-foreground flex items-center justify-center text-background text-2xl font-black shadow-xl">
               {symbol[0]}
             </div>
             <div>
@@ -238,27 +269,27 @@ export default function StockDetailsPage() {
                 <MoreVertical className="size-5 text-muted-foreground cursor-pointer" />
               </div>
               <div className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-                NASDAQ: {symbol}
+                EXCHANGE: {symbol}
               </div>
             </div>
           </div>
           <div className="flex items-center gap-6">
-            <div className="flex items-center space-x-2 bg-muted/50 px-4 py-2 rounded-2xl border border-border/50">
+            <div className="flex items-center space-x-3 bg-muted/50 px-5 py-2.5 rounded-2xl border border-border/50 shadow-sm transition-all hover:border-primary/30">
               <Switch 
                 id="live-mode" 
                 checked={isLiveMode} 
                 onCheckedChange={setIsLiveMode}
               />
-              <Label htmlFor="live-mode" className="text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                <Zap className={cn("size-3", isLiveMode ? "text-primary fill-primary" : "text-muted-foreground")} />
+              <Label htmlFor="live-mode" className="text-xs font-black uppercase tracking-widest flex items-center gap-2 cursor-pointer">
+                <Zap className={cn("size-4", isLiveMode ? "text-primary fill-primary animate-pulse" : "text-muted-foreground")} />
                 Live Predict
               </Label>
             </div>
             <Button variant="outline" className="rounded-full gap-2 border-2 px-6 h-11 font-bold">
-              <Plus className="size-4" /> Follow
+              <Plus className="size-4" /> Watchlist
             </Button>
             <Button className="rounded-full gap-2 px-8 h-11 font-bold shadow-lg shadow-primary/20" onClick={() => router.push('/trade')}>
-              Explore
+              All Assets
             </Button>
           </div>
         </div>
@@ -268,8 +299,8 @@ export default function StockDetailsPage() {
           <div className="lg:col-span-2 space-y-6">
             <div className="space-y-1">
               <div className="flex items-baseline gap-3">
-                <span className="text-5xl font-bold font-headline">{stock.price.toFixed(2)}</span>
-                <span className="text-xl font-medium text-muted-foreground">USD</span>
+                <span className="text-5xl font-bold font-headline">₹{stock.price.toFixed(2)}</span>
+                <span className="text-xl font-medium text-muted-foreground">INR</span>
               </div>
               <div className={cn(
                 "flex items-center gap-2 text-lg font-bold",
@@ -282,7 +313,7 @@ export default function StockDetailsPage() {
             </div>
 
             {/* Main Chart Area with Live Trade HUD */}
-            <div className="relative group rounded-[2.5rem] overflow-hidden bg-card/30 border border-border/50">
+            <div className="relative group rounded-[2.5rem] overflow-hidden bg-card/30 border border-border/50 shadow-2xl backdrop-blur-sm">
               {/* Timeframe Selector */}
               <div className="flex border-b border-border/50 px-6 bg-muted/20">
                 {["1D", "5D", "1M", "6M", "YTD", "1Y", "5Y", "Max"].map((t) => (
@@ -301,7 +332,7 @@ export default function StockDetailsPage() {
                 ))}
               </div>
 
-              <div className="h-[450px] w-full p-8 relative">
+              <div className="h-[480px] w-full p-8 relative">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <defs>
@@ -319,6 +350,7 @@ export default function StockDetailsPage() {
                       tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
                     />
                     <ReferenceLine y={prevClose} stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3" />
+                    {isTradingLive && <ReferenceLine y={entryPrice} stroke="#f59e0b" strokeWidth={2} label={{ position: 'right', value: 'ENTRY', fill: '#f59e0b', fontSize: 10, fontWeight: 'bold' }} />}
                     <Tooltip 
                       contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' }}
                       itemStyle={{ color: isUp ? '#22c55e' : '#ef4444', fontWeight: 'bold' }}
@@ -335,62 +367,75 @@ export default function StockDetailsPage() {
                   </AreaChart>
                 </ResponsiveContainer>
 
-                {/* Live Trade HUD Overlay */}
+                {/* Pocket Option Style Live Trade HUD Overlay */}
                 {isLiveMode && (
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <Card className="glass-card w-full max-w-sm mx-auto p-6 shadow-2xl pointer-events-auto border-primary/20 bg-background/40 backdrop-blur-2xl rounded-[2rem] animate-in zoom-in-95">
-                      <div className="space-y-6">
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none p-6">
+                    <Card className="glass-card w-full max-w-sm mx-auto p-8 shadow-[0_20px_50px_rgba(0,0,0,0.3)] pointer-events-auto border-primary/20 bg-background/60 backdrop-blur-3xl rounded-[2.5rem] animate-in zoom-in-95 duration-500">
+                      <div className="space-y-8">
                         <div className="flex items-center justify-between">
-                          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 gap-1 px-3">
-                            <Zap className="size-3 fill-primary" /> Live Demo Trade
+                          <Badge className="bg-primary/20 text-primary border-none gap-1.5 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest">
+                            <Zap className="size-3 fill-primary" /> Live Speculation
                           </Badge>
-                          <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                            <Timer className="size-3 text-primary" /> {isTradingLive ? `${tradeTimer}s` : "Idle"}
+                          <div className="flex items-center gap-2 text-xs font-black text-muted-foreground uppercase tracking-widest bg-muted/30 px-3 py-1 rounded-full">
+                            <Timer className="size-3.5 text-primary" /> {isTradingLive ? `${tradeTimer}s` : "Waiting"}
                           </div>
                         </div>
 
                         {isTradingLive ? (
-                          <div className="space-y-4 py-4">
-                            <div className="flex justify-between items-center text-sm font-bold">
-                              <span>Settling {prediction} Prediction</span>
-                              <span className="text-primary">{Math.round((tradeTimer/15)*100)}%</span>
+                          <div className="space-y-6 py-6 text-center">
+                            <div className="space-y-2">
+                              <h4 className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em]">Pending Settlement</h4>
+                              <div className="text-3xl font-black font-headline">
+                                {prediction === "HIGHER" ? "HIGHER" : "LOWER"}
+                              </div>
                             </div>
-                            <Progress value={(tradeTimer/15)*100} className="h-2 bg-muted/50" />
-                            <p className="text-[10px] text-center text-muted-foreground uppercase tracking-widest">
-                              Entering @ {stock.price.toFixed(2)} USD
-                            </p>
+                            <Progress value={(tradeTimer/TRADE_DURATION)*100} className="h-2.5 bg-muted/50 rounded-full overflow-hidden" />
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="p-3 bg-muted/20 rounded-2xl">
+                                <span className="block text-[8px] font-black text-muted-foreground uppercase mb-1 tracking-tighter">Entry Price</span>
+                                <span className="font-bold text-sm">₹{entryPrice.toFixed(2)}</span>
+                              </div>
+                              <div className="p-3 bg-muted/20 rounded-2xl">
+                                <span className="block text-[8px] font-black text-muted-foreground uppercase mb-1 tracking-tighter">Current Price</span>
+                                <span className="font-bold text-sm">₹{stock.price.toFixed(2)}</span>
+                              </div>
+                            </div>
                           </div>
                         ) : (
-                          <div className="space-y-6">
-                            <div className="space-y-2">
-                              <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                                <span>Entry Amount</span>
-                                <span>Bal: ₹{userBalance.toLocaleString()}</span>
+                          <div className="space-y-8">
+                            <div className="space-y-4">
+                              <div className="flex justify-between items-center px-1">
+                                <span className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.1em]">Trade Amount</span>
+                                <span className="text-[10px] font-bold text-primary">Demo Bal: ₹{userBalance.toLocaleString()}</span>
                               </div>
                               <div className="relative">
-                                <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-muted-foreground">₹</span>
+                                <span className="absolute left-5 top-1/2 -translate-y-1/2 font-black text-muted-foreground opacity-50">₹</span>
                                 <Input 
                                   type="number" 
                                   value={tradeAmount} 
                                   onChange={e => setTradeAmount(e.target.value)}
-                                  className="pl-8 h-12 bg-background border-none rounded-xl text-lg font-bold focus-visible:ring-primary/20"
+                                  className="pl-10 h-14 bg-muted/30 border-none rounded-2xl text-xl font-black focus-visible:ring-2 focus-visible:ring-primary/20 transition-all shadow-inner"
                                 />
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 bg-primary/10 text-primary text-[10px] font-black px-2 py-1 rounded-md">
+                                  PAYOUT: 180%
+                                </div>
                               </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+                            
+                            <div className="grid grid-cols-2 gap-5">
                               <Button 
-                                onClick={() => executeLiveTrade("UP")}
-                                className="h-20 flex-col gap-2 rounded-2xl bg-green-500 hover:bg-green-600 shadow-lg shadow-green-500/20"
+                                onClick={() => executeLiveTrade("HIGHER")}
+                                className="h-24 flex-col gap-2 rounded-[1.5rem] bg-green-500 hover:bg-green-600 shadow-[0_10px_30px_rgba(34,197,94,0.3)] border-none transition-transform hover:scale-105 active:scale-95"
                               >
-                                <TrendingUp className="size-6" />
-                                <span className="font-bold">UP</span>
+                                <ArrowUpCircle className="size-8" />
+                                <span className="font-black text-sm tracking-widest uppercase">Higher</span>
                               </Button>
                               <Button 
-                                onClick={() => executeLiveTrade("DOWN")}
-                                className="h-20 flex-col gap-2 rounded-2xl bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/20"
+                                onClick={() => executeLiveTrade("LOWER")}
+                                className="h-24 flex-col gap-2 rounded-[1.5rem] bg-red-500 hover:bg-red-600 shadow-[0_10px_30px_rgba(239,68,68,0.3)] border-none transition-transform hover:scale-105 active:scale-95"
                               >
-                                <TrendingDown className="size-6" />
-                                <span className="font-bold">DOWN</span>
+                                <ArrowDownCircle className="size-8" />
+                                <span className="font-black text-sm tracking-widest uppercase">Lower</span>
                               </Button>
                             </div>
                           </div>
@@ -398,13 +443,20 @@ export default function StockDetailsPage() {
 
                         {tradeResult && (
                           <div className={cn(
-                            "p-4 rounded-xl flex items-center justify-center gap-3 animate-in zoom-in-95",
-                            tradeResult === "WIN" ? "bg-green-500/10 text-green-500 border border-green-500/20" : "bg-red-500/10 text-red-500 border border-red-500/20"
+                            "p-5 rounded-3xl flex items-center justify-center gap-4 animate-in zoom-in-95 duration-500 shadow-xl",
+                            tradeResult === "WIN" 
+                              ? "bg-green-500/20 text-green-500 border border-green-500/30" 
+                              : "bg-red-500/20 text-red-500 border border-red-500/30"
                           )}>
-                            {tradeResult === "WIN" ? <Trophy className="size-5" /> : <AlertCircle className="size-5" />}
-                            <span className="font-black uppercase tracking-widest text-xs">
-                              Trade Result: {tradeResult}
-                            </span>
+                            {tradeResult === "WIN" ? <Trophy className="size-6 animate-bounce" /> : <AlertCircle className="size-6" />}
+                            <div>
+                              <div className="font-black uppercase tracking-[0.2em] text-xs">
+                                RESULT: {tradeResult === "WIN" ? "SUCCESS" : "FAILED"}
+                              </div>
+                              <div className="text-[10px] font-bold opacity-80">
+                                {tradeResult === "WIN" ? "Virtual profit credited!" : "Market moved against you."}
+                              </div>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -437,11 +489,11 @@ export default function StockDetailsPage() {
 
           {/* Sidebar Section */}
           <div className="space-y-8">
-            {/* Trade Controller */}
+            {/* Trade Controller (Standard Investing) */}
             <Card className="glass-card bg-primary/5 border-primary/20 rounded-[2.5rem] overflow-hidden shadow-xl">
               <CardHeader className="pb-4">
                 <CardTitle className="text-lg font-headline flex items-center gap-2">
-                  <Wallet className="size-5 text-primary" /> Execute Trade
+                  <Wallet className="size-5 text-primary" /> Instant Trade
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -454,13 +506,13 @@ export default function StockDetailsPage() {
                     type="number" 
                     value={qty} 
                     onChange={e => setQty(e.target.value)} 
-                    className="h-12 bg-background border-none rounded-xl text-lg font-bold"
+                    className="h-12 bg-background border-none rounded-xl text-lg font-bold shadow-inner"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <Button 
                     onClick={() => handleTrade("BUY")} 
-                    className="h-12 rounded-xl bg-green-500 hover:bg-green-600 font-bold"
+                    className="h-12 rounded-xl bg-green-500 hover:bg-green-600 font-bold shadow-lg shadow-green-500/20"
                     disabled={isBuying}
                   >
                     {isBuying ? <Loader2 className="animate-spin" /> : "Buy"}
@@ -468,7 +520,7 @@ export default function StockDetailsPage() {
                   <Button 
                     variant="outline" 
                     onClick={() => handleTrade("SELL")} 
-                    className="h-12 rounded-xl border-2 border-red-500 text-red-500 hover:bg-red-500 hover:text-white font-bold"
+                    className="h-12 rounded-xl border-2 border-red-500 text-red-500 hover:bg-red-500 hover:text-white font-bold transition-all"
                     disabled={isBuying}
                   >
                     Sell
@@ -480,8 +532,8 @@ export default function StockDetailsPage() {
             {/* Related Stocks */}
             <Card className="glass-card rounded-[2.5rem] border-none shadow-sm overflow-hidden">
               <div className="flex bg-muted/30">
-                <button className="flex-1 py-4 text-[10px] uppercase font-black tracking-widest border-b-2 border-primary text-primary">Related</button>
-                <button className="flex-1 py-4 text-[10px] uppercase font-black tracking-widest text-muted-foreground">Following</button>
+                <button className="flex-1 py-4 text-[10px] uppercase font-black tracking-widest border-b-2 border-primary text-primary">Related Assets</button>
+                <button className="flex-1 py-4 text-[10px] uppercase font-black tracking-widest text-muted-foreground">Recent</button>
               </div>
               <CardContent className="p-0">
                 <div className="divide-y divide-border/50">
@@ -493,7 +545,7 @@ export default function StockDetailsPage() {
                     >
                       <div className="space-y-0.5">
                         <div className="font-bold text-sm group-hover:text-primary transition-colors">{s.name}</div>
-                        <div className="text-[10px] text-muted-foreground uppercase font-medium">{s.price} USD</div>
+                        <div className="text-[10px] text-muted-foreground uppercase font-medium">₹{s.price.toFixed(2)}</div>
                       </div>
                       <Badge variant={s.change > 0 ? "default" : "destructive"} className="h-7 min-w-[64px] justify-center rounded-lg font-black text-xs">
                         {s.change > 0 ? <TrendingUp className="size-3 mr-1" /> : <TrendingDown className="size-3 mr-1" />}
@@ -507,31 +559,31 @@ export default function StockDetailsPage() {
 
             {/* Financial Intelligence Cards */}
             <div className="grid grid-cols-1 gap-4">
-              <Card className="glass-card p-6 rounded-[2rem] space-y-4">
+              <Card className="glass-card p-6 rounded-[2rem] space-y-4 hover:border-primary/30 transition-all cursor-default">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Quarterly financials</span>
                   <ChevronDown className="size-4 text-muted-foreground" />
                 </div>
                 <div className="space-y-1">
-                  <div className="text-2xl font-bold">14.38KCr</div>
+                  <div className="text-2xl font-bold">₹14.38KCr</div>
                   <div className="text-xs text-green-500 font-bold flex items-center gap-1">
                     <TrendingUp className="size-3" /> +15.65% Y/Y Revenue
                   </div>
                 </div>
               </Card>
-              <Card className="glass-card p-6 rounded-[2rem] space-y-4">
+              <Card className="glass-card p-6 rounded-[2rem] space-y-4 hover:border-primary/30 transition-all cursor-default">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Earnings</span>
+                  <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Market Sentiment</span>
                   <ChevronDown className="size-4 text-muted-foreground" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <div className="text-green-500 font-bold text-lg">+6.25%</div>
-                    <div className="text-[10px] text-muted-foreground uppercase font-black">EPS Beat</div>
+                    <div className="text-green-500 font-bold text-lg">BULLISH</div>
+                    <div className="text-[10px] text-muted-foreground uppercase font-black">AI Analysis</div>
                   </div>
                   <div className="space-y-1 border-l border-border/50 pl-4">
-                    <div className="text-green-500 font-bold text-lg">+3.78%</div>
-                    <div className="text-[10px] text-muted-foreground uppercase font-black">Revenue Beat</div>
+                    <div className="text-primary font-bold text-lg">72%</div>
+                    <div className="text-[10px] text-muted-foreground uppercase font-black">Confidence</div>
                   </div>
                 </div>
               </Card>
