@@ -21,7 +21,8 @@ import {
   Moon,
   Sun,
   LogOut,
-  LogIn
+  LogIn,
+  Loader2
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -49,8 +50,16 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const auth = useAuth()
   const { user, loading } = useUser()
   const { toast } = useToast()
+  
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(true)
   const [theme, setTheme] = React.useState<"light" | "dark">("dark")
+
+  // Authentication Guard
+  React.useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login')
+    }
+  }, [user, loading, router])
 
   React.useEffect(() => {
     const isDark = document.documentElement.classList.contains("dark")
@@ -110,6 +119,21 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     })
   }
 
+  // Show nothing or a loader while checking authentication
+  if (loading) {
+    return (
+      <div className="h-screen w-screen flex flex-col items-center justify-center bg-background gap-4">
+        <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center animate-pulse">
+          <span className="font-headline font-bold text-white text-xl">FI</span>
+        </div>
+        <Loader2 className="animate-spin size-6 text-primary/60" />
+      </div>
+    )
+  }
+
+  // If no user after loading, let the useEffect handle the redirect
+  if (!user) return null
+
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
       {/* Sidebar */}
@@ -138,7 +162,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 <Link key={item.name} href={item.href}>
                   <Button
                     variant="ghost"
-                    suppressHydrationWarning
                     className={cn(
                       "w-full justify-start gap-4 h-12",
                       isActive ? "bg-primary/10 text-primary hover:bg-primary/20" : "text-muted-foreground hover:text-foreground",
@@ -155,45 +178,38 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
           {/* User Section */}
           <div className="p-4 border-t border-border">
-            {user ? (
-              <div className="flex flex-col gap-2">
-                <Button
-                  variant="ghost"
-                  suppressHydrationWarning
-                  className={cn(
-                    "w-full justify-start gap-4 p-2 h-auto hover:bg-muted",
-                    !isSidebarOpen && "justify-center"
-                  )}
-                  onClick={() => handleHeaderAction("Profile Settings")}
-                >
-                  <Avatar className="size-8">
-                    <AvatarImage src={user.photoURL || MOCK_USER.avatar} />
-                    <AvatarFallback>{user.displayName?.charAt(0) || user.email?.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  {isSidebarOpen && (
-                    <div className="flex flex-col items-start text-sm overflow-hidden">
-                      <span className="font-medium truncate w-full">{user.displayName || 'User'}</span>
-                      <span className="text-xs text-muted-foreground truncate w-full">Pro Member</span>
-                    </div>
-                  )}
-                </Button>
-                {isSidebarOpen && (
-                  <Button variant="ghost" size="sm" className="w-full justify-start gap-4 text-muted-foreground hover:text-destructive" onClick={handleLogout}>
-                    <LogOut className="size-4" />
-                    <span>Logout</span>
-                  </Button>
+            <div className="flex flex-col gap-2">
+              <Button
+                variant="ghost"
+                className={cn(
+                  "w-full justify-start gap-4 p-2 h-auto hover:bg-muted",
+                  !isSidebarOpen && "justify-center"
                 )}
-              </div>
-            ) : (
-              <Button 
-                variant="default" 
-                className={cn("w-full gap-2", !isSidebarOpen && "px-0 justify-center")}
-                onClick={() => router.push('/login')}
+                onClick={() => handleHeaderAction("Profile Settings")}
               >
-                <LogIn className="size-4" />
-                {isSidebarOpen && <span>Login</span>}
+                <Avatar className="size-8">
+                  <AvatarImage src={user.photoURL || MOCK_USER.avatar} />
+                  <AvatarFallback>{user.displayName?.charAt(0) || user.email?.charAt(0)}</AvatarFallback>
+                </Avatar>
+                {isSidebarOpen && (
+                  <div className="flex flex-col items-start text-sm overflow-hidden text-left">
+                    <span className="font-medium truncate w-full">{user.displayName || 'User'}</span>
+                    <span className="text-xs text-muted-foreground truncate w-full">Pro Member</span>
+                  </div>
+                )}
               </Button>
-            )}
+              {isSidebarOpen && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="w-full justify-start gap-4 text-muted-foreground hover:text-destructive" 
+                  onClick={handleLogout}
+                >
+                  <LogOut className="size-4" />
+                  <span>Logout</span>
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </aside>
@@ -203,7 +219,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         {/* Header */}
         <header className="h-20 border-b border-border bg-background/80 backdrop-blur-md flex items-center justify-between px-8 z-40">
           <div className="flex items-center gap-6">
-            <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(!isSidebarOpen)} suppressHydrationWarning>
+            <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
               <Menu className="size-5" />
             </Button>
             <form onSubmit={handleSearch} className="relative w-64 md:w-96 hidden md:block">
@@ -211,19 +227,18 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               <Input 
                 placeholder="Search stocks, news, lessons..." 
                 className="pl-10 bg-muted/50 border-none focus-visible:ring-primary/50" 
-                suppressHydrationWarning
               />
             </form>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-muted-foreground hover:text-primary" suppressHydrationWarning>
+            <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-muted-foreground hover:text-primary">
               {theme === "light" ? <Moon className="size-5" /> : <Sun className="size-5" />}
             </Button>
-            <Button variant="ghost" size="icon" className="relative text-muted-foreground" onClick={() => handleHeaderAction("Notifications")} suppressHydrationWarning>
+            <Button variant="ghost" size="icon" className="relative text-muted-foreground" onClick={() => handleHeaderAction("Notifications")}>
               <Bell className="size-5" />
               <span className="absolute top-2.5 right-2.5 size-2 bg-primary rounded-full ring-2 ring-background"></span>
             </Button>
-            <Button variant="ghost" size="icon" className="text-muted-foreground" onClick={() => handleHeaderAction("Settings")} suppressHydrationWarning>
+            <Button variant="ghost" size="icon" className="text-muted-foreground" onClick={() => handleHeaderAction("Settings")}>
               <Settings className="size-5" />
             </Button>
           </div>
