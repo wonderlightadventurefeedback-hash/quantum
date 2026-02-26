@@ -53,7 +53,7 @@ export default function AdvisorPage() {
       setMessages(history.map(m => ({ role: m.role, content: m.content, timestamp: m.timestamp })))
     } else if (history && history.length === 0 && !isHistoryLoading) {
       setMessages([
-        { role: 'assistant', content: "Hello! I'm **FinIntel AI**. I am directly connected to OpenAI through ChatGPT to give you all the answers regarding the stock market and finance. How can I help you today?" }
+        { role: 'assistant', content: "Hello! I'm **FinIntel AI**. Here, the AI advisor is directly connected to ChatGPT to provide you with all answers regarding the stock market and finance. How can I help you today?" }
       ])
     }
   }, [history, isHistoryLoading])
@@ -91,7 +91,7 @@ export default function AdvisorPage() {
     } catch (error) {
       addDocumentNonBlocking(userMsgRef, {
         role: 'assistant',
-        content: "I encountered an error while communicating with my premium intelligence layer. Please check your configuration or try again shortly.",
+        content: "I'm having difficulty connecting to my ChatGPT intelligence layer right now. Please ensure your configuration is active or try again in a few moments.",
         timestamp: serverTimestamp()
       })
     } finally {
@@ -121,10 +121,10 @@ export default function AdvisorPage() {
             <div className="flex items-center gap-3">
               <h1 className="text-3xl font-headline font-bold">FinIntel Advisor</h1>
               <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-black text-primary uppercase tracking-widest">
-                <Zap className="size-3 fill-primary animate-pulse" /> OpenAI Active
+                <Zap className="size-3 fill-primary animate-pulse" /> ChatGPT Active
               </span>
             </div>
-            <p className="text-muted-foreground text-sm">Directly connected to OpenAI through ChatGPT for expert answers on stock markets and finance.</p>
+            <p className="text-muted-foreground text-sm">Here the AI advisor is directly connected to the ChatGPT to provide expert answers on stock markets and finance.</p>
           </div>
           <div className="hidden md:flex items-center gap-2">
             <span className="size-2 bg-green-500 rounded-full animate-pulse"></span>
@@ -143,7 +143,9 @@ export default function AdvisorPage() {
                 <div key={i} className={`flex gap-6 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
                   <Avatar className={`size-12 border-2 shrink-0 ${msg.role === 'assistant' ? 'border-primary/20 shadow-lg shadow-primary/5' : 'border-muted'}`}>
                     {msg.role === 'assistant' ? (
-                      <AvatarImage src="/bot-avatar.png" className="bg-primary/5" />
+                      <AvatarFallback className="bg-primary">
+                        <Bot className="text-white size-6" />
+                      </AvatarFallback>
                     ) : (
                       <AvatarImage src={user?.photoURL || MOCK_USER.avatar} />
                     )}
