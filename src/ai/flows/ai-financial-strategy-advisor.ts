@@ -1,8 +1,8 @@
 
 'use server';
 /**
- * @fileOverview QuantumF AI Financial Advisor flow powered by RapidAPI ChatGPT integration.
- * This flow provides professional, data-driven financial advice.
+ * @fileOverview QuantumF AI Financial Advisor flow powered by native Genkit intelligence.
+ * This flow provides professional, data-driven financial advice using the provided Google AI key.
  *
  * - aiFinancialStrategyAdvisor - Entry point for the AI advisor process.
  * - AiFinancialAdvisorInput - Input schema for queries and context.
@@ -48,13 +48,10 @@ const aiFinancialStrategyAdvisorFlow = ai.defineFlow(
     outputSchema: AiFinancialAdvisorOutputSchema,
   },
   async (input) => {
-    // API Key provided by user for SiliconFlow/RapidAPI connection
-    const API_KEY = process.env.RAPIDAPI_KEY || 'ef844e3b8eac407990679dffbd62147c.I9mEPUXANRbOARAI150CNX2a';
-
     try {
       const marketNews = await getMarketContext();
 
-      const systemPrompt = `You are QuantumF AI, a high-performance Financial Strategy Advisor directly connected to OpenAI intelligence via ChatGPT. 
+      const systemPrompt = `You are QuantumF AI, a high-performance Financial Strategy Advisor.
 Your mission is to provide professional, data-driven financial advice for QuantumF platform users.
 
 REAL-TIME CONTEXT:
@@ -69,41 +66,19 @@ GUIDELINES:
 4. DISCLAIMER: Always state that this is for educational purposes and not official financial advice.
 5. FORMATTING: Use Markdown. Bold stock tickers (e.g., **AAPL**, **NVDA**).`;
 
-      // Use the RapidAPI Conversation Llama endpoint as requested by user code snippets
-      const response = await fetch('https://open-ai21.p.rapidapi.com/conversationllama', {
-        method: 'POST',
-        headers: {
-          'x-rapidapi-host': 'open-ai21.p.rapidapi.com',
-          'x-rapidapi-key': API_KEY,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          messages: [
-            { 
-              role: 'user', 
-              content: `${systemPrompt}\n\nUSER QUERY: ${input.userQuery}` 
-            }
-          ],
-          web_access: false
-        })
+      // Use native Genkit generation with the provided Google AI key
+      const { text } = await ai.generate({
+        prompt: `${systemPrompt}\n\nUSER QUERY: ${input.userQuery}`,
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("RapidAPI Error Response:", errorText);
-        throw new Error("RapidAPI Service Unavailable");
+      if (!text) {
+        throw new Error("AI failed to generate a response text.");
       }
 
-      const result = await response.json();
-      
-      // Handle the response structure from RapidAPI Llama endpoints
-      // Fallback through common keys: result, response, output, BOT
-      const botResponse = result.BOT || result.result || result.response || result.output || "I have processed your request but could not generate a text response. Please try asking about a specific market sector.";
-
-      return { response: botResponse };
+      return { response: text };
     } catch (error: any) {
       console.error("Advisor Flow Error:", error);
-      return { response: "I encountered a communication error with my premium ChatGPT intelligence layer. Please verify your connection or try again shortly." };
+      return { response: "I encountered a communication error with my premium intelligence layer. Please verify your connection or try again shortly." };
     }
   }
 );
