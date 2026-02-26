@@ -73,12 +73,21 @@ const RangeBar = ({ low, high, current, labelLow, labelHigh }: { low: number, hi
   )
 }
 
-const generateChartData = (basePrice: number) => {
-  return Array.from({ length: 40 }, (_, i) => {
-    const open = basePrice + (Math.random() - 0.5) * (basePrice * 0.04);
-    const close = basePrice + (Math.random() - 0.5) * (basePrice * 0.04);
-    const high = Math.max(open, close) + Math.random() * (basePrice * 0.01);
-    const low = Math.min(open, close) - Math.random() * (basePrice * 0.01);
+const generateChartData = (basePrice: number, isBullish: boolean) => {
+  // Create a trend based on whether the stock is generally up or down
+  let currentPrice = basePrice * (isBullish ? 0.95 : 1.05);
+  return Array.from({ length: 60 }, (_, i) => {
+    const volatility = basePrice * 0.01;
+    const trend = isBullish ? (basePrice * 0.1) / 60 : -(basePrice * 0.1) / 60;
+    
+    const open = currentPrice;
+    const change = (Math.random() - 0.45) * volatility + trend;
+    const close = open + change;
+    const high = Math.max(open, close) + Math.random() * (volatility * 0.2);
+    const low = Math.min(open, close) - Math.random() * (volatility * 0.2);
+    
+    currentPrice = close;
+
     return {
       time: i,
       open,
@@ -87,7 +96,6 @@ const generateChartData = (basePrice: number) => {
       close,
       price: close,
       isUp: close >= open,
-      candle: [low, open, close, high] // For candle visualization if needed
     };
   })
 }
@@ -109,8 +117,11 @@ export default function StockDetailPage() {
   const [price, setPrice] = React.useState(initialStock.price.toString())
   const [chartType, setChartType] = React.useState<'area' | 'candle'>('area')
   
-  const chartData = React.useMemo(() => generateChartData(stock.price), [stock.price])
-  const priceChange = (stock.price * (stock.change / 100)).toFixed(2)
+  const isUp = stock.change >= 0;
+  const trendColor = isUp ? "hsl(var(--primary))" : "hsl(var(--destructive))";
+  
+  const chartData = React.useMemo(() => generateChartData(stock.price, isUp), [stock.price, isUp])
+  const priceChange = (stock.price * (Math.abs(stock.change) / 100)).toFixed(2)
 
   // Watchlist status using Firestore
   const watchlistDocRef = React.useMemo(() => {
@@ -241,8 +252,8 @@ export default function StockDetailPage() {
                     <div className="flex items-center gap-2 text-muted-foreground text-sm font-medium mt-1">
                       <span className="bg-muted px-2 py-0.5 rounded text-[10px] font-bold">NSE</span>
                       <span>₹{stock.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                      <span className={stock.change >= 0 ? "text-primary" : "text-destructive"}>
-                        ({stock.change > 0 ? '+' : ''}{stock.change.toFixed(2)}%)
+                      <span className={isUp ? "text-primary" : "text-destructive"}>
+                        ({isUp ? '+' : ''}{stock.change.toFixed(2)}%)
                       </span>
                       <span className="text-border mx-1">|</span>
                       <span className="bg-muted px-2 py-0.5 rounded text-[10px] font-bold">BSE</span>
@@ -261,9 +272,9 @@ export default function StockDetailPage() {
                   <span className="text-5xl font-headline font-bold">₹{stock.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                   <div className={cn(
                     "flex items-center gap-1.5 text-xl font-bold px-3 py-1 rounded-lg",
-                    stock.trend === "UP" ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
+                    isUp ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
                   )}>
-                    {stock.trend === "UP" ? "+" : ""}{priceChange} ({stock.change.toFixed(2)}%)
+                    {isUp ? "+" : "-"}{priceChange} ({stock.change.toFixed(2)}%)
                   </div>
                   <span className="text-muted-foreground text-xs font-bold uppercase tracking-widest bg-muted/50 px-2 py-1 rounded ml-2">1D</span>
                 </div>
@@ -299,21 +310,21 @@ export default function StockDetailPage() {
                     <AreaChart data={chartData}>
                       <defs>
                         <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                          <stop offset="5%" stopColor={trendColor} stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor={trendColor} stopOpacity={0}/>
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.1} />
                       <Tooltip 
                         contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: '16px', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                        itemStyle={{ color: 'hsl(var(--primary))' }}
+                        itemStyle={{ color: trendColor }}
                         labelStyle={{ fontWeight: 'bold', color: 'hsl(var(--muted-foreground))' }}
                         formatter={(value: any) => [`₹${parseFloat(value).toFixed(2)}`, "Price"]}
                       />
                       <Area 
                         type="monotone" 
                         dataKey="price" 
-                        stroke="hsl(var(--primary))" 
+                        stroke={trendColor} 
                         strokeWidth={4}
                         fillOpacity={1} 
                         fill="url(#colorPrice)" 
@@ -457,9 +468,9 @@ export default function StockDetailPage() {
                       NSE ₹{stock.price.toLocaleString(undefined, { minimumFractionDigits: 2 })} 
                       <span className={cn(
                         "font-black",
-                        stock.change > 0 ? "text-primary" : "text-destructive"
+                        isUp ? "text-primary" : "text-destructive"
                       )}>
-                        ({stock.change > 0 ? '+' : ''}{stock.change.toFixed(2)}%)
+                        ({isUp ? '+' : ''}{stock.change.toFixed(2)}%)
                       </span>
                     </span>
                   </div>
