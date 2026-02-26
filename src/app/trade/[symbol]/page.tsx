@@ -176,11 +176,6 @@ export default function StockTerminalPage() {
     return generateChartData(stock.price, isUp, timeframe);
   }, [stock.price, isUp, timeframe, isMounted])
 
-  const chartDataSecondary = React.useMemo(() => {
-    if (!isMounted) return [];
-    return generateChartData(stock.price * 0.8, !isUp, timeframe);
-  }, [stock.price, isUp, timeframe, isMounted])
-
   React.useEffect(() => {
     setIsMounted(true);
     async function fetchUserData() {
@@ -329,16 +324,8 @@ export default function StockTerminalPage() {
             <div className="flex-1 flex flex-col gap-1 p-1 overflow-y-auto custom-scrollbar">
               <TerminalChart 
                 data={chartData} 
-                height={350} 
-                title={`${symbol} Main`} 
-                symbol={symbol} 
-                timeframe={timeframe} 
-                setTimeframe={setTimeframe} 
-              />
-              <TerminalChart 
-                data={chartDataSecondary} 
-                height={250} 
-                title={`${symbol} (Put) 25600`} 
+                height={600} 
+                title={`${symbol} Main Analysis`} 
                 symbol={symbol} 
                 timeframe={timeframe} 
                 setTimeframe={setTimeframe} 
