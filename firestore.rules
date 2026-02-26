@@ -44,6 +44,10 @@ service cloud.firestore {
         allow read, write: if isOwner(userId);
       }
 
+      match /activity/{activityId} {
+        allow read, write: if isOwner(userId);
+      }
+
       match /portfolios/{portfolioId} {
         allow read, write: if isOwner(userId);
 
