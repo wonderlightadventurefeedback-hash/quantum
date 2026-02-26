@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { Newspaper, TrendingUp, TrendingDown, RefreshCw, BarChart3, ShieldAlert, Loader2, ExternalLink } from "lucide-react"
+import { Newspaper, TrendingUp, TrendingDown, RefreshCw, BarChart3, ShieldAlert, Loader2, ExternalLink, Zap } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { formatDistanceToNow } from "date-fns"
 
