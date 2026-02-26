@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
+import { Progress } from "@/components/ui/progress"
 import { 
   Plus, 
   MoreVertical, 
@@ -22,7 +23,10 @@ import {
   ArrowDownCircle,
   LineChart as LineChartIcon,
   CandlestickChart as CandleIcon,
-  Loader2
+  Loader2,
+  ArrowUpRight,
+  ArrowDownRight,
+  Activity
 } from "lucide-react"
 import { 
   BarChart,
@@ -149,19 +153,43 @@ export default function StockDetailsPage() {
   const TRADE_DURATION = 15;
   const PAYOUT_RATIO = 1.8;
 
-  const isUp = stock.change >= 0;
-  
-  const chartData = React.useMemo(() => {
-    if (!isMounted) return [];
-    const points = activeTimeframe === "1D" ? 40 : activeTimeframe === "5D" ? 60 : 30;
-    return generateMarketData(points, stock.price, activeTimeframe);
-  }, [stock.price, activeTimeframe, isMounted])
-
-  const prevClose = stock.price * (isUp ? 0.985 : 1.015)
+  const [simulatedData, setSimulatedData] = React.useState<OHLCData[]>([])
 
   React.useEffect(() => {
     setIsMounted(true);
+    setSimulatedData(generateMarketData(40, stock.price, "1D"));
   }, [])
+
+  // High-frequency price simulation
+  React.useEffect(() => {
+    if (!isMounted) return
+    const interval = setInterval(() => {
+      setSimulatedData(prev => {
+        if (prev.length === 0) return generateMarketData(40, stock.price, "1D");
+        const last = prev[prev.length - 1]
+        const drift = (Math.random() - 0.48) * (stock.price * 0.002)
+        const nextPrice = +(last.price + drift).toFixed(2)
+        
+        const nextPoint: OHLCData = {
+          time: last.time, // simplified
+          open: last.price,
+          close: nextPrice,
+          high: Math.max(last.price, nextPrice) + Math.random() * 0.5,
+          low: Math.min(last.price, nextPrice) - Math.random() * 0.5,
+          body: [Math.min(last.price, nextPrice), Math.max(last.price, nextPrice)],
+          wick: [Math.min(last.price, nextPrice) - 0.5, Math.max(last.price, nextPrice) + 0.5],
+          price: nextPrice
+        }
+        
+        return [...prev.slice(1), nextPoint]
+      })
+    }, 2000)
+    return () => clearInterval(interval)
+  }, [isMounted, stock.price])
+
+  const currentSimulatedPrice = simulatedData.length > 0 ? simulatedData[simulatedData.length - 1].price : stock.price
+  const isUp = stock.change >= 0;
+  const prevClose = stock.price * (isUp ? 0.985 : 1.015)
 
   const fetchLiveQuote = React.useCallback(async () => {
     try {
@@ -234,7 +262,7 @@ export default function StockDetailsPage() {
           name: stock.name,
           quantity: orderQty,
           price: stock.price,
-          total: totalValue,
+          total: -totalValue,
           timestamp: serverTimestamp(),
           status: "COMPLETED"
         })
@@ -295,7 +323,7 @@ export default function StockDetailsPage() {
 
     setIsTradingLive(true)
     setPrediction(dir)
-    setEntryPrice(stock.price)
+    setEntryPrice(currentSimulatedPrice)
     setTradeTimer(TRADE_DURATION)
 
     const userRef = doc(db, 'users', user.uid)
@@ -305,7 +333,7 @@ export default function StockDetailsPage() {
       updatedAt: serverTimestamp()
     }, { merge: true })
     
-    toast({ title: "Position Opened", description: `Predicted ${dir} for ${symbol} @ ${stock.price.toFixed(2)}` })
+    toast({ title: "Position Opened", description: `Predicted ${dir} for ${symbol} @ ₹${currentSimulatedPrice.toFixed(2)}` })
   }
 
   React.useEffect(() => {
@@ -313,9 +341,9 @@ export default function StockDetailsPage() {
     if (isTradingLive && tradeTimer > 0) {
       interval = setInterval(() => setTradeTimer(t => t - 1), 1000)
     } else if (isTradingLive && tradeTimer === 0) {
-      const finalPrice = stock.price + (Math.random() - 0.45) * 2;
-      const isWin = (prediction === "HIGHER" && finalPrice > entryPrice) || (prediction === "LOWER" && finalPrice < entryPrice);
+      const isWin = (prediction === "HIGHER" && currentSimulatedPrice > entryPrice) || (prediction === "LOWER" && currentSimulatedPrice < entryPrice);
       const amount = parseFloat(tradeAmount)
+      const profit = isWin ? (amount * 0.8) : -amount
       
       setIsTradingLive(false)
       if (isWin && db && user) {
@@ -339,7 +367,7 @@ export default function StockDetailsPage() {
           prediction: prediction,
           outcome: isWin ? "WIN" : "LOSS",
           stake: amount,
-          total: isWin ? (amount * 0.8) : -amount,
+          total: profit,
           price: entryPrice,
           timestamp: serverTimestamp(),
           status: "SETTLED"
@@ -347,13 +375,15 @@ export default function StockDetailsPage() {
       }
     }
     return () => clearInterval(interval)
-  }, [isTradingLive, tradeTimer, db, user, prediction, entryPrice, stock.price, tradeAmount, symbol, stock.name])
+  }, [isTradingLive, tradeTimer, db, user, prediction, entryPrice, currentSimulatedPrice, tradeAmount, symbol, stock.name])
 
   if (!isMounted) return null;
 
+  const livePL = isTradingLive ? (prediction === "HIGHER" ? (currentSimulatedPrice - entryPrice) : (entryPrice - currentSimulatedPrice)) : 0
+
   return (
     <DashboardShell>
-      <div className="max-w-[1280px] mx-auto space-y-8 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="max-w-[1440px] mx-auto space-y-8 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
         
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
           <div className="flex items-center gap-4">
@@ -365,8 +395,8 @@ export default function StockDetailsPage() {
                 <h1 className="text-3xl font-headline font-bold">{stock.name}</h1>
                 <MoreVertical className="size-5 text-muted-foreground cursor-pointer" />
               </div>
-              <div className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-                EXCHANGE: {symbol}
+              <div className="flex items-center gap-2 text-xs font-black text-muted-foreground uppercase tracking-widest mt-1">
+                <Activity className="size-3 text-primary" /> Exchange: {symbol} • Live Terminal
               </div>
             </div>
           </div>
@@ -385,9 +415,9 @@ export default function StockDetailsPage() {
                 <CandleIcon className="size-5" />
               </button>
             </div>
-            <div className="flex items-center space-x-3 bg-muted/50 px-5 py-2.5 rounded-2xl border border-border/50">
+            <div className="flex items-center space-x-3 bg-primary/5 px-5 py-2.5 rounded-2xl border border-primary/20">
               <Switch id="live-mode" checked={isLiveMode} onCheckedChange={setIsLiveMode} />
-              <Label htmlFor="live-mode" className="text-xs font-black uppercase tracking-widest flex items-center gap-2 cursor-pointer">
+              <Label htmlFor="live-mode" className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 cursor-pointer">
                 <Zap className={cn("size-4", isLiveMode ? "text-primary fill-primary animate-pulse" : "text-muted-foreground")} />
                 Live Predict
               </Label>
@@ -398,99 +428,139 @@ export default function StockDetailsPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-          <div className="lg:col-span-2 space-y-6">
-            <div className="space-y-1">
-              <div className="flex items-baseline gap-3">
-                <span className="text-5xl font-bold font-headline">₹{stock.price.toFixed(2)}</span>
-                <span className="text-xl font-medium text-muted-foreground">INR</span>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-10">
+          <div className="lg:col-span-3 space-y-6">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+              <div className="space-y-1">
+                <div className="flex items-baseline gap-3">
+                  <span className="text-6xl font-bold font-headline tracking-tighter">₹{currentSimulatedPrice.toFixed(2)}</span>
+                  <span className="text-xl font-medium text-muted-foreground">INR</span>
+                </div>
+                <div className={cn("flex items-center gap-2 text-lg font-bold", isUp ? "text-green-500" : "text-red-500")}>
+                  {isUp ? <TrendingUp className="size-5" /> : <TrendingDown className="size-5" />}
+                  {isUp ? '+' : ''}{(stock.price * (stock.change / 100)).toFixed(2)} ({stock.change.toFixed(2)}%)
+                </div>
               </div>
-              <div className={cn("flex items-center gap-2 text-lg font-bold", isUp ? "text-green-500" : "text-red-500")}>
-                {isUp ? <TrendingUp className="size-5" /> : <TrendingDown className="size-5" />}
-                {isUp ? '+' : ''}{(stock.price * (stock.change / 100)).toFixed(2)} ({stock.change.toFixed(2)}%)
-              </div>
+              
+              {isTradingLive && (
+                <div className="bg-black/10 backdrop-blur-xl border border-primary/30 p-4 rounded-2xl min-w-[240px] animate-in slide-in-from-right-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-black uppercase text-primary tracking-widest">Active P/L Tracking</span>
+                    <span className="text-[10px] font-black uppercase text-muted-foreground">{tradeTimer}s</span>
+                  </div>
+                  <div className={cn("text-2xl font-black font-headline", livePL >= 0 ? "text-green-500" : "text-red-500")}>
+                    {livePL >= 0 ? "+" : ""}₹{Math.abs(livePL).toFixed(2)}
+                  </div>
+                  <div className="text-[10px] text-muted-foreground font-bold mt-1 uppercase">Predicted {prediction} @ ₹{entryPrice.toFixed(2)}</div>
+                </div>
+              )}
             </div>
 
-            <div className="relative group rounded-[2.5rem] overflow-hidden bg-card/30 border border-border/50 shadow-2xl backdrop-blur-sm">
-              <div className="flex border-b border-border/50 px-6 bg-muted/20">
+            <div className="relative group rounded-[3rem] overflow-hidden bg-card/20 border border-border/50 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.1)] backdrop-blur-md">
+              <div className="flex border-b border-border/50 px-8 bg-muted/10">
                 {["1D", "5D", "1M", "6M", "YTD", "1Y", "5Y", "Max"].map((t) => (
-                  <button key={t} onClick={() => setActiveTimeframe(t as Timeframe)} className={cn("px-4 py-4 text-[10px] font-black tracking-[0.2em] transition-all border-b-2 -mb-px", activeTimeframe === t ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground")}>
+                  <button key={t} onClick={() => setActiveTimeframe(t as Timeframe)} className={cn("px-6 py-5 text-[10px] font-black tracking-[0.2em] transition-all border-b-2 -mb-px", activeTimeframe === t ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground")}>
                     {t}
                   </button>
                 ))}
               </div>
 
-              <div className="h-[480px] w-full p-8 relative">
+              <div className="h-[540px] w-full p-10 relative">
                 <ResponsiveContainer width="100%" height="100%">
                   {chartType === "CANDLE" ? (
-                    <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.3} />
+                    <BarChart data={simulatedData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.2} />
                       <XAxis dataKey="time" hide />
-                      <YAxis domain={['auto', 'auto']} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
-                      <ReferenceLine y={prevClose} stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3" />
-                      {isTradingLive && <ReferenceLine y={entryPrice} stroke="#f59e0b" strokeWidth={2} label={{ position: 'right', value: 'ENTRY', fill: '#f59e0b', fontSize: 10, fontWeight: 'bold' }} />}
+                      <YAxis domain={['auto', 'auto']} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))', fontWeight: 700 }} />
+                      <ReferenceLine y={prevClose} stroke="hsl(var(--muted-foreground))" strokeDasharray="5 5" strokeWidth={1} opacity={0.5} />
+                      {isTradingLive && (
+                        <ReferenceLine 
+                          y={entryPrice} 
+                          stroke="#f59e0b" 
+                          strokeWidth={2} 
+                          strokeDasharray="3 3"
+                          label={{ position: 'right', value: 'STRIKE', fill: '#f59e0b', fontSize: 10, fontWeight: '900' }} 
+                        />
+                      )}
                       <Tooltip content={<CustomTooltip chartType="CANDLE" />} />
                       <Bar dataKey="wick" fill="#8884d8" barSize={1}>
-                        {chartData.map((entry, index) => (
+                        {simulatedData.map((entry, index) => (
                           <Cell key={`wick-${index}`} fill={entry.close >= entry.open ? '#22c55e' : '#ef4444'} />
                         ))}
                       </Bar>
                       <Bar dataKey="body" barSize={12}>
-                        {chartData.map((entry, index) => (
+                        {simulatedData.map((entry, index) => (
                           <Cell key={`body-${index}`} fill={entry.close >= entry.open ? '#22c55e' : '#ef4444'} />
                         ))}
                       </Bar>
                     </BarChart>
                   ) : (
-                    <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <AreaChart data={simulatedData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                       <defs>
                         <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor={isUp ? "#22c55e" : "#ef4444"} stopOpacity={0.3}/>
                           <stop offset="95%" stopColor={isUp ? "#22c55e" : "#ef4444"} stopOpacity={0}/>
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.3} />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.2} />
                       <XAxis dataKey="time" hide />
-                      <YAxis domain={['auto', 'auto']} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
-                      <ReferenceLine y={prevClose} stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3" />
-                      {isTradingLive && <ReferenceLine y={entryPrice} stroke="#f59e0b" strokeWidth={2} label={{ position: 'right', value: 'ENTRY', fill: '#f59e0b', fontSize: 10, fontWeight: 'bold' }} />}
+                      <YAxis domain={['auto', 'auto']} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))', fontWeight: 700 }} />
+                      <ReferenceLine y={prevClose} stroke="hsl(var(--muted-foreground))" strokeDasharray="5 5" opacity={0.5} />
+                      {isTradingLive && (
+                        <ReferenceLine 
+                          y={entryPrice} 
+                          stroke="#f59e0b" 
+                          strokeWidth={2} 
+                          strokeDasharray="3 3"
+                          label={{ position: 'right', value: 'STRIKE', fill: '#f59e0b', fontSize: 10, fontWeight: '900' }} 
+                        />
+                      )}
                       <Tooltip content={<CustomTooltip chartType="AREA" />} />
-                      <Area type="monotone" dataKey="price" stroke={isUp ? "#22c55e" : "#ef4444"} strokeWidth={3} fillOpacity={1} fill="url(#colorPrice)" />
+                      <Area type="monotone" dataKey="price" stroke={isUp ? "#22c55e" : "#ef4444"} strokeWidth={4} fillOpacity={1} fill="url(#colorPrice)" animationDuration={300} />
                     </AreaChart>
                   )}
                 </ResponsiveContainer>
 
                 {isLiveMode && (
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none p-6">
-                    <Card className="glass-card w-full max-w-sm mx-auto p-8 shadow-2xl pointer-events-auto border-primary/20 bg-background/60 backdrop-blur-3xl rounded-[2.5rem] animate-in zoom-in-95 duration-500">
-                      <div className="space-y-8">
+                    <Card className="glass-card w-full max-w-sm mx-auto p-10 shadow-3xl pointer-events-auto border-primary/30 bg-background/40 backdrop-blur-3xl rounded-[3rem] animate-in zoom-in-95 duration-500 shadow-[0_0_100px_rgba(var(--primary),0.1)]">
+                      <div className="space-y-10">
                         <div className="flex items-center justify-between">
-                          <Badge className="bg-primary/20 text-primary border-none px-4 py-1.5 text-[10px] font-black uppercase tracking-widest">
-                            Live Speculation
+                          <Badge className="bg-primary/20 text-primary border-none px-5 py-2 text-[10px] font-black uppercase tracking-[0.2em]">
+                            Real-Time Speculation
                           </Badge>
-                          <div className="flex items-center gap-2 text-xs font-black text-muted-foreground uppercase tracking-widest bg-muted/30 px-3 py-1 rounded-full">
-                            <Timer className="size-3.5 text-primary" /> {isTradingLive ? `${tradeTimer}s` : "Waiting"}
+                          <div className="flex items-center gap-3 text-xs font-black text-muted-foreground uppercase tracking-widest bg-muted/30 px-4 py-1.5 rounded-full">
+                            <Timer className="size-4 text-primary" /> {isTradingLive ? `${tradeTimer}s` : "STANDBY"}
                           </div>
                         </div>
 
                         {isTradingLive ? (
-                          <div className="space-y-6 py-6 text-center">
-                            <h4 className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em]">Settlement Pending</h4>
-                            <div className="text-3xl font-black font-headline">{prediction}</div>
-                            <div className="space-y-2">
-                              <Progress value={(tradeTimer/TRADE_DURATION)*100} className="h-2.5 bg-muted/50 rounded-full" />
-                              <div className="text-[10px] font-bold text-muted-foreground">ENTRY: ₹{entryPrice.toFixed(2)}</div>
+                          <div className="space-y-8 py-6 text-center">
+                            <h4 className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.3em]">Position Settlement</h4>
+                            <div className={cn("text-4xl font-black font-headline tracking-tighter", prediction === "HIGHER" ? "text-green-500" : "text-red-500")}>{prediction}</div>
+                            <div className="space-y-3">
+                              <Progress value={(tradeTimer/TRADE_DURATION)*100} className="h-3 bg-white/5 rounded-full" />
+                              <div className="flex justify-between text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                                <span>Entry: ₹{entryPrice.toFixed(2)}</span>
+                                <span>Live: ₹{currentSimulatedPrice.toFixed(2)}</span>
+                              </div>
                             </div>
                           </div>
                         ) : (
-                          <div className="space-y-8">
+                          <div className="space-y-10">
                             <div className="space-y-4">
-                              <span className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.1em]">Trade Amount</span>
-                              <Input type="number" value={tradeAmount} onChange={e => setTradeAmount(e.target.value)} className="h-14 bg-muted/30 border-none rounded-2xl text-xl font-black" />
+                              <div className="flex justify-between items-center px-1">
+                                <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Stake Amount</span>
+                                <span className="text-[10px] font-black text-primary">Potential Return: 80%</span>
+                              </div>
+                              <div className="relative">
+                                <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-primary text-xl">₹</span>
+                                <Input type="number" value={tradeAmount} onChange={e => setTradeAmount(e.target.value)} className="h-16 pl-10 bg-black/20 border-none rounded-2xl text-2xl font-black focus-visible:ring-primary/40" />
+                              </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-5">
-                              <Button onClick={() => executeLiveTrade("HIGHER")} className="h-24 flex-col gap-2 rounded-[1.5rem] bg-green-500 hover:bg-green-600"><ArrowUpCircle className="size-8" /><span className="font-black text-sm uppercase">Higher</span></Button>
-                              <Button onClick={() => executeLiveTrade("LOWER")} className="h-24 flex-col gap-2 rounded-[1.5rem] bg-red-500 hover:bg-red-600"><ArrowDownCircle className="size-8" /><span className="font-black text-sm uppercase">Lower</span></Button>
+                            <div className="grid grid-cols-2 gap-6">
+                              <Button onClick={() => executeLiveTrade("HIGHER")} className="h-28 flex-col gap-2 rounded-[2rem] bg-green-500 hover:bg-green-600 shadow-xl shadow-green-500/20 transition-all hover:scale-[1.05] active:scale-95"><ArrowUpCircle className="size-10" /><span className="font-black text-sm uppercase tracking-widest">Higher</span></Button>
+                              <Button onClick={() => executeLiveTrade("LOWER")} className="h-28 flex-col gap-2 rounded-[2rem] bg-red-500 hover:bg-red-600 shadow-xl shadow-red-500/20 transition-all hover:scale-[1.05] active:scale-95"><ArrowDownCircle className="size-10" /><span className="font-black text-sm uppercase tracking-widest">Lower</span></Button>
                             </div>
                           </div>
                         )}
@@ -501,85 +571,89 @@ export default function StockDetailsPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-y-6 gap-x-12 pt-8 border-t border-border/50">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-y-8 gap-x-16 pt-10 border-t border-border/50">
               {[
-                { label: "Mkt cap", value: "4.00LCr" },
-                { label: "P/E ratio", value: "34.43" },
-                { label: "Dividend yield", value: "0.38%" },
-                { label: "Prev close", value: prevClose.toFixed(2) },
-                { label: "52-wk high", value: "288.61" },
-                { label: "52-wk low", value: "169.21" },
+                { label: "Market Cap", value: "4.00 LCr" },
+                { label: "P/E Ratio", value: "34.43" },
+                { label: "Dividend Yield", value: "0.38%" },
+                { label: "Previous Close", value: prevClose.toFixed(2) },
+                { label: "52-Week High", value: "288.61" },
+                { label: "52-Week Low", value: "169.21" },
               ].map((stat, i) => (
-                <div key={i} className="flex justify-between items-center border-b border-border/50 pb-2">
-                  <span className="text-sm font-medium text-muted-foreground">{stat.label}</span>
-                  <span className="text-sm font-bold">{stat.value}</span>
+                <div key={i} className="flex justify-between items-center border-b border-border/30 pb-3 hover:border-primary/50 transition-colors">
+                  <span className="text-[11px] font-black uppercase text-muted-foreground tracking-widest">{stat.label}</span>
+                  <span className="text-sm font-bold text-foreground">{stat.value}</span>
                 </div>
               ))}
             </div>
           </div>
 
           <div className="space-y-8">
-            <Card className="glass-card bg-primary/5 border-primary/20 rounded-[2.5rem] p-6 shadow-xl">
-              <CardHeader className="pb-4 px-0">
-                <CardTitle className="text-lg font-headline flex items-center gap-2">
-                  <Wallet className="size-5 text-primary" /> Instant Trade
+            <Card className="glass-card bg-primary/5 border-primary/20 rounded-[3rem] p-8 shadow-2xl">
+              <CardHeader className="pb-6 px-0">
+                <CardTitle className="text-xl font-headline font-bold flex items-center gap-3">
+                  <Wallet className="size-6 text-primary" /> Terminal Order
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6 px-0">
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase text-muted-foreground">Quantity</Label>
+              <CardContent className="space-y-8 px-0">
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em] ml-1">Order Quantity</Label>
                   <Input 
                     type="number" 
                     value={qty} 
                     onChange={e => setQty(e.target.value)} 
-                    className="h-12 bg-background border-none rounded-xl text-lg font-bold" 
+                    className="h-14 bg-background border-none rounded-2xl text-2xl font-black shadow-inner" 
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-4">
                   <Button 
                     onClick={() => handleTrade("BUY")} 
-                    className="h-12 rounded-xl bg-green-500 font-bold hover:bg-green-600" 
+                    className="h-14 rounded-2xl bg-green-500 font-black text-lg uppercase tracking-tighter hover:bg-green-600 shadow-lg shadow-green-500/20 active:scale-95 transition-all" 
                     disabled={isProcessing}
                   >
-                    {isProcessing ? <Loader2 className="animate-spin size-4" /> : "Buy"}
+                    {isProcessing ? <Loader2 className="animate-spin size-5" /> : "Buy"}
                   </Button>
                   <Button 
                     variant="outline" 
                     onClick={() => handleTrade("SELL")} 
-                    className="h-12 rounded-xl border-2 border-red-500 text-red-500 font-bold hover:bg-red-50" 
+                    className="h-14 rounded-2xl border-2 border-red-500 text-red-500 font-black text-lg uppercase tracking-tighter hover:bg-red-500 hover:text-white shadow-lg shadow-red-500/10 active:scale-95 transition-all" 
                     disabled={isProcessing}
                   >
-                    {isProcessing ? <Loader2 className="animate-spin size-4" /> : "Sell"}
+                    {isProcessing ? <Loader2 className="animate-spin size-5" /> : "Sell"}
                   </Button>
                 </div>
-                <div className="pt-2 text-center">
-                  <span className="text-xs text-muted-foreground">
-                    Estimated Cost: <span className="font-bold text-foreground">₹{(parseFloat(qty) * stock.price || 0).toFixed(2)}</span>
-                  </span>
+                <div className="text-center py-4 bg-muted/20 rounded-2xl border border-border/50">
+                  <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest block mb-1">Estimated Cost</span>
+                  <span className="text-xl font-black text-foreground">₹{(parseFloat(qty) * stock.price || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                 </div>
-                <div className="mt-4 p-4 rounded-xl bg-muted/30 border border-border/50">
-                  <div className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1">Available Demo Balance</div>
-                  <div className="text-lg font-black text-primary">₹{balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                <div className="mt-4 p-6 rounded-2xl bg-primary/10 border border-primary/20 shadow-sm">
+                  <div className="text-[10px] font-black uppercase text-primary tracking-[0.2em] mb-1.5 flex items-center gap-2">
+                    <Wallet className="size-3" /> Demo Funds Available
+                  </div>
+                  <div className="text-2xl font-black text-primary tracking-tight">₹{balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="glass-card rounded-[2.5rem] border-none shadow-sm overflow-hidden">
+            <Card className="glass-card rounded-[3rem] border-none shadow-xl overflow-hidden">
               <div className="flex bg-muted/30">
-                <button className="flex-1 py-4 text-[10px] uppercase font-black tracking-widest border-b-2 border-primary text-primary">Related Assets</button>
-                <button className="flex-1 py-4 text-[10px] uppercase font-black tracking-widest text-muted-foreground">Recent</button>
+                <button className="flex-1 py-5 text-[10px] uppercase font-black tracking-[0.2em] border-b-2 border-primary text-primary">Sectors</button>
+                <button className="flex-1 py-5 text-[10px] uppercase font-black tracking-[0.2em] text-muted-foreground">Market</button>
               </div>
               <CardContent className="p-0">
                 <div className="divide-y divide-border/50">
-                  {MOCK_STOCKS.filter(s => s.symbol !== symbol).slice(0, 5).map((s) => (
-                    <div key={s.symbol} className="p-6 flex items-center justify-between hover:bg-muted/30 cursor-pointer group" onClick={() => router.push(`/trade/${s.symbol}`)}>
-                      <div className="flex items-center gap-3">
-                        <div className="size-8 rounded-lg bg-muted flex items-center justify-center font-bold text-primary group-hover:scale-110 transition-transform">
+                  {MOCK_STOCKS.filter(s => s.symbol !== symbol).slice(0, 6).map((s) => (
+                    <div key={s.symbol} className="p-6 flex items-center justify-between hover:bg-muted/30 cursor-pointer group transition-colors" onClick={() => router.push(`/trade/${s.symbol}`)}>
+                      <div className="flex items-center gap-4">
+                        <div className="size-10 rounded-xl bg-muted/50 flex items-center justify-center font-black text-primary group-hover:scale-110 transition-transform">
                           {s.symbol[0]}
                         </div>
-                        <div><div className="font-bold text-sm">{s.name}</div><div className="text-[10px] text-muted-foreground uppercase">₹{s.price.toFixed(2)}</div></div>
+                        <div>
+                          <div className="font-bold text-sm text-foreground">{s.name}</div>
+                          <div className="text-[10px] text-muted-foreground font-black uppercase tracking-wider">₹{s.price.toFixed(2)}</div>
+                        </div>
                       </div>
-                      <Badge variant={s.change > 0 ? "default" : "destructive"} className="h-7 min-w-[64px] justify-center rounded-lg font-black text-xs">
+                      <Badge variant={s.change > 0 ? "default" : "destructive"} className="h-7 min-w-[72px] justify-center rounded-lg font-black text-[10px]">
                         {s.change > 0 ? '+' : ''}{s.change.toFixed(2)}%
                       </Badge>
                     </div>
