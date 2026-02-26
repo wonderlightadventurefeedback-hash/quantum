@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview An AI financial advisor chatbot powered by OpenAI GPT-4o (ChatGPT) 
@@ -14,12 +13,6 @@ import { z } from 'genkit';
 import OpenAI from 'openai';
 
 const FINNHUB_API_KEY = process.env.NEXT_PUBLIC_FINNHUB_API_KEY || 'd6g3c49r01qqnmbqk10gd6g3c49r01qqnmbqk110';
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: OPENAI_API_KEY,
-});
 
 // --- Tools for Real-Time Finance Data ---
 
@@ -81,11 +74,18 @@ const aiFinancialStrategyAdvisorFlow = ai.defineFlow(
     outputSchema: AiFinancialAdvisorOutputSchema,
   },
   async (input) => {
+    const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+
     if (!OPENAI_API_KEY) {
-      return { response: "I'm currently missing my OpenAI Intelligence Key. Please add OPENAI_API_KEY to the environment variables to activate ChatGPT reasoning." };
+      return { response: "I'm currently missing my OpenAI Intelligence Key. To activate ChatGPT reasoning, please add **OPENAI_API_KEY** to your Vercel Environment Variables. In the meantime, I can still provide real-time data visualization on your dashboard!" };
     }
 
     try {
+      // Initialize OpenAI client inside the flow to prevent module-level evaluation crashes
+      const openai = new OpenAI({
+        apiKey: OPENAI_API_KEY,
+      });
+
       const messages: any[] = [
         {
           role: 'system',
@@ -179,7 +179,7 @@ KEY GUIDELINES:
       return { response: responseMessage.content || "I'm here to help with your financial questions." };
     } catch (error: any) {
       console.error("Advisor Flow Error:", error);
-      return { response: "I encountered an error while processing your request. This is usually due to a missing or invalid OpenAI API Key." };
+      return { response: "I encountered an error while communicating with ChatGPT. Please verify that your **OPENAI_API_KEY** is valid and has sufficient credits." };
     }
   }
 );
