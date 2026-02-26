@@ -164,7 +164,7 @@ export default function StockDetailPage() {
         }
       }
     } catch (error) {
-      console.error("Failed to fetch live quote", error)
+      // Silently fail individual fetch
     } finally {
       setIsLoading(false)
     }
@@ -323,19 +323,27 @@ export default function StockDetailPage() {
                 
                 <ResponsiveContainer width="100%" height="100%">
                   {chartType === 'area' ? (
-                    <AreaChart data={chartData}>
+                    <AreaChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
                       <defs>
                         <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor={trendColor} stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor={trendColor} stopOpacity={0}/>
+                          <stop offset="0%" stopColor={trendColor} stopOpacity={0.6}/>
+                          <stop offset="100%" stopColor={trendColor} stopOpacity={0}/>
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.1} />
+                      <CartesianGrid strokeDasharray="1 4" vertical={false} stroke="hsl(var(--muted-foreground))" opacity={0.2} />
+                      <XAxis dataKey="time" hide />
+                      <YAxis domain={['auto', 'auto']} hide />
                       <Tooltip 
-                        contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: '16px', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                        itemStyle={{ color: trendColor }}
-                        labelStyle={{ fontWeight: 'bold', color: 'hsl(var(--muted-foreground))' }}
-                        formatter={(value: any) => [`₹${parseFloat(value).toFixed(2)}`, "Price"]}
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--background))', 
+                          border: '1px solid hsl(var(--border))', 
+                          borderRadius: '16px', 
+                          boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                          backdropFilter: 'blur(8px)'
+                        }}
+                        itemStyle={{ color: trendColor, fontWeight: 'bold' }}
+                        labelStyle={{ display: 'none' }}
+                        formatter={(value: any) => [`₹${parseFloat(value).toFixed(2)}`, "Current"]}
                       />
                       <Area 
                         type="monotone" 
@@ -345,11 +353,15 @@ export default function StockDetailPage() {
                         fillOpacity={1} 
                         fill="url(#colorPrice)" 
                         animationDuration={1500}
+                        connectNulls
+                        className="recharts-area-area"
                       />
                     </AreaChart>
                   ) : (
-                    <ComposedChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.1} />
+                    <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="1 4" vertical={false} stroke="hsl(var(--muted-foreground))" opacity={0.2} />
+                      <XAxis dataKey="time" hide />
+                      <YAxis domain={['auto', 'auto']} hide />
                       <Tooltip 
                         contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: '16px' }}
                         formatter={(value: any, name: string) => [`₹${parseFloat(value).toFixed(2)}`, name]}
