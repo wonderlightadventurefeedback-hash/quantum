@@ -222,7 +222,7 @@ export default function StockDetailsPage() {
       return
     }
     
-    // Use the HIGH-FREQUENCY simulated price for "REAL-TIME" execution
+    // Use the HIGH-FREQUENCY simulated price for "REAL-TIME" execution filling
     const executionPrice = currentSimulatedPrice
     const totalValue = orderQty * executionPrice
     const currentBalance = balance
@@ -439,7 +439,7 @@ export default function StockDetailsPage() {
                     <span className="size-3 bg-primary rounded-full animate-pulse"></span>
                     ₹{currentSimulatedPrice.toFixed(2)}
                   </span>
-                  <span className="text-xl font-medium text-muted-foreground">INR</span>
+                  <span className="text-xl font-medium text-muted-foreground uppercase tracking-widest text-[10px] bg-muted/50 px-2 py-1 rounded">Live</span>
                 </div>
                 <div className={cn("flex items-center gap-2 text-lg font-bold", isUp ? "text-green-500" : "text-red-500")}>
                   {isUp ? <TrendingUp className="size-5" /> : <TrendingDown className="size-5" />}
@@ -628,7 +628,7 @@ export default function StockDetailsPage() {
                   </Button>
                 </div>
                 <div className="text-center py-4 bg-muted/20 rounded-2xl border border-border/50">
-                  <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest block mb-1">Estimated Cost</span>
+                  <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest block mb-1">Estimated Cost (Real-Time)</span>
                   <span className="text-xl font-black text-foreground">₹{(parseFloat(qty) * currentSimulatedPrice || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                 </div>
                 <div className="mt-4 p-6 rounded-2xl bg-primary/10 border border-primary/20 shadow-sm">
