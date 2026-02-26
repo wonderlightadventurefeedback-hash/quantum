@@ -17,10 +17,6 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    function isExistingOwner(userId) {
-      return resource != null && isOwner(userId);
-    }
-
     function isAdmin() {
       return isSignedIn() && exists(/databases/$(database)/documents/admin_roles/$(request.auth.uid));
     }
@@ -28,50 +24,43 @@ service cloud.firestore {
     // --- COLLECTION RULES ---
 
     match /users/{userId} {
-      allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+      // Allow the owner to read and write their own profile and all subcollections
+      allow read, write: if isOwner(userId);
 
-      // Lesson progress tracking
+      // Explicit rules for subcollections to ensure clarity
       match /lesson_progress/{lessonId} {
-        allow get, list, create, update, delete: if isOwner(userId);
+        allow read, write: if isOwner(userId);
       }
 
-      // Module-wide progress
       match /module_progress/{moduleId} {
-        allow get, list, create, update, delete: if isOwner(userId);
+        allow read, write: if isOwner(userId);
       }
 
-      // Stock predictions
       match /stock_predictions/{predictionId} {
-        allow get, list, create, update, delete: if isOwner(userId);
+        allow read, write: if isOwner(userId);
       }
 
-      // Flat holdings structure (Used by the current frontend)
       match /holdings/{holdingId} {
-        allow get, list, create, update, delete: if isOwner(userId);
+        allow read, write: if isOwner(userId);
       }
 
-      // Portfolios and nested data
       match /portfolios/{portfolioId} {
-        allow get, list, create, update, delete: if isOwner(userId);
+        allow read, write: if isOwner(userId);
 
         match /holdings/{hId} {
-          allow get, list, create, update, delete: if isOwner(userId);
+          allow read, write: if isOwner(userId);
         }
 
         match /analyses/{analysisId} {
-          allow get, list, create, update, delete: if isOwner(userId);
+          allow read, write: if isOwner(userId);
         }
       }
 
-      // AI Chat conversations
       match /chat_conversations/{conversationId} {
-        allow get, list, create, update, delete: if isOwner(userId);
+        allow read, write: if isOwner(userId);
 
         match /messages/{messageId} {
-          allow get, list, create, update, delete: if isOwner(userId);
+          allow read, write: if isOwner(userId);
         }
       }
     }

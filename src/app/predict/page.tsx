@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -34,7 +33,7 @@ import {
 import { aiStockPredictionExplanation } from "@/ai/flows/ai-stock-prediction-explanation-flow"
 import { MOCK_STOCKS } from "@/lib/mock-data"
 import { useToast } from "@/hooks/use-toast"
-import { useUser, useFirestore, useDoc, useMemoFirebase, updateDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase"
+import { useUser, useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase"
 import { doc, increment, serverTimestamp, collection } from "firebase/firestore"
 import { cn } from "@/lib/utils"
 
@@ -113,10 +112,11 @@ export default function PredictionArenaPage() {
     setTradeResult(null)
 
     const userRef = doc(db, 'users', user.uid)
-    updateDocumentNonBlocking(userRef, { 
+    // Use setDocumentNonBlocking with merge: true for robustness
+    setDocumentNonBlocking(userRef, { 
       balance: increment(-amount),
       updatedAt: serverTimestamp()
-    })
+    }, { merge: true })
     
     toast({ title: "Trade Executed", description: `Virtual ${dir} position opened @ ₹${currentPrice}` })
   }
@@ -141,10 +141,10 @@ export default function PredictionArenaPage() {
 
     if (isWin && db && user) {
       const userRef = doc(db, 'users', user.uid)
-      updateDocumentNonBlocking(userRef, { 
+      setDocumentNonBlocking(userRef, { 
         balance: increment(winAmount),
         updatedAt: serverTimestamp()
-      })
+      }, { merge: true })
     }
 
     let aiReview = "AI Analyst busy, but your virtual result was recorded.";

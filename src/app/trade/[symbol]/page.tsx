@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -127,7 +126,7 @@ export default function StockDetailsPage() {
   const [activeTimeframe, setActiveTimeframe] = React.useState<Timeframe>("1D")
   const [chartType, setChartType] = React.useState<ChartType>("AREA")
   const [qty, setQty] = React.useState("1")
-  const [isBuying, setIsBuying] = React.useState(false)
+  const [isProcessing, setIsProcessing] = React.useState(false)
 
   // Real-time Balance and Profile
   const userProfileRef = useMemoFirebase(() => {
@@ -186,7 +185,7 @@ export default function StockDetailsPage() {
   }, [fetchLiveQuote])
 
   const handleTrade = async (type: "BUY" | "SELL") => {
-    if (!db || !user) return
+    if (!db || !user || isProcessing) return
     const orderQty = parseFloat(qty)
     if (isNaN(orderQty) || orderQty <= 0) {
       toast({ title: "Invalid Quantity", variant: "destructive" })
@@ -199,7 +198,7 @@ export default function StockDetailsPage() {
       return
     }
 
-    setIsBuying(true)
+    setIsProcessing(true)
     const holdingRef = doc(db, 'users', user.uid, 'holdings', symbol)
     const userRef = doc(db, 'users', user.uid)
 
@@ -213,10 +212,11 @@ export default function StockDetailsPage() {
           lastUpdated: serverTimestamp() 
         }, { merge: true })
         
-        updateDocumentNonBlocking(userRef, { 
+        // Use setDocumentNonBlocking with merge: true for the user profile to be safer than updateDoc
+        setDocumentNonBlocking(userRef, { 
           balance: increment(-totalValue),
           updatedAt: serverTimestamp()
-        })
+        }, { merge: true })
         
         toast({ title: "Virtual Buy Success", description: `Added ${orderQty} shares of ${symbol} to your demo portfolio.` })
       } else {
@@ -225,22 +225,22 @@ export default function StockDetailsPage() {
           throw new Error("You don't own enough shares to sell this quantity.");
         }
         
-        updateDocumentNonBlocking(holdingRef, { 
+        setDocumentNonBlocking(holdingRef, { 
           quantity: increment(-orderQty), 
           lastUpdated: serverTimestamp() 
-        })
+        }, { merge: true })
         
-        updateDocumentNonBlocking(userRef, { 
+        setDocumentNonBlocking(userRef, { 
           balance: increment(totalValue),
           updatedAt: serverTimestamp()
-        })
+        }, { merge: true })
         
         toast({ title: "Virtual Sell Success", description: `Sold ${orderQty} shares of ${symbol}. Funds added to demo balance.` })
       }
     } catch (e: any) {
       toast({ title: "Trade Error", description: e.message || "An error occurred", variant: "destructive" })
     } finally {
-      setIsBuying(false)
+      setIsProcessing(false)
     }
   }
 
@@ -262,10 +262,10 @@ export default function StockDetailsPage() {
     setTradeTimer(TRADE_DURATION)
 
     const userRef = doc(db, 'users', user.uid)
-    updateDocumentNonBlocking(userRef, { 
+    setDocumentNonBlocking(userRef, { 
       balance: increment(-amount),
       updatedAt: serverTimestamp()
-    })
+    }, { merge: true })
     
     toast({ title: "Position Opened", description: `Predicted ${dir} for ${symbol} @ ${stock.price.toFixed(2)}` })
   }
@@ -281,10 +281,10 @@ export default function StockDetailsPage() {
       setIsTradingLive(false)
       if (isWin && db && user) {
         const userRef = doc(db, 'users', user.uid)
-        updateDocumentNonBlocking(userRef, { 
+        setDocumentNonBlocking(userRef, { 
           balance: increment(amount * PAYOUT_RATIO),
           updatedAt: serverTimestamp()
-        })
+        }, { merge: true })
         toast({ title: "TRADE WON", description: `Profited ₹${(amount * 0.8).toFixed(2)} in virtual returns.` })
       } else {
         toast({ variant: "destructive", title: "TRADE EXPIRED", description: "Market moved against your prediction." })
@@ -483,7 +483,7 @@ export default function StockDetailsPage() {
                   <Button 
                     onClick={() => handleTrade("BUY")} 
                     className="h-12 rounded-xl bg-green-500 font-bold hover:bg-green-600" 
-                    disabled={isBuying}
+                    disabled={isProcessing}
                   >
                     Buy
                   </Button>
@@ -491,7 +491,7 @@ export default function StockDetailsPage() {
                     variant="outline" 
                     onClick={() => handleTrade("SELL")} 
                     className="h-12 rounded-xl border-2 border-red-500 text-red-500 font-bold hover:bg-red-50" 
-                    disabled={isBuying}
+                    disabled={isProcessing}
                   >
                     Sell
                   </Button>
