@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
 import { 
   ArrowLeft, 
   Bell, 
@@ -24,7 +25,10 @@ import {
   BookmarkCheck,
   TrendingUp,
   BarChart2,
-  LineChart as LineChartIcon
+  LineChart as LineChartIcon,
+  Maximize2,
+  Minimize2,
+  X
 } from "lucide-react"
 import { 
   AreaChart, 
@@ -93,14 +97,17 @@ const generateChartData = (basePrice: number, isBullish: boolean, timeframe: Tim
   let currentPrice = basePrice * (isBullish ? multiplier : (2 - multiplier));
   
   return Array.from({ length: points }, (_, i) => {
-    const volatility = basePrice * 0.015;
+    const volatility = basePrice * 0.025; // Increased volatility for clearer candles
     const trend = isBullish ? (basePrice * (1 - multiplier)) / points : -(basePrice * (1 - multiplier)) / points;
     
     const open = currentPrice;
     const change = (Math.random() - 0.45) * volatility + trend;
     const close = open + change;
-    const high = Math.max(open, close) + Math.random() * (volatility * 0.3);
-    const low = Math.min(open, close) - Math.random() * (volatility * 0.3);
+    
+    // Hammer style logic: sometimes long wicks
+    const wickExpansion = Math.random() > 0.7 ? volatility * 1.5 : volatility * 0.5;
+    const high = Math.max(open, close) + Math.random() * wickExpansion;
+    const low = Math.min(open, close) - Math.random() * wickExpansion;
     
     currentPrice = close;
 
@@ -110,8 +117,8 @@ const generateChartData = (basePrice: number, isBullish: boolean, timeframe: Tim
       high,
       low,
       close,
-      body: [open, close], // Used for professional range bars
-      wick: [low, high],   // Used for professional range bars
+      body: [open, close], // Range for the candle body
+      wick: [low, high],   // Range for the candle wick
       price: close,
       isUp: close >= open,
     };
@@ -133,8 +140,9 @@ export default function StockDetailPage() {
   const [orderType, setOrderType] = React.useState("Delivery")
   const [qty, setQty] = React.useState("1")
   const [price, setPrice] = React.useState(initialStock.price.toString())
-  const [chartType, setChartType] = React.useState<'area' | 'candle'>('area')
+  const [chartType, setChartType] = React.useState<'area' | 'candle'>('candle') // Default to candle for better technicals
   const [timeframe, setTimeframe] = React.useState<Timeframe>("1D")
+  const [isFullScreen, setIsFullScreen] = React.useState(false)
   
   const isUp = stock.change >= 0;
   const trendColor = isUp ? "hsl(var(--primary))" : "hsl(var(--destructive))";
@@ -166,7 +174,7 @@ export default function StockDetailPage() {
         }
       }
     } catch (error) {
-      // Silently fail individual fetch
+      // Catch network errors
     } finally {
       setIsLoading(false)
     }
@@ -196,6 +204,7 @@ export default function StockDetailPage() {
       title: `${activeOrderTab} Order Placed`,
       description: `Order for ${qty} shares of ${stock.symbol} at ₹${price} has been sent to the exchange.`,
     })
+    if (isFullScreen) setIsFullScreen(false)
   }
 
   const toggleWatchlist = () => {
@@ -209,28 +218,83 @@ export default function StockDetailPage() {
     }
 
     if (isWatched) {
-      deleteDoc(watchlistDocRef)
-        .catch(async () => {
-          const err = new FirestorePermissionError({ path: watchlistDocRef.path, operation: 'delete' })
-          errorEmitter.emit('permission-error', err)
-        })
+      deleteDoc(watchlistDocRef).catch(() => {
+        const err = new FirestorePermissionError({ path: watchlistDocRef.path, operation: 'delete' })
+        errorEmitter.emit('permission-error', err)
+      })
       toast({ title: "Removed from Watchlist", description: `${stock.symbol} has been removed.` })
     } else {
-      setDoc(watchlistDocRef, {
-        symbol,
-        addedAt: serverTimestamp()
+      setDoc(watchlistDocRef, { symbol, addedAt: serverTimestamp() }).catch(() => {
+        const err = new FirestorePermissionError({ path: watchlistDocRef.path, operation: 'create' })
+        errorEmitter.emit('permission-error', err)
       })
-        .catch(async () => {
-          const err = new FirestorePermissionError({ 
-            path: watchlistDocRef.path, 
-            operation: 'create',
-            requestResourceData: { symbol, addedAt: 'serverTimestamp' }
-          })
-          errorEmitter.emit('permission-error', err)
-        })
       toast({ title: "Added to Watchlist", description: `${stock.symbol} is now being tracked.` })
     }
   }
+
+  const ChartComponent = () => (
+    <ResponsiveContainer width="100%" height="100%">
+      {chartType === 'area' ? (
+        <AreaChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+          <defs>
+            <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={trendColor} stopOpacity={0.6}/>
+              <stop offset="100%" stopColor={trendColor} stopOpacity={0}/>
+            </linearGradient>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+              <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+          <CartesianGrid strokeDasharray="1 4" vertical={false} stroke="hsl(var(--muted-foreground))" opacity={0.2} />
+          <XAxis dataKey="time" hide />
+          <YAxis domain={['auto', 'auto']} hide />
+          <Tooltip 
+            contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: '16px', backdropFilter: 'blur(8px)' }}
+            itemStyle={{ color: trendColor, fontWeight: 'bold' }}
+            labelStyle={{ display: 'none' }}
+            formatter={(value: any) => [`₹${parseFloat(value).toFixed(2)}`, "Current"]}
+          />
+          <Area type="monotone" dataKey="price" stroke={trendColor} strokeWidth={4} fillOpacity={1} fill="url(#colorPrice)" filter="url(#glow)" />
+        </AreaChart>
+      ) : (
+        <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+          <defs>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+              <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+          <CartesianGrid strokeDasharray="1 4" vertical={false} stroke="hsl(var(--muted-foreground))" opacity={0.2} />
+          <XAxis dataKey="time" hide />
+          <YAxis domain={['auto', 'auto']} hide />
+          <Tooltip 
+            contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: '16px' }}
+            formatter={(value: any, name: string) => [`₹${parseFloat(Array.isArray(value) ? value[1] : value).toFixed(2)}`, name]}
+            labelStyle={{ display: 'none' }}
+          />
+          {/* Wick: Thin line for hammer clarity */}
+          <Bar dataKey="wick" barSize={1} filter="url(#glow)">
+            {chartData.map((entry, index) => (
+              <Cell key={`cell-wick-${index}`} fill={entry.isUp ? 'hsl(var(--primary))' : 'hsl(var(--destructive))'} />
+            ))}
+          </Bar>
+          {/* Body: Thicker for professional visibility */}
+          <Bar dataKey="body" barSize={14} filter="url(#glow)">
+            {chartData.map((entry, index) => (
+              <Cell key={`cell-body-${index}`} fill={entry.isUp ? 'hsl(var(--primary))' : 'hsl(var(--destructive))'} />
+            ))}
+          </Bar>
+        </ComposedChart>
+      )}
+    </ResponsiveContainer>
+  )
 
   return (
     <DashboardShell>
@@ -269,13 +333,9 @@ export default function StockDetailPage() {
                     <h1 className="text-4xl font-headline font-bold tracking-tight">{stock.name}</h1>
                     <div className="flex items-center gap-2 text-muted-foreground text-sm font-medium mt-1">
                       <span className="bg-muted px-2 py-0.5 rounded text-[10px] font-bold">NSE</span>
-                      <span>₹{stock.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                       <span className={isUp ? "text-primary" : "text-destructive"}>
-                        ({isUp ? '+' : ''}{stock.change.toFixed(2)}%)
+                        ₹{stock.price.toLocaleString(undefined, { minimumFractionDigits: 2 })} ({isUp ? '+' : ''}{stock.change.toFixed(2)}%)
                       </span>
-                      <span className="text-border mx-1">|</span>
-                      <span className="bg-muted px-2 py-0.5 rounded text-[10px] font-bold">BSE</span>
-                      <span>₹{stock.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                     </div>
                   </div>
                 </div>
@@ -285,126 +345,78 @@ export default function StockDetailPage() {
                 </Button>
               </div>
 
-              <div className="space-y-1">
-                <div className="flex items-baseline gap-3">
-                  <span className="text-5xl font-headline font-bold">₹{stock.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                  <div className={cn(
-                    "flex items-center gap-1.5 text-xl font-bold px-3 py-1 rounded-lg",
-                    isUp ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
-                  )}>
-                    {isUp ? "+" : "-"}{priceChange} ({stock.change.toFixed(2)}%)
-                  </div>
-                  <span className="text-muted-foreground text-xs font-bold uppercase tracking-widest bg-muted/50 px-2 py-1 rounded ml-2">{timeframe}</span>
-                </div>
-              </div>
-
-              <div className="h-[450px] w-full glass-card p-4 rounded-[2.5rem] relative group/chart overflow-hidden shadow-2xl border-primary/10">
+              {/* Chart Section */}
+              <div className="h-[500px] w-full glass-card p-4 rounded-[2.5rem] relative group/chart overflow-hidden shadow-2xl border-primary/10">
                 <div className="absolute top-6 left-6 z-10 flex items-center gap-2">
-                  <Badge variant="outline" className="bg-background/80 backdrop-blur-md font-bold">Real-time Feed</Badge>
+                  <Badge variant="outline" className="bg-background/80 backdrop-blur-md font-bold">Live</Badge>
                   <div className="flex p-0.5 bg-muted/50 rounded-lg border border-border/50">
-                    <button 
-                      onClick={() => setChartType('area')}
-                      className={cn(
-                        "p-1.5 rounded-md transition-all",
-                        chartType === 'area' ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
-                      )}
-                    >
+                    <button onClick={() => setChartType('area')} className={cn("p-1.5 rounded-md", chartType === 'area' ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted")}>
                       <LineChartIcon className="size-4" />
                     </button>
-                    <button 
-                      onClick={() => setChartType('candle')}
-                      className={cn(
-                        "p-1.5 rounded-md transition-all",
-                        chartType === 'candle' ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
-                      )}
-                    >
+                    <button onClick={() => setChartType('candle')} className={cn("p-1.5 rounded-md", chartType === 'candle' ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted")}>
                       <BarChart2 className="size-4" />
                     </button>
                   </div>
                 </div>
+
+                <div className="absolute top-6 right-6 z-10">
+                  <Dialog open={isFullScreen} onOpenChange={setIsFullScreen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="icon" className="rounded-full bg-background/80 backdrop-blur-md border-border/50 hover:bg-primary/10 hover:border-primary/30">
+                        <Maximize2 className="size-4" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-none w-screen h-screen m-0 p-0 bg-background border-none rounded-none">
+                      <div className="flex flex-col h-full relative p-10 space-y-6">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <h2 className="text-3xl font-headline font-bold text-primary">{stock.name} <span className="text-muted-foreground text-sm">{stock.symbol}</span></h2>
+                            <div className={cn("px-4 py-1 rounded-full text-lg font-bold", isUp ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive")}>
+                              ₹{stock.price.toLocaleString()} ({isUp ? '+' : ''}{stock.change.toFixed(2)}%)
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <div className="flex gap-2">
+                              {["1D", "1W", "1M", "3M", "6M", "1Y"].map(t => (
+                                <Button key={t} variant={timeframe === t ? "default" : "outline"} size="sm" className="rounded-full h-8 px-4" onClick={() => setTimeframe(t as Timeframe)}>{t}</Button>
+                              ))}
+                            </div>
+                            <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setIsFullScreen(false)}>
+                              <X className="size-6" />
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className="flex-1 min-h-0 bg-muted/5 rounded-[3rem] p-6 border border-border/50">
+                          <ChartComponent />
+                        </div>
+
+                        <div className="flex items-center justify-center gap-4 pt-4">
+                          <Button 
+                            className="bg-primary hover:bg-primary/90 text-primary-foreground h-16 px-12 rounded-2xl text-xl font-black shadow-xl shadow-primary/20"
+                            onClick={() => { setActiveOrderTab("BUY"); handleOrder(); }}
+                          >
+                            QUICK BUY {stock.symbol}
+                          </Button>
+                          <Button 
+                            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground h-16 px-12 rounded-2xl text-xl font-black shadow-xl shadow-destructive/20"
+                            onClick={() => { setActiveOrderTab("SELL"); handleOrder(); }}
+                          >
+                            QUICK SELL {stock.symbol}
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
                 
-                <ResponsiveContainer width="100%" height="100%">
-                  {chartType === 'area' ? (
-                    <AreaChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
-                      <defs>
-                        <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor={trendColor} stopOpacity={0.6}/>
-                          <stop offset="100%" stopColor={trendColor} stopOpacity={0}/>
-                        </linearGradient>
-                        <filter id="glow">
-                          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-                          <feMerge>
-                            <feMergeNode in="coloredBlur"/>
-                            <feMergeNode in="SourceGraphic"/>
-                          </feMerge>
-                        </filter>
-                      </defs>
-                      <CartesianGrid strokeDasharray="1 4" vertical={false} stroke="hsl(var(--muted-foreground))" opacity={0.2} />
-                      <XAxis dataKey="time" hide />
-                      <YAxis domain={['auto', 'auto']} hide />
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: 'hsl(var(--background))', 
-                          border: '1px solid hsl(var(--border))', 
-                          borderRadius: '16px', 
-                          boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-                          backdropFilter: 'blur(8px)'
-                        }}
-                        itemStyle={{ color: trendColor, fontWeight: 'bold' }}
-                        labelStyle={{ display: 'none' }}
-                        formatter={(value: any) => [`₹${parseFloat(value).toFixed(2)}`, "Current"]}
-                      />
-                      <Area 
-                        type="monotone" 
-                        dataKey="price" 
-                        stroke={trendColor} 
-                        strokeWidth={4}
-                        fillOpacity={1} 
-                        fill="url(#colorPrice)" 
-                        animationDuration={1500}
-                        connectNulls
-                        className="recharts-area-area"
-                        filter="url(#glow)"
-                      />
-                    </AreaChart>
-                  ) : (
-                    <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
-                      <defs>
-                        <filter id="glow">
-                          <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-                          <feMerge>
-                            <feMergeNode in="coloredBlur"/>
-                            <feMergeNode in="SourceGraphic"/>
-                          </feMerge>
-                        </filter>
-                      </defs>
-                      <CartesianGrid strokeDasharray="1 4" vertical={false} stroke="hsl(var(--muted-foreground))" opacity={0.2} />
-                      <XAxis dataKey="time" hide />
-                      <YAxis domain={['auto', 'auto']} hide />
-                      <Tooltip 
-                        contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: '16px' }}
-                        formatter={(value: any, name: string) => [`₹${parseFloat(value[0] || value).toFixed(2)}`, name]}
-                        labelStyle={{ display: 'none' }}
-                      />
-                      <Bar dataKey="wick" barSize={1} filter="url(#glow)">
-                        {chartData.map((entry, index) => (
-                          <Cell key={`cell-wick-${index}`} fill={entry.isUp ? 'hsl(var(--primary))' : 'hsl(var(--destructive))'} />
-                        ))}
-                      </Bar>
-                      <Bar dataKey="body" barSize={10} filter="url(#glow)">
-                        {chartData.map((entry, index) => (
-                          <Cell key={`cell-body-${index}`} fill={entry.isUp ? 'hsl(var(--primary))' : 'hsl(var(--destructive))'} />
-                        ))}
-                      </Bar>
-                    </ComposedChart>
-                  )}
-                </ResponsiveContainer>
+                <ChartComponent />
                 
                 <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 p-1.5 bg-background/80 backdrop-blur-xl rounded-[2rem] border border-border shadow-2xl">
-                  {(["NSE", "1D", "1W", "1M", "3M", "6M", "1Y", "5Y", "All"] as (Timeframe | "NSE")[]).map((t) => (
+                  {(["1D", "1W", "1M", "3M", "6M", "1Y", "All"] as (Timeframe)[]).map((t) => (
                     <button 
                       key={t}
-                      onClick={() => t !== "NSE" && setTimeframe(t as Timeframe)}
+                      onClick={() => setTimeframe(t)}
                       className={cn(
                         "h-9 px-4 rounded-[1.25rem] text-[11px] font-bold transition-all",
                         t === timeframe ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -414,9 +426,6 @@ export default function StockDetailPage() {
                     </button>
                   ))}
                   <div className="w-px h-5 bg-border mx-1" />
-                  <Button variant="ghost" size="icon" className="h-9 w-9 p-0 rounded-full text-primary hover:bg-primary/10">
-                    <Zap className="size-4 fill-primary" />
-                  </Button>
                   <Button variant="outline" className="h-9 rounded-[1.25rem] text-[11px] font-bold gap-2 px-4 border-2 hover:bg-primary/5 hover:border-primary/50">
                     Terminal <Layout className="size-4" />
                   </Button>
@@ -446,59 +455,27 @@ export default function StockDetailPage() {
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-24 gap-y-14">
-                      <RangeBar 
-                        low={performance.todayLow} 
-                        high={performance.todayHigh} 
-                        current={stock.price} 
-                        labelLow="Today's Low" 
-                        labelHigh="Today's High" 
-                      />
-                      <RangeBar 
-                        low={performance.fiftyTwoWLow} 
-                        high={performance.fiftyTwoWHigh} 
-                        current={stock.price} 
-                        labelLow="52W Low" 
-                        labelHigh="52W High" 
-                      />
+                      <RangeBar low={performance.todayLow} high={performance.todayHigh} current={stock.price} labelLow="Today's Low" labelHigh="Today's High" />
+                      <RangeBar low={performance.fiftyTwoWLow} high={performance.fiftyTwoWHigh} current={stock.price} labelLow="52W Low" labelHigh="52W High" />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-y-14 gap-x-12 p-8 bg-muted/20 rounded-[2rem] border border-border/50">
                     <div className="space-y-2">
-                      <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
-                        <div className="size-1 bg-primary rounded-full"></div> Open
-                      </div>
+                      <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Open</div>
                       <div className="text-xl font-bold">₹{performance.open.toFixed(2)}</div>
                     </div>
                     <div className="space-y-2">
-                      <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
-                        <div className="size-1 bg-primary rounded-full"></div> Prev. Close
-                      </div>
+                      <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Prev. Close</div>
                       <div className="text-xl font-bold">₹{performance.prevClose.toFixed(2)}</div>
                     </div>
                     <div className="space-y-2">
-                      <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
-                        <div className="size-1 bg-primary rounded-full"></div> Volume
-                      </div>
+                      <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Volume</div>
                       <div className="text-xl font-bold">{performance.volume}</div>
                     </div>
                     <div className="space-y-2">
-                      <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
-                        <div className="size-1 bg-primary rounded-full"></div> traded value
-                      </div>
+                      <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Traded Value</div>
                       <div className="text-xl font-bold">{performance.totalTradedValue}</div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
-                        <div className="size-1 bg-green-500 rounded-full"></div> Upper Circuit
-                      </div>
-                      <div className="text-xl font-bold text-green-500">₹{performance.upperCircuit.toFixed(2)}</div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
-                        <div className="size-1 bg-red-500 rounded-full"></div> Lower Circuit
-                      </div>
-                      <div className="text-xl font-bold text-red-500">₹{performance.lowerCircuit.toFixed(2)}</div>
                     </div>
                   </div>
                 </TabsContent>
@@ -509,113 +486,40 @@ export default function StockDetailPage() {
           <div className="space-y-8">
             <Card className="glass-card border-none bg-card/60 backdrop-blur-3xl overflow-hidden rounded-[2.5rem] shadow-2xl border-t border-white/10 ring-1 ring-black/5">
               <CardHeader className="pb-6 pt-10 px-8">
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-2xl font-headline font-bold">{stock.name}</span>
-                    <span className="text-[11px] text-muted-foreground uppercase tracking-widest font-bold flex items-center gap-1.5">
-                      NSE ₹{stock.price.toLocaleString(undefined, { minimumFractionDigits: 2 })} 
-                      <span className={cn(
-                        "font-black",
-                        isUp ? "text-primary" : "text-destructive"
-                      )}>
-                        ({isUp ? '+' : ''}{stock.change.toFixed(2)}%)
-                      </span>
-                    </span>
-                  </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-2xl font-headline font-bold">{stock.name}</span>
+                  <span className={cn("text-xs font-bold", isUp ? "text-primary" : "text-destructive")}>
+                    NSE ₹{stock.price.toLocaleString()} ({isUp ? '+' : ''}{stock.change.toFixed(2)}%)
+                  </span>
                 </div>
               </CardHeader>
               <CardContent className="space-y-8 px-8 pb-10">
                 <div className="flex p-1.5 bg-muted/50 rounded-[1.5rem] border border-border/50">
-                  <button 
-                    onClick={() => setActiveOrderTab("BUY")}
-                    className={cn(
-                      "flex-1 py-3 text-sm font-black rounded-xl transition-all duration-300",
-                      activeOrderTab === "BUY" ? "bg-primary text-primary-foreground shadow-xl shadow-primary/20 scale-[1.02]" : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    BUY
-                  </button>
-                  <button 
-                    onClick={() => setActiveOrderTab("SELL")}
-                    className={cn(
-                      "flex-1 py-3 text-sm font-black rounded-xl transition-all duration-300",
-                      activeOrderTab === "SELL" ? "bg-destructive text-destructive-foreground shadow-xl shadow-destructive/20 scale-[1.02]" : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    SELL
-                  </button>
-                </div>
-
-                <div className="flex items-center gap-3 overflow-x-auto no-scrollbar py-1">
-                  {["Delivery", "Intraday", "MTF 4.11x"].map((t) => (
-                    <Button 
-                      key={t}
-                      variant="outline"
-                      size="sm"
-                      className={cn(
-                        "rounded-full h-10 px-5 text-xs font-bold shrink-0 transition-all border-2",
-                        orderType === t ? "border-primary text-primary bg-primary/5" : "border-border hover:border-primary/30"
-                      )}
-                      onClick={() => setOrderType(t)}
-                    >
-                      {t}
-                    </Button>
-                  ))}
-                  <Button variant="ghost" size="icon" className="size-10 rounded-full border-2 border-border hover:border-primary/50 shrink-0">
-                    <Settings2 className="size-4" />
-                  </Button>
+                  <button onClick={() => setActiveOrderTab("BUY")} className={cn("flex-1 py-3 text-sm font-black rounded-xl transition-all duration-300", activeOrderTab === "BUY" ? "bg-primary text-primary-foreground shadow-xl shadow-primary/20 scale-[1.02]" : "text-muted-foreground hover:text-foreground")}>BUY</button>
+                  <button onClick={() => setActiveOrderTab("SELL")} className={cn("flex-1 py-3 text-sm font-black rounded-xl transition-all duration-300", activeOrderTab === "SELL" ? "bg-destructive text-destructive-foreground shadow-xl shadow-destructive/20 scale-[1.02]" : "text-muted-foreground hover:text-foreground")}>SELL</button>
                 </div>
 
                 <div className="space-y-6 pt-4">
                   <div className="space-y-2">
-                    <div className="flex justify-between items-center px-1">
-                      <div className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
-                        Qty <span className="text-primary">{stock.symbol}</span> <ChevronDown className="size-3" />
-                      </div>
-                    </div>
-                    <Input 
-                      type="number" 
-                      value={qty} 
-                      onChange={(e) => setQty(e.target.value)}
-                      className="h-14 text-right text-xl font-bold bg-muted/30 border-none rounded-2xl focus-visible:ring-2 focus-visible:ring-primary/40" 
-                    />
+                    <div className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Quantity</div>
+                    <Input type="number" value={qty} onChange={(e) => setQty(e.target.value)} className="h-14 text-right text-xl font-bold bg-muted/30 border-none rounded-2xl focus-visible:ring-2 focus-visible:ring-primary/40" />
                   </div>
                   <div className="space-y-2">
-                    <div className="flex justify-between items-center px-1">
-                      <div className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
-                        Price <span className="text-primary">Limit</span> <ChevronDown className="size-3" />
-                      </div>
-                    </div>
-                    <Input 
-                      type="number" 
-                      value={price} 
-                      onChange={(e) => setPrice(e.target.value)}
-                      className="h-14 text-right text-xl font-bold bg-muted/30 border-none rounded-2xl focus-visible:ring-2 focus-visible:ring-primary/40" 
-                    />
+                    <div className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Price (Limit)</div>
+                    <Input type="number" value={price} onChange={(e) => setPrice(e.target.value)} className="h-14 text-right text-xl font-bold bg-muted/30 border-none rounded-2xl focus-visible:ring-2 focus-visible:ring-primary/40" />
                   </div>
                 </div>
 
                 <div className="pt-6 space-y-5">
-                  <div className="flex flex-col gap-3 px-1">
-                    <div className="flex justify-between items-center text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em]">
-                      <div className="flex items-center gap-1.5">
-                        Balance: ₹{MOCK_USER.balance.toLocaleString()} <Info className="size-3 text-primary/60" />
-                      </div>
-                      <div className="text-foreground">Margin Available</div>
-                    </div>
-                    <div className="flex justify-between items-center text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em]">
-                      <span>Approx Req:</span>
-                      <span className="text-lg text-foreground">₹{(parseFloat(qty) * parseFloat(price)).toLocaleString()}</span>
-                    </div>
+                  <div className="flex justify-between items-center text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em]">
+                    <span>Balance: ₹{MOCK_USER.balance.toLocaleString()}</span>
+                    <span className="text-foreground">Total: ₹{(parseFloat(qty) * parseFloat(price)).toLocaleString()}</span>
                   </div>
                   <Button 
-                    className={cn(
-                      "w-full h-16 rounded-[1.5rem] text-xl font-black shadow-2xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]",
-                      activeOrderTab === "BUY" ? "bg-primary text-primary-foreground shadow-primary/20" : "bg-destructive text-destructive-foreground shadow-destructive/20"
-                    )}
+                    className={cn("w-full h-16 rounded-[1.5rem] text-xl font-black shadow-2xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]", activeOrderTab === "BUY" ? "bg-primary text-primary-foreground shadow-primary/20" : "bg-destructive text-destructive-foreground shadow-destructive/20")}
                     onClick={handleOrder}
                   >
-                    {activeOrderTab === "BUY" ? "Buy" : "Sell"}
+                    {activeOrderTab === "BUY" ? "Buy Now" : "Sell Now"}
                   </Button>
                 </div>
               </CardContent>
@@ -623,12 +527,8 @@ export default function StockDetailPage() {
 
             <Card className="glass-card border-none bg-muted/30 p-6 rounded-[2rem]">
               <CardContent className="p-0 flex gap-4">
-                <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <Info className="size-5 text-primary" />
-                </div>
-                <p className="text-[11px] text-muted-foreground leading-relaxed font-medium">
-                  Investing in stocks involves market risks. Ensure sufficient margin for {activeOrderTab} orders. Limit orders are filled at the specified price or better.
-                </p>
+                <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0"><Info className="size-5 text-primary" /></div>
+                <p className="text-[11px] text-muted-foreground leading-relaxed font-medium">Investing involves market risks. Ensure sufficient margin. Limit orders are filled at specified prices.</p>
               </CardContent>
             </Card>
           </div>
@@ -637,3 +537,4 @@ export default function StockDetailPage() {
     </DashboardShell>
   )
 }
+
