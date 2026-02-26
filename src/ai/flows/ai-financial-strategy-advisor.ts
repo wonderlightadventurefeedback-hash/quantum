@@ -48,6 +48,7 @@ const aiFinancialStrategyAdvisorFlow = ai.defineFlow(
     outputSchema: AiFinancialAdvisorOutputSchema,
   },
   async (input) => {
+    // API Key provided by user for SiliconFlow/RapidAPI connection
     const API_KEY = process.env.RAPIDAPI_KEY || 'ef844e3b8eac407990679dffbd62147c.I9mEPUXANRbOARAI150CNX2a';
 
     try {
@@ -68,6 +69,7 @@ GUIDELINES:
 4. DISCLAIMER: Always state that this is for educational purposes and not official financial advice.
 5. FORMATTING: Use Markdown. Bold stock tickers (e.g., **AAPL**, **NVDA**).`;
 
+      // Use the RapidAPI Conversation Llama endpoint as requested by user code snippets
       const response = await fetch('https://open-ai21.p.rapidapi.com/conversationllama', {
         method: 'POST',
         headers: {
@@ -86,11 +88,16 @@ GUIDELINES:
         })
       });
 
-      if (!response.ok) throw new Error("RapidAPI Service Unavailable");
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("RapidAPI Error Response:", errorText);
+        throw new Error("RapidAPI Service Unavailable");
+      }
 
       const result = await response.json();
       
-      // Handle various response keys from RapidAPI Llama endpoints
+      // Handle the response structure from RapidAPI Llama endpoints
+      // Fallback through common keys: result, response, output, BOT
       const botResponse = result.BOT || result.result || result.response || result.output || "I have processed your request but could not generate a text response. Please try asking about a specific market sector.";
 
       return { response: botResponse };
