@@ -75,9 +75,10 @@ const generateChartData = (basePrice: number, isBullish: boolean, timeframe: Tim
     const change = (Math.random() - 0.48) * volatility + trend;
     const close = open + change;
     
-    // Technical analysis "Hammer" style wicks
-    const wickHigh = Math.random() * (volatility * 0.4);
-    const wickLow = Math.random() * (volatility * 1.2); // pronounced lower wick
+    // Technical analysis "Hammer" style wicks - sometimes extreme for realism
+    const hasLongWick = Math.random() > 0.85;
+    const wickHigh = Math.random() * (volatility * (hasLongWick ? 1.5 : 0.4));
+    const wickLow = Math.random() * (volatility * (hasLongWick ? 1.8 : 1.2)); 
     
     const high = Math.max(open, close) + wickHigh;
     const low = Math.min(open, close) - wickLow;
@@ -343,12 +344,13 @@ export default function StockDetailPage() {
               contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: '12px' }}
               labelStyle={{ fontWeight: 'bold' }}
             />
-            {/* Hammer Style Candlesticks */}
+            {/* Hammer Style Candlesticks: Wicks first */}
             <Bar dataKey="wick" barSize={1} filter="url(#candle-glow)">
               {chartData.map((entry: any, index: number) => (
                 <Cell key={`wick-${index}`} fill={entry.color} />
               ))}
             </Bar>
+            {/* Hammer Style Candlesticks: Bodies on top */}
             <Bar dataKey="body" barSize={10} filter="url(#candle-glow)">
               {chartData.map((entry: any, index: number) => (
                 <Cell key={`body-${index}`} fill={entry.color} />
@@ -364,7 +366,8 @@ export default function StockDetailPage() {
                 fill: 'white',
                 fontSize: 10,
                 fontWeight: 'bold',
-                offset: 5
+                offset: 5,
+                className: "price-marker"
               }}
             />
           </ComposedChart>
@@ -559,14 +562,17 @@ export default function StockDetailPage() {
         </div>
       </div>
       <style jsx global>{`
-        .price-marker {
-          background-color: #333;
-          border-radius: 4px;
-          padding: 2px 6px;
+        .price-marker text {
+          font-weight: 900;
+          filter: drop-shadow(0 0 8px rgba(0,0,0,1));
+          fill: white;
+          paint-order: stroke;
+          stroke: rgba(0,0,0,0.5);
+          stroke-width: 2px;
         }
-        .recharts-reference-line-label text {
-          font-weight: 800;
-          filter: drop-shadow(0 0 4px rgba(0,0,0,0.8));
+        .recharts-reference-line-label {
+          background-color: rgba(0,0,0,0.8);
+          border-radius: 4px;
         }
       `}</style>
     </DashboardShell>
