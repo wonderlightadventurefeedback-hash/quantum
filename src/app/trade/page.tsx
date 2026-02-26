@@ -2,20 +2,18 @@
 
 import * as React from "react"
 import { DashboardShell } from "@/components/dashboard-shell"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { 
-  ArrowUpRight, 
-  ArrowDownRight, 
   Search, 
   Wallet, 
-  TrendingUp, 
   Zap,
   Info,
   ShoppingCart
 } from "lucide-react"
+import { LineChart, Line, ResponsiveContainer } from "recharts"
 import { MOCK_STOCKS, MOCK_USER } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
@@ -32,7 +30,6 @@ export default function TradePage() {
 
   const handleBuy = (stock: typeof MOCK_STOCKS[0]) => {
     setIsOrdering(stock.symbol)
-    // Simulate API delay
     setTimeout(() => {
       setIsOrdering(null)
       toast({
@@ -62,75 +59,101 @@ export default function TradePage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Main Stock List */}
           <div className="lg:col-span-3 space-y-6">
             <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
               <Input 
-                placeholder="Search stocks by name or symbol (e.g. SBLI, AAPL)..." 
+                placeholder="Search stocks by name or symbol (e.g. BOB, AMZN)..." 
                 className="pl-12 h-14 bg-card/50 border-border rounded-2xl focus-visible:ring-primary/40"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
 
-            <div className="grid grid-cols-1 gap-3">
-              {filteredStocks.map((stock) => (
-                <Card key={stock.symbol} className="glass-card hover:border-primary/50 transition-all group overflow-hidden border-none shadow-sm">
-                  <CardContent className="p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-4 min-w-0">
-                      <div className="size-12 rounded-full bg-muted flex items-center justify-center shrink-0 font-bold text-muted-foreground border border-border/50">
-                        {stock.symbol[0]}
-                      </div>
-                      <div className="flex flex-col min-w-0">
-                        <h3 className="font-bold text-sm truncate">{stock.name}</h3>
-                        <Badge variant="secondary" className="w-fit text-[9px] h-4 py-0 px-1.5 bg-muted/50 text-muted-foreground font-bold uppercase border-none rounded-sm">
-                          {stock.symbol}
-                        </Badge>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-6">
-                      <div className="text-right shrink-0">
-                        <div className="text-base font-bold flex items-center gap-1 justify-end">
-                          {stock.price.toFixed(2)} <span className="text-[10px] text-muted-foreground font-normal">INR</span>
-                        </div>
-                        <div className={cn(
-                          "text-[11px] font-bold px-2 py-0.5 rounded min-w-[70px] text-center mt-1",
-                          stock.change > 0 ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
-                        )}>
-                          {stock.change > 0 ? "+" : ""}{stock.change.toFixed(2)}%
-                        </div>
-                      </div>
-                      
-                      <div className="flex gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          className="rounded-lg font-bold h-9 text-xs"
-                          onClick={() => toast({ title: stock.symbol, description: `Loading technical charts...` })}
+            <Card className="glass-card border-none shadow-none bg-transparent overflow-hidden">
+              <CardContent className="p-0">
+                <div className="min-w-[800px] overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="text-left text-xs text-muted-foreground font-bold uppercase tracking-widest border-b border-border/50">
+                        <th className="px-6 py-4">Company</th>
+                        <th className="px-6 py-4 text-center">Market Chart</th>
+                        <th className="px-6 py-4 text-right">Price (INR)</th>
+                        <th className="px-6 py-4 text-right">Volume</th>
+                        <th className="px-6 py-4 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/30">
+                      {filteredStocks.map((stock, i) => (
+                        <tr 
+                          key={stock.symbol} 
+                          className="group hover:bg-muted/5 transition-colors animate-in fade-in slide-in-from-right-4"
+                          style={{ animationDelay: `${100 + (i * 30)}ms` }}
                         >
-                          Details
-                        </Button>
-                        <Button 
-                          size="sm"
-                          className="rounded-lg font-bold gap-2 h-9 text-xs"
-                          disabled={isOrdering === stock.symbol}
-                          onClick={() => handleBuy(stock)}
-                        >
-                          {isOrdering === stock.symbol ? (
-                            <span className="size-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                          ) : (
-                            <ShoppingCart className="size-3" />
-                          )}
-                          Buy
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-4">
+                              <div className="size-12 rounded-xl bg-muted/50 flex items-center justify-center shrink-0 font-bold text-primary text-base border border-border/50 transition-transform group-hover:scale-105">
+                                {stock.symbol[0]}
+                              </div>
+                              <div className="flex flex-col min-w-0">
+                                <div className="font-bold text-[14px] truncate">{stock.name}</div>
+                                <Badge variant="secondary" className="w-fit text-[9px] h-4 py-0 px-1.5 bg-muted/50 text-muted-foreground font-bold uppercase border-none rounded-sm">
+                                  {stock.symbol}
+                                </Badge>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="w-24 h-10 mx-auto">
+                              <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={stock.sparklineData}>
+                                  <Line 
+                                    type="monotone" 
+                                    dataKey="value" 
+                                    stroke={stock.trend === "UP" ? "#22c55e" : "#ef4444"} 
+                                    strokeWidth={2} 
+                                    dot={false} 
+                                  />
+                                </LineChart>
+                              </ResponsiveContainer>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex flex-col items-end">
+                              <div className="text-[14px] font-bold">₹{stock.price.toLocaleString()}</div>
+                              <div className={cn(
+                                "text-[10px] font-bold",
+                                stock.trend === "UP" ? "text-green-500" : "text-red-500"
+                              )}>
+                                {stock.trend === "UP" ? "+" : ""}{(stock.price * (stock.change / 100)).toFixed(2)} ({stock.change.toFixed(2)}%)
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="text-xs font-medium text-muted-foreground">{stock.volume}</div>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <Button 
+                              size="sm"
+                              className="rounded-lg font-bold gap-2 h-9 text-xs"
+                              disabled={isOrdering === stock.symbol}
+                              onClick={() => handleBuy(stock)}
+                            >
+                              {isOrdering === stock.symbol ? (
+                                <span className="size-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                              ) : (
+                                <ShoppingCart className="size-3" />
+                              )}
+                              Buy
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
 
             {filteredStocks.length === 0 && (
               <div className="text-center py-20 bg-muted/20 rounded-3xl border border-dashed border-border">
@@ -141,7 +164,6 @@ export default function TradePage() {
             )}
           </div>
 
-          {/* Sidebar / Market Info */}
           <div className="space-y-6">
             <Card className="glass-card border-primary/20 bg-primary/5">
               <CardHeader>
@@ -178,13 +200,8 @@ export default function TradePage() {
             </Card>
 
             <Card className="glass-card bg-muted/30 border-none">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-sm font-bold">
-                  <Info className="size-4 text-primary" />
-                  Trading Rule
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="text-[10px] text-muted-foreground leading-tight">
+              <CardContent className="p-4 flex items-start gap-2 text-[10px] text-muted-foreground leading-tight">
+                <Info className="size-4 text-primary shrink-0" />
                 All simulated trades are executed at current market price. Commission is 0 INR for the first 100 trades of the month.
               </CardContent>
             </Card>

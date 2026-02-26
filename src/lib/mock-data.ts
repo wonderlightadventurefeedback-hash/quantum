@@ -14,22 +14,108 @@ export const MOCK_INDICES = [
   { name: "IT INDEX", value: "35,120.90", change: "+210.15", percent: "+0.60%", trend: "UP" },
 ];
 
-export const MOCK_STOCKS = [
-  { symbol: "SBLI", name: "SBL Infratech Limited", price: 42.60, change: 20.00, trend: "UP", category: "Stocks" },
-  { symbol: "SBRANDS", name: "Sanghvi Brands Ltd.", price: 10.98, change: 20.00, trend: "UP", category: "Stocks" },
-  { symbol: "TARMAT", name: "Tarmat Ltd.", price: 64.89, change: 19.99, trend: "UP", category: "Stocks" },
-  { symbol: "XTGLOBAL", name: "XTGlobal Infotech Ltd.", price: 33.63, change: 19.98, trend: "UP", category: "Stocks" },
-  { symbol: "RUDRA", name: "Rudra Global Infra Products L...", price: 21.40, change: 19.96, trend: "UP", category: "Stocks" },
-  { symbol: "SHANTIDENM", name: "Shanti Spintex Ltd.", price: 68.75, change: 19.57, trend: "UP", category: "Stocks" },
-  { symbol: "RMDRIP", name: "R M Drip And Sprinklers Syste...", price: 78.36, change: -20.00, trend: "DOWN", category: "Stocks" },
-  { symbol: "SIROHIA", name: "Sirohia & Sons Ltd", price: 4.82, change: -19.67, trend: "DOWN", category: "Stocks" },
-  { symbol: "SOFCOM", name: "Sofcom Systems Ltd.", price: 22.49, change: -18.28, trend: "DOWN", category: "Stocks" },
-  { symbol: "TGIF", name: "TGIF Agribusiness Ltd.", price: 70.50, change: -18.02, trend: "DOWN", category: "Stocks" },
-  { symbol: "LLFICL", name: "Leading Leasing Finance & In...", price: 2.31, change: -17.79, trend: "DOWN", category: "Stocks" },
-  { symbol: "ANNVRPP", name: "Annvriddhi Ventures Ltd TEMP", price: 2.42, change: -16.55, trend: "DOWN", category: "Stocks" },
-  { symbol: "AMZN", name: "Amazon.com", price: 175.35, change: 1.12, trend: "UP", category: "US Stocks" },
-  { symbol: "META", name: "Meta Platforms", price: 485.58, change: 2.34, trend: "UP", category: "US Stocks" },
-  { symbol: "BRK.B", name: "Berkshire Hathaway", price: 405.12, change: -0.45, trend: "DOWN", category: "US Stocks" },
+export interface Stock {
+  symbol: string;
+  name: string;
+  price: number;
+  change: number;
+  trend: "UP" | "DOWN";
+  category: "Stocks" | "US Stocks";
+  volume: string;
+  sparklineData: { value: number }[];
+}
+
+export const MOCK_STOCKS: Stock[] = [
+  { 
+    symbol: "BOB", 
+    name: "Bank of Baroda", 
+    price: 324.45, 
+    change: 2.72, 
+    trend: "UP", 
+    category: "Stocks", 
+    volume: "2,05,02,406",
+    sparklineData: [{value: 300}, {value: 310}, {value: 305}, {value: 320}, {value: 315}, {value: 324}]
+  },
+  { 
+    symbol: "TATAMOTORS", 
+    name: "Tata Motors Passenger", 
+    price: 391.55, 
+    change: 2.54, 
+    trend: "UP", 
+    category: "Stocks", 
+    volume: "1,46,97,484",
+    sparklineData: [{value: 370}, {value: 375}, {value: 385}, {value: 380}, {value: 390}, {value: 391}]
+  },
+  { 
+    symbol: "EICHERMOT", 
+    name: "Eicher Motors", 
+    price: 8190.00, 
+    change: 2.27, 
+    trend: "UP", 
+    category: "Stocks", 
+    volume: "4,27,401",
+    sparklineData: [{value: 8000}, {value: 8050}, {value: 8100}, {value: 8080}, {value: 8150}, {value: 8190}]
+  },
+  { 
+    symbol: "BEL", 
+    name: "Bharat Electronics", 
+    price: 449.05, 
+    change: 2.22, 
+    trend: "UP", 
+    category: "Stocks", 
+    volume: "1,37,38,213",
+    sparklineData: [{value: 430}, {value: 435}, {value: 440}, {value: 438}, {value: 445}, {value: 449}]
+  },
+  { 
+    symbol: "SOLARINDS", 
+    name: "Solar Industries", 
+    price: 13755.00, 
+    change: 2.20, 
+    trend: "UP", 
+    category: "Stocks", 
+    volume: "1,48,694",
+    sparklineData: [{value: 13400}, {value: 13500}, {value: 13600}, {value: 13550}, {value: 13700}, {value: 13755}]
+  },
+  { 
+    symbol: "ZYDUSLIFE", 
+    name: "Zydus", 
+    price: 938.50, 
+    change: 2.05, 
+    trend: "UP", 
+    category: "Stocks", 
+    volume: "14,36,917",
+    sparklineData: [{value: 910}, {value: 920}, {value: 915}, {value: 925}, {value: 930}, {value: 938}]
+  },
+  { 
+    symbol: "RELIANCE", 
+    name: "Reliance Industries", 
+    price: 2980.45, 
+    change: -1.20, 
+    trend: "DOWN", 
+    category: "Stocks", 
+    volume: "54,23,102",
+    sparklineData: [{value: 3020}, {value: 3010}, {value: 3000}, {value: 3015}, {value: 2990}, {value: 2980}]
+  },
+  { 
+    symbol: "AMZN", 
+    name: "Amazon.com Inc.", 
+    price: 175.35, 
+    change: 1.12, 
+    trend: "UP", 
+    category: "US Stocks", 
+    volume: "4,50,00,000",
+    sparklineData: [{value: 170}, {value: 172}, {value: 171}, {value: 174}, {value: 173}, {value: 175}]
+  },
+  { 
+    symbol: "META", 
+    name: "Meta Platforms", 
+    price: 485.58, 
+    change: 2.34, 
+    trend: "UP", 
+    category: "US Stocks", 
+    volume: "2,10,00,000",
+    sparklineData: [{value: 470}, {value: 475}, {value: 480}, {value: 478}, {value: 482}, {value: 485}]
+  },
 ];
 
 export const MOCK_MUTUAL_FUNDS = [

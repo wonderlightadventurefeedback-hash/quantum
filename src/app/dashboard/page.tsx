@@ -1,8 +1,6 @@
-
 "use client"
 
 import * as React from "react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { DashboardShell } from "@/components/dashboard-shell"
 import { Card, CardContent } from "@/components/ui/card"
@@ -12,7 +10,6 @@ import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { 
   TrendingUp, 
-  TrendingDown, 
   ArrowRight,
   PieChart,
   Briefcase,
@@ -20,6 +17,7 @@ import {
   CircleDollarSign,
   ChevronRight
 } from "lucide-react"
+import { LineChart, Line, ResponsiveContainer } from "recharts"
 import { MOCK_USER, MOCK_STOCKS, MOCK_INDICES, MOCK_NEWS } from "@/lib/mock-data"
 
 export default function DashboardOverview() {
@@ -101,62 +99,86 @@ export default function DashboardOverview() {
         </div>
 
         {/* Stocks in Focus Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-          
-          {/* Top Gainers / Losers */}
-          <div className="lg:col-span-2 space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-600">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-headline font-bold">Stocks in Focus</h2>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="rounded-full text-xs">Top Gainers</Button>
-                <Button variant="ghost" size="sm" className="rounded-full text-xs text-muted-foreground">Top Losers</Button>
-              </div>
-            </div>
-            
-            <Card className="glass-card border-none shadow-none bg-transparent">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
-                {MOCK_STOCKS.filter(s => s.category === "Stocks").slice(0, 10).map((stock, i) => (
-                  <div 
-                    key={stock.symbol} 
-                    className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/10 transition-colors cursor-pointer group animate-in fade-in slide-in-from-right-4"
-                    style={{ animationDelay: `${700 + (i * 50)}ms` }}
-                    onClick={() => handleAction(`Viewing ${stock.symbol}`, `Current price: ${stock.price} INR`)}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="size-10 rounded-full bg-muted flex items-center justify-center shrink-0 font-bold text-muted-foreground text-xs border border-border/50">
-                        {stock.symbol[0]}
-                      </div>
-                      <div className="flex flex-col min-w-0">
-                        <div className="font-bold text-sm truncate">{stock.name}</div>
-                        <Badge variant="secondary" className="w-fit text-[9px] h-4 py-0 px-1.5 bg-muted/50 text-muted-foreground font-bold uppercase border-none rounded-sm">
-                          {stock.symbol}
-                        </Badge>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4 text-right shrink-0">
-                      <div className="flex flex-col items-end">
-                        <div className="text-sm font-bold flex items-center gap-1">
-                          {stock.price.toFixed(2)} <span className="text-[9px] text-muted-foreground font-normal">INR</span>
-                        </div>
-                      </div>
-                      <div className={cn(
-                        "text-[11px] font-bold px-2 py-1 rounded min-w-[70px] text-center",
-                        stock.change > 0 ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
-                      )}>
-                        {stock.change > 0 ? "+" : ""}{stock.change.toFixed(2)}%
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <Button variant="ghost" className="w-full text-primary font-bold text-sm gap-2 mt-4" onClick={() => navigateToExplore('Stocks')}>
-                View more stocks <ArrowRight className="size-4" />
-              </Button>
-            </Card>
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-600">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-headline font-bold">Stocks in Focus</h2>
+            <Button variant="ghost" className="text-primary font-bold text-sm gap-2" onClick={() => navigateToExplore('Stocks')}>
+              View all <ArrowRight className="size-4" />
+            </Button>
           </div>
+          
+          <Card className="glass-card border-none shadow-none bg-transparent overflow-hidden">
+            <CardContent className="p-0">
+              <div className="min-w-[800px] overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="text-left text-xs text-muted-foreground font-bold uppercase tracking-widest border-b border-border/50">
+                      <th className="px-6 py-4 font-bold">Company</th>
+                      <th className="px-6 py-4 text-center">Trend (1D)</th>
+                      <th className="px-6 py-4 text-right">Market Price (1D)</th>
+                      <th className="px-6 py-4 text-right">Volume</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/30">
+                    {MOCK_STOCKS.filter(s => s.category === "Stocks").slice(0, 8).map((stock, i) => (
+                      <tr 
+                        key={stock.symbol} 
+                        className="group hover:bg-muted/5 transition-colors cursor-pointer animate-in fade-in slide-in-from-right-4"
+                        style={{ animationDelay: `${700 + (i * 50)}ms` }}
+                        onClick={() => handleAction(`Viewing ${stock.symbol}`, `Current price: ${stock.price} INR`)}
+                      >
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-4">
+                            <div className="size-12 rounded-xl bg-muted/50 flex items-center justify-center shrink-0 font-bold text-primary text-base border border-border/50 transition-transform group-hover:scale-105">
+                              {stock.symbol[0]}
+                            </div>
+                            <div className="flex flex-col min-w-0">
+                              <div className="font-bold text-[15px] text-foreground truncate">{stock.name}</div>
+                              <div className="text-[11px] text-muted-foreground font-medium">{stock.symbol}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="w-24 h-10 mx-auto">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <LineChart data={stock.sparklineData}>
+                                <Line 
+                                  type="monotone" 
+                                  dataKey="value" 
+                                  stroke={stock.trend === "UP" ? "#22c55e" : "#ef4444"} 
+                                  strokeWidth={2} 
+                                  dot={false} 
+                                />
+                              </LineChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex flex-col items-end">
+                            <div className="text-[15px] font-bold">₹{stock.price.toLocaleString()}</div>
+                            <div className={cn(
+                              "text-xs font-bold",
+                              stock.trend === "UP" ? "text-green-500" : "text-red-500"
+                            )}>
+                              {stock.trend === "UP" ? "+" : ""}{(stock.price * (stock.change / 100)).toFixed(2)} ({stock.change.toFixed(2)}%)
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="text-sm font-medium text-muted-foreground">{stock.volume}</div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-          {/* User Portfolio Summary & News */}
-          <div className="space-y-8 animate-in fade-in slide-in-from-right-8 duration-1000 delay-800">
+        {/* User Portfolio Summary & News Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+          <div className="lg:col-span-1 space-y-8">
             <Card className="glass-card bg-primary/5 border-primary/20 p-6 space-y-4 hover:shadow-primary/10 transition-shadow">
               <h2 className="font-headline font-bold text-lg">Your Portfolio</h2>
               <div>
@@ -170,32 +192,31 @@ export default function DashboardOverview() {
                 <Button className="text-xs h-9 rounded-lg" onClick={() => handleAction("Quick Buy", "Opening execution panel...")}>Invest More</Button>
               </div>
             </Card>
-
-            <div className="space-y-4">
-              <h2 className="text-lg font-headline font-bold">Top Market News</h2>
-              <div className="space-y-4">
-                {MOCK_NEWS.slice(0, 3).map((item, i) => (
-                  <div 
-                    key={item.id} 
-                    className="group cursor-pointer border-b border-border/50 pb-4 last:border-0 animate-in fade-in slide-in-from-bottom-2" 
-                    style={{ animationDelay: `${1000 + (i * 100)}ms` }}
-                    onClick={() => router.push('/news')}
-                  >
-                    <div className="flex justify-between items-start gap-3">
-                      <h4 className="text-xs font-bold leading-tight group-hover:text-primary transition-colors">{item.title}</h4>
-                      <Badge variant="outline" className="text-[9px] h-4 py-0 shrink-0">{item.sentiment}</Badge>
-                    </div>
-                    <div className="flex items-center gap-2 mt-2 text-[10px] text-muted-foreground uppercase font-medium">
-                      <span>{item.source}</span>
-                      <span>•</span>
-                      <span>{item.time}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
 
+          <div className="lg:col-span-2 space-y-6">
+            <h2 className="text-lg font-headline font-bold">Top Market News</h2>
+            <div className="space-y-4">
+              {MOCK_NEWS.slice(0, 3).map((item, i) => (
+                <div 
+                  key={item.id} 
+                  className="group cursor-pointer border-b border-border/50 pb-4 last:border-0 animate-in fade-in slide-in-from-bottom-2" 
+                  style={{ animationDelay: `${1000 + (i * 100)}ms` }}
+                  onClick={() => router.push('/news')}
+                >
+                  <div className="flex justify-between items-start gap-3">
+                    <h4 className="text-xs font-bold leading-tight group-hover:text-primary transition-colors">{item.title}</h4>
+                    <Badge variant="outline" className="text-[9px] h-4 py-0 shrink-0">{item.sentiment}</Badge>
+                  </div>
+                  <div className="flex items-center gap-2 mt-2 text-[10px] text-muted-foreground uppercase font-medium">
+                    <span>{item.source}</span>
+                    <span>•</span>
+                    <span>{item.time}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Global Market Explorer Call to Action */}
