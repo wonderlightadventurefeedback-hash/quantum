@@ -27,7 +27,9 @@ import {
   Search,
   Bookmark,
   BarChart3,
-  Code
+  Code,
+  LineChart as LineChartIcon,
+  CandlestickChart as CandleIcon
 } from "lucide-react"
 import { 
   BarChart,
@@ -38,7 +40,9 @@ import {
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer, 
-  ReferenceLine 
+  ReferenceLine,
+  AreaChart,
+  Area
 } from "recharts"
 import { MOCK_STOCKS } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
@@ -49,6 +53,7 @@ import { doc, setDoc, serverTimestamp, getDoc, updateDoc, increment } from "fire
 const FINNHUB_API_KEY = "d6g3c49r01qqnmbqk10gd6g3c49r01qqnmbqk110";
 
 type Timeframe = "1D" | "5D" | "1M" | "6M" | "YTD" | "1Y" | "5Y" | "Max";
+type ChartType = "AREA" | "CANDLE";
 
 interface OHLCData {
   time: string;
@@ -58,9 +63,10 @@ interface OHLCData {
   low: number;
   body: [number, number];
   wick: [number, number];
+  price: number; // for area chart
 }
 
-const generateCandleData = (points: number, basePrice: number, tf: string): OHLCData[] => {
+const generateMarketData = (points: number, basePrice: number, tf: string): OHLCData[] => {
   let currentPrice = basePrice * 0.98;
   return Array.from({ length: points }, (_, i) => {
     const open = currentPrice;
@@ -77,27 +83,38 @@ const generateCandleData = (points: number, basePrice: number, tf: string): OHLC
       high: +high.toFixed(2),
       low: +low.toFixed(2),
       body: [Math.min(open, close), Math.max(open, close)],
-      wick: [low, high]
+      wick: [low, high],
+      price: +close.toFixed(2)
     };
   });
 };
 
-const CustomTooltip = ({ active, payload }: any) => {
+const CustomTooltip = ({ active, payload, chartType }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     const isUp = data.close >= data.open;
+    
+    if (chartType === "CANDLE") {
+      return (
+        <div className="bg-background border border-border p-3 rounded-xl shadow-2xl space-y-1">
+          <div className="text-[10px] font-black text-muted-foreground uppercase">{data.time}</div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+            <div className="text-[10px] text-muted-foreground">OPEN: <span className="text-foreground font-bold">{data.open}</span></div>
+            <div className="text-[10px] text-muted-foreground">CLOSE: <span className="text-foreground font-bold">{data.close}</span></div>
+            <div className="text-[10px] text-muted-foreground">HIGH: <span className="text-foreground font-bold">{data.high}</span></div>
+            <div className="text-[10px] text-muted-foreground">LOW: <span className="text-foreground font-bold">{data.low}</span></div>
+          </div>
+          <div className={cn("text-xs font-black mt-1", isUp ? "text-green-500" : "text-red-500")}>
+            {isUp ? "BULLISH" : "BEARISH"}
+          </div>
+        </div>
+      );
+    }
+
     return (
-      <div className="bg-background border border-border p-3 rounded-xl shadow-2xl space-y-1">
+      <div className="bg-background border border-border p-3 rounded-xl shadow-2xl">
         <div className="text-[10px] font-black text-muted-foreground uppercase">{data.time}</div>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-          <div className="text-[10px] text-muted-foreground">OPEN: <span className="text-foreground font-bold">{data.open}</span></div>
-          <div className="text-[10px] text-muted-foreground">CLOSE: <span className="text-foreground font-bold">{data.close}</span></div>
-          <div className="text-[10px] text-muted-foreground">HIGH: <span className="text-foreground font-bold">{data.high}</span></div>
-          <div className="text-[10px] text-muted-foreground">LOW: <span className="text-foreground font-bold">{data.low}</span></div>
-        </div>
-        <div className={cn("text-xs font-black mt-1", isUp ? "text-green-500" : "text-red-500")}>
-          {isUp ? "BULLISH" : "BEARISH"}
-        </div>
+        <div className="text-lg font-bold">₹{data.price}</div>
       </div>
     );
   }
@@ -116,6 +133,7 @@ export default function StockDetailsPage() {
   const [stock, setStock] = React.useState(initialStock)
   const [isMounted, setIsMounted] = React.useState(false)
   const [activeTimeframe, setActiveTimeframe] = React.useState<Timeframe>("1D")
+  const [chartType, setChartType] = React.useState<ChartType>("AREA")
   const [qty, setQty] = React.useState("1")
   const [userBalance, setUserBalance] = React.useState<number>(0)
   const [isBuying, setIsBuying] = React.useState(false)
@@ -136,7 +154,7 @@ export default function StockDetailsPage() {
   const chartData = React.useMemo(() => {
     if (!isMounted) return [];
     const points = activeTimeframe === "1D" ? 40 : activeTimeframe === "5D" ? 60 : 30;
-    return generateCandleData(points, stock.price, activeTimeframe);
+    return generateMarketData(points, stock.price, activeTimeframe);
   }, [stock.price, activeTimeframe, isMounted])
 
   const prevClose = stock.price * (isUp ? 0.985 : 1.015)
@@ -293,7 +311,21 @@ export default function StockDetailsPage() {
             </div>
           </div>
           <div className="flex items-center gap-6">
-            <div className="flex items-center space-x-3 bg-muted/50 px-5 py-2.5 rounded-2xl border border-border/50 shadow-sm transition-all hover:border-primary/30">
+            <div className="flex p-1 bg-muted/50 rounded-2xl">
+              <button 
+                onClick={() => setChartType("AREA")} 
+                className={cn("p-2 rounded-xl transition-all", chartType === "AREA" ? "bg-background shadow-sm text-primary" : "text-muted-foreground")}
+              >
+                <LineChartIcon className="size-5" />
+              </button>
+              <button 
+                onClick={() => setChartType("CANDLE")} 
+                className={cn("p-2 rounded-xl transition-all", chartType === "CANDLE" ? "bg-background shadow-sm text-primary" : "text-muted-foreground")}
+              >
+                <CandleIcon className="size-5" />
+              </button>
+            </div>
+            <div className="flex items-center space-x-3 bg-muted/50 px-5 py-2.5 rounded-2xl border border-border/50">
               <Switch id="live-mode" checked={isLiveMode} onCheckedChange={setIsLiveMode} />
               <Label htmlFor="live-mode" className="text-xs font-black uppercase tracking-widest flex items-center gap-2 cursor-pointer">
                 <Zap className={cn("size-4", isLiveMode ? "text-primary fill-primary animate-pulse" : "text-muted-foreground")} />
@@ -302,9 +334,6 @@ export default function StockDetailsPage() {
             </div>
             <Button variant="outline" className="rounded-full gap-2 border-2 px-6 h-11 font-bold">
               <Plus className="size-4" /> Watchlist
-            </Button>
-            <Button className="rounded-full gap-2 px-8 h-11 font-bold shadow-lg shadow-primary/20" onClick={() => router.push('/trade')}>
-              All Assets
             </Button>
           </div>
         </div>
@@ -319,7 +348,6 @@ export default function StockDetailsPage() {
               <div className={cn("flex items-center gap-2 text-lg font-bold", isUp ? "text-green-500" : "text-red-500")}>
                 {isUp ? <TrendingUp className="size-5" /> : <TrendingDown className="size-5" />}
                 {isUp ? '+' : ''}{(stock.price * (stock.change / 100)).toFixed(2)} ({stock.change.toFixed(2)}%)
-                <span className="text-muted-foreground font-normal text-sm ml-1">today</span>
               </div>
             </div>
 
@@ -334,36 +362,50 @@ export default function StockDetailsPage() {
 
               <div className="h-[480px] w-full p-8 relative">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.3} />
-                    <XAxis dataKey="time" hide />
-                    <YAxis domain={['auto', 'auto']} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
-                    <ReferenceLine y={prevClose} stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3" />
-                    {isTradingLive && <ReferenceLine y={entryPrice} stroke="#f59e0b" strokeWidth={2} label={{ position: 'right', value: 'ENTRY', fill: '#f59e0b', fontSize: 10, fontWeight: 'bold' }} />}
-                    <Tooltip content={<CustomTooltip />} />
-                    
-                    {/* Candle Wicks */}
-                    <Bar dataKey="wick" fill="#8884d8" barSize={1}>
-                      {chartData.map((entry, index) => (
-                        <Cell key={`wick-${index}`} fill={entry.close >= entry.open ? '#22c55e' : '#ef4444'} />
-                      ))}
-                    </Bar>
-                    
-                    {/* Candle Bodies */}
-                    <Bar dataKey="body" barSize={12}>
-                      {chartData.map((entry, index) => (
-                        <Cell key={`body-${index}`} fill={entry.close >= entry.open ? '#22c55e' : '#ef4444'} />
-                      ))}
-                    </Bar>
-                  </BarChart>
+                  {chartType === "CANDLE" ? (
+                    <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.3} />
+                      <XAxis dataKey="time" hide />
+                      <YAxis domain={['auto', 'auto']} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
+                      <ReferenceLine y={prevClose} stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3" />
+                      {isTradingLive && <ReferenceLine y={entryPrice} stroke="#f59e0b" strokeWidth={2} label={{ position: 'right', value: 'ENTRY', fill: '#f59e0b', fontSize: 10, fontWeight: 'bold' }} />}
+                      <Tooltip content={<CustomTooltip chartType="CANDLE" />} />
+                      <Bar dataKey="wick" fill="#8884d8" barSize={1}>
+                        {chartData.map((entry, index) => (
+                          <Cell key={`wick-${index}`} fill={entry.close >= entry.open ? '#22c55e' : '#ef4444'} />
+                        ))}
+                      </Bar>
+                      <Bar dataKey="body" barSize={12}>
+                        {chartData.map((entry, index) => (
+                          <Cell key={`body-${index}`} fill={entry.close >= entry.open ? '#22c55e' : '#ef4444'} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  ) : (
+                    <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor={isUp ? "#22c55e" : "#ef4444"} stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor={isUp ? "#22c55e" : "#ef4444"} stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.3} />
+                      <XAxis dataKey="time" hide />
+                      <YAxis domain={['auto', 'auto']} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
+                      <ReferenceLine y={prevClose} stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3" />
+                      {isTradingLive && <ReferenceLine y={entryPrice} stroke="#f59e0b" strokeWidth={2} label={{ position: 'right', value: 'ENTRY', fill: '#f59e0b', fontSize: 10, fontWeight: 'bold' }} />}
+                      <Tooltip content={<CustomTooltip chartType="AREA" />} />
+                      <Area type="monotone" dataKey="price" stroke={isUp ? "#22c55e" : "#ef4444"} strokeWidth={3} fillOpacity={1} fill="url(#colorPrice)" />
+                    </AreaChart>
+                  )}
                 </ResponsiveContainer>
 
                 {isLiveMode && (
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none p-6">
-                    <Card className="glass-card w-full max-w-sm mx-auto p-8 shadow-[0_20px_50px_rgba(0,0,0,0.3)] pointer-events-auto border-primary/20 bg-background/60 backdrop-blur-3xl rounded-[2.5rem] animate-in zoom-in-95 duration-500">
+                    <Card className="glass-card w-full max-w-sm mx-auto p-8 shadow-2xl pointer-events-auto border-primary/20 bg-background/60 backdrop-blur-3xl rounded-[2.5rem] animate-in zoom-in-95 duration-500">
                       <div className="space-y-8">
                         <div className="flex items-center justify-between">
-                          <Badge className="bg-primary/20 text-primary border-none gap-1.5 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest">
+                          <Badge className="bg-primary/20 text-primary border-none px-4 py-1.5 text-[10px] font-black uppercase tracking-widest">
                             Live Speculation
                           </Badge>
                           <div className="flex items-center gap-2 text-xs font-black text-muted-foreground uppercase tracking-widest bg-muted/30 px-3 py-1 rounded-full">
@@ -375,7 +417,10 @@ export default function StockDetailsPage() {
                           <div className="space-y-6 py-6 text-center">
                             <h4 className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em]">Settlement Pending</h4>
                             <div className="text-3xl font-black font-headline">{prediction}</div>
-                            <Progress value={(tradeTimer/TRADE_DURATION)*100} className="h-2.5 bg-muted/50 rounded-full" />
+                            <div className="space-y-2">
+                              <Progress value={(tradeTimer/TRADE_DURATION)*100} className="h-2.5 bg-muted/50 rounded-full" />
+                              <div className="text-[10px] font-bold text-muted-foreground">ENTRY: ₹{entryPrice.toFixed(2)}</div>
+                            </div>
                           </div>
                         ) : (
                           <div className="space-y-8">
@@ -384,8 +429,8 @@ export default function StockDetailsPage() {
                               <Input type="number" value={tradeAmount} onChange={e => setTradeAmount(e.target.value)} className="h-14 bg-muted/30 border-none rounded-2xl text-xl font-black" />
                             </div>
                             <div className="grid grid-cols-2 gap-5">
-                              <Button onClick={() => executeLiveTrade("HIGHER")} className="h-24 flex-col gap-2 rounded-[1.5rem] bg-green-500"><ArrowUpCircle className="size-8" /><span className="font-black text-sm uppercase">Higher</span></Button>
-                              <Button onClick={() => executeLiveTrade("LOWER")} className="h-24 flex-col gap-2 rounded-[1.5rem] bg-red-500"><ArrowDownCircle className="size-8" /><span className="font-black text-sm uppercase">Lower</span></Button>
+                              <Button onClick={() => executeLiveTrade("HIGHER")} className="h-24 flex-col gap-2 rounded-[1.5rem] bg-green-500 hover:bg-green-600"><ArrowUpCircle className="size-8" /><span className="font-black text-sm uppercase">Higher</span></Button>
+                              <Button onClick={() => executeLiveTrade("LOWER")} className="h-24 flex-col gap-2 rounded-[1.5rem] bg-red-500 hover:bg-red-600"><ArrowDownCircle className="size-8" /><span className="font-black text-sm uppercase">Lower</span></Button>
                             </div>
                           </div>
                         )}
@@ -396,15 +441,12 @@ export default function StockDetailsPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-y-6 gap-x-12 pt-8">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-y-6 gap-x-12 pt-8 border-t border-border/50">
               {[
-                { label: "Open", value: (stock.price * 0.99).toFixed(2) },
                 { label: "Mkt cap", value: "4.00LCr" },
-                { label: "Dividend", value: "0.38%" },
-                { label: "High", value: (stock.price * 1.02).toFixed(2) },
                 { label: "P/E ratio", value: "34.43" },
-                { label: "Qtrly div amt", value: "0.26" },
-                { label: "Low", value: (stock.price * 0.98).toFixed(2) },
+                { label: "Dividend yield", value: "0.38%" },
+                { label: "Prev close", value: prevClose.toFixed(2) },
                 { label: "52-wk high", value: "288.61" },
                 { label: "52-wk low", value: "169.21" },
               ].map((stat, i) => (
@@ -420,10 +462,16 @@ export default function StockDetailsPage() {
             <Card className="glass-card bg-primary/5 border-primary/20 rounded-[2.5rem] p-6 shadow-xl">
               <CardHeader className="pb-4 px-0"><CardTitle className="text-lg font-headline flex items-center gap-2"><Wallet className="size-5 text-primary" /> Instant Trade</CardTitle></CardHeader>
               <CardContent className="space-y-6 px-0">
-                <Input type="number" value={qty} onChange={e => setQty(e.target.value)} className="h-12 bg-background border-none rounded-xl text-lg font-bold" />
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase text-muted-foreground">Quantity</Label>
+                  <Input type="number" value={qty} onChange={e => setQty(e.target.value)} className="h-12 bg-background border-none rounded-xl text-lg font-bold" />
+                </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <Button onClick={() => handleTrade("BUY")} className="h-12 rounded-xl bg-green-500 font-bold" disabled={isBuying}>Buy</Button>
-                  <Button variant="outline" onClick={() => handleTrade("SELL")} className="h-12 rounded-xl border-2 border-red-500 text-red-500 font-bold" disabled={isBuying}>Sell</Button>
+                  <Button onClick={() => handleTrade("BUY")} className="h-12 rounded-xl bg-green-500 font-bold hover:bg-green-600" disabled={isBuying}>Buy</Button>
+                  <Button variant="outline" onClick={() => handleTrade("SELL")} className="h-12 rounded-xl border-2 border-red-500 text-red-500 font-bold hover:bg-red-50" disabled={isBuying}>Sell</Button>
+                </div>
+                <div className="pt-2 text-center">
+                  <span className="text-xs text-muted-foreground">Estimated Cost: <span className="font-bold text-foreground">₹{(parseFloat(qty) * stock.price).toFixed(2)}</span></span>
                 </div>
               </CardContent>
             </Card>
@@ -435,10 +483,17 @@ export default function StockDetailsPage() {
               </div>
               <CardContent className="p-0">
                 <div className="divide-y divide-border/50">
-                  {MOCK_STOCKS.filter(s => s.symbol !== symbol).slice(0, 4).map((s) => (
-                    <div key={s.symbol} className="p-6 flex items-center justify-between hover:bg-muted/30 cursor-pointer" onClick={() => router.push(`/trade/${s.symbol}`)}>
-                      <div><div className="font-bold text-sm">{s.name}</div><div className="text-[10px] text-muted-foreground uppercase">₹{s.price.toFixed(2)}</div></div>
-                      <Badge variant={s.change > 0 ? "default" : "destructive"} className="h-7 min-w-[64px] justify-center rounded-lg font-black text-xs">{s.change > 0 ? '+' : ''}{Math.abs(s.change).toFixed(2)}%</Badge>
+                  {MOCK_STOCKS.filter(s => s.symbol !== symbol).slice(0, 5).map((s) => (
+                    <div key={s.symbol} className="p-6 flex items-center justify-between hover:bg-muted/30 cursor-pointer group" onClick={() => router.push(`/trade/${s.symbol}`)}>
+                      <div className="flex items-center gap-3">
+                        <div className="size-8 rounded-lg bg-muted flex items-center justify-center font-bold text-primary group-hover:scale-110 transition-transform">
+                          {s.symbol[0]}
+                        </div>
+                        <div><div className="font-bold text-sm">{s.name}</div><div className="text-[10px] text-muted-foreground uppercase">₹{s.price.toFixed(2)}</div></div>
+                      </div>
+                      <Badge variant={s.change > 0 ? "default" : "destructive"} className="h-7 min-w-[64px] justify-center rounded-lg font-black text-xs">
+                        {s.change > 0 ? '+' : ''}{s.change.toFixed(2)}%
+                      </Badge>
                     </div>
                   ))}
                 </div>
