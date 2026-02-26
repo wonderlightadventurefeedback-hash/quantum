@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -137,7 +136,7 @@ export default function StockDetailsPage() {
   }, [db, user])
 
   const { data: userProfile } = useDoc(userProfileRef)
-  const balance = userProfile?.balance ?? 50000
+  const balance = typeof userProfile?.balance === 'number' && userProfile.balance >= 0 ? userProfile.balance : 50000
 
   // Live Prediction Mode State
   const [isLiveMode, setIsLiveMode] = React.useState(false)
@@ -194,8 +193,7 @@ export default function StockDetailsPage() {
       return
     }
     
-    // Ensure we are using the real Firestore balance or the default starting capital
-    const currentBalance = userProfile?.balance ?? 50000
+    const currentBalance = balance
     const totalValue = orderQty * stock.price
 
     if (type === "BUY" && totalValue > currentBalance) {
@@ -221,7 +219,6 @@ export default function StockDetailsPage() {
           lastUpdated: serverTimestamp() 
         }, { merge: true })
         
-        // Calculate new balance based on actual current balance to avoid negative results from missing fields
         const newBalance = currentBalance - totalValue
         setDocumentNonBlocking(userRef, { 
           balance: newBalance,
@@ -231,8 +228,9 @@ export default function StockDetailsPage() {
         toast({ title: "Virtual Buy Success", description: `Added ${orderQty} shares of ${symbol} to your demo portfolio.` })
       } else {
         const snap = await getDoc(holdingRef);
-        if (!snap.exists() || snap.data().quantity < orderQty) {
-          throw new Error("You don't own enough shares to sell this quantity.");
+        const currentQty = snap.exists() ? snap.data().quantity : 0
+        if (!snap.exists() || currentQty < orderQty) {
+          throw new Error(`You don't own enough shares to sell this quantity. Available: ${currentQty}`);
         }
         
         setDocumentNonBlocking(holdingRef, { 
@@ -258,7 +256,7 @@ export default function StockDetailsPage() {
   const executeLiveTrade = async (dir: "HIGHER" | "LOWER") => {
     if (!db || !user || isTradingLive) return
     const amount = parseFloat(tradeAmount)
-    const currentBalance = userProfile?.balance ?? 50000
+    const currentBalance = balance
 
     if (amount <= 0 || isNaN(amount)) {
       toast({ title: "Invalid Amount", variant: "destructive" })
@@ -292,7 +290,6 @@ export default function StockDetailsPage() {
       const finalPrice = stock.price + (Math.random() - 0.45) * 2;
       const isWin = (prediction === "HIGHER" && finalPrice > entryPrice) || (prediction === "LOWER" && finalPrice < entryPrice);
       const amount = parseFloat(tradeAmount)
-      const currentBalanceRef = userProfile?.balance ?? 0 // We'll fetch again or use increment
       
       setIsTradingLive(false)
       if (isWin && db && user) {
@@ -307,7 +304,7 @@ export default function StockDetailsPage() {
       }
     }
     return () => clearInterval(interval)
-  }, [isTradingLive, tradeTimer, db, user, prediction, entryPrice, stock.price, tradeAmount, userProfile?.balance])
+  }, [isTradingLive, tradeTimer, db, user, prediction, entryPrice, stock.price, tradeAmount])
 
   if (!isMounted) return null;
 
