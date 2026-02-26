@@ -54,7 +54,7 @@ export default function AdvisorPage() {
       setMessages(history.map(m => ({ role: m.role, content: m.content, timestamp: m.timestamp })))
     } else if (history && history.length === 0 && !isHistoryLoading) {
       setMessages([
-        { role: 'assistant', content: "Hello! I'm **FinIntel AI**, your expert financial advisor connected directly to OpenAI through ChatGPT. I have access to live market feeds and your portfolio to give you the best stock and finance answers. How can I help you today?" }
+        { role: 'assistant', content: "Hello! I'm **FinIntel AI**. I am directly connected to OpenAI through ChatGPT to give you all the answers regarding the stock market and finance. How can I help you today?" }
       ])
     }
   }, [history, isHistoryLoading])
@@ -92,7 +92,7 @@ export default function AdvisorPage() {
     } catch (error) {
       addDocumentNonBlocking(userMsgRef, {
         role: 'assistant',
-        content: "I'm having trouble connecting to my intelligence layer. Please check your configuration.",
+        content: "I'm having trouble connecting to my ChatGPT intelligence layer. Please check your configuration.",
         timestamp: serverTimestamp()
       })
     } finally {
@@ -122,10 +122,10 @@ export default function AdvisorPage() {
             <div className="flex items-center gap-3">
               <h1 className="text-3xl font-headline font-bold">FinIntel Advisor</h1>
               <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-black text-primary uppercase tracking-widest">
-                <Zap className="size-3 fill-primary animate-pulse" /> Ollama Active
+                <Zap className="size-3 fill-primary animate-pulse" /> OpenAI Active
               </span>
             </div>
-            <p className="text-muted-foreground text-sm">Powered by OpenAI ChatGPT and Finnhub Real-Time API.</p>
+            <p className="text-muted-foreground text-sm">Directly connected to OpenAI through ChatGPT for expert stock market and finance answers.</p>
           </div>
           <div className="hidden md:flex items-center gap-2">
             <span className="size-2 bg-green-500 rounded-full animate-pulse"></span>
@@ -211,7 +211,7 @@ export default function AdvisorPage() {
               <Input 
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask about stock markets or finance..." 
+                placeholder="Ask ChatGPT for stock market and finance answers..." 
                 className="pr-16 h-16 bg-background border-border/50 rounded-2xl focus-visible:ring-primary/40 text-lg shadow-xl shadow-black/5"
               />
               <Button 
@@ -229,7 +229,7 @@ export default function AdvisorPage() {
               </p>
               <div className="h-3 w-px bg-border" />
               <p className="text-[10px] text-muted-foreground italic">
-                Answers all finance questions using Ollama and OpenAI logic.
+                Directly connected to OpenAI for professional financial answers.
               </p>
             </div>
           </div>
