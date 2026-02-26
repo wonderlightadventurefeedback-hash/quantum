@@ -12,7 +12,7 @@ export type PillNavItem = {
 };
 
 export interface PillNavProps {
-  logo: string;
+  logo?: string;
   logoAlt?: string;
   items: PillNavItem[];
   activeHref?: string;
@@ -24,6 +24,7 @@ export interface PillNavProps {
   pillTextColor?: string;
   onMobileMenuClick?: () => void;
   initialLoadAnimation?: boolean;
+  showLogo?: boolean;
 }
 
 const PillNav: React.FC<PillNavProps> = ({
@@ -33,14 +34,15 @@ const PillNav: React.FC<PillNavProps> = ({
   activeHref,
   className = '',
   ease = 'power3.out',
-  baseColor = '#fff',
-  pillColor = '#060010',
-  hoveredPillTextColor = '#060010',
+  baseColor = 'hsl(var(--primary))',
+  pillColor = 'hsl(var(--card))',
+  hoveredPillTextColor = 'white',
   pillTextColor,
   onMobileMenuClick,
-  initialLoadAnimation = true
+  initialLoadAnimation = true,
+  showLogo = true
 }) => {
-  const resolvedPillTextColor = pillTextColor ?? baseColor;
+  const resolvedPillTextColor = pillTextColor ?? 'hsl(var(--foreground))';
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const circleRefs = useRef<Array<HTMLSpanElement | null>>([]);
   const tlRefs = useRef<Array<gsap.core.Timeline | null>>([]);
@@ -104,7 +106,6 @@ const PillNav: React.FC<PillNavProps> = ({
       });
     };
 
-    // Initial layout
     layout();
 
     const onResize = () => layout();
@@ -114,36 +115,8 @@ const PillNav: React.FC<PillNavProps> = ({
       document.fonts.ready.then(layout).catch(() => {});
     }
 
-    const menu = mobileMenuRef.current;
-    if (menu) {
-      gsap.set(menu, { visibility: 'hidden', opacity: 0, scaleY: 1, y: 0 });
-    }
-
-    if (initialLoadAnimation) {
-      const logo = logoRef.current;
-      const navItems = navItemsRef.current;
-
-      if (logo) {
-        gsap.set(logo, { scale: 0 });
-        gsap.to(logo, {
-          scale: 1,
-          duration: 0.6,
-          ease
-        });
-      }
-
-      if (navItems) {
-        gsap.set(navItems, { width: 0, overflow: 'hidden' });
-        gsap.to(navItems, {
-          width: 'auto',
-          duration: 0.6,
-          ease
-        });
-      }
-    }
-
     return () => window.removeEventListener('resize', onResize);
-  }, [items, ease, initialLoadAnimation]);
+  }, [items, ease]);
 
   const handleEnter = (i: number) => {
     const tl = tlRefs.current[i];
@@ -243,30 +216,32 @@ const PillNav: React.FC<PillNavProps> = ({
   } as React.CSSProperties;
 
   return (
-    <div className={`relative z-50 w-full flex justify-center py-8 ${className}`} style={cssVars}>
+    <div className={`relative z-50 flex justify-center ${className}`} style={cssVars}>
       <nav
         className="w-max flex items-center justify-between box-border px-4 md:px-0"
         aria-label="Primary"
       >
-        <Link
-          href="/"
-          aria-label="Home"
-          onMouseEnter={handleLogoEnter}
-          role="menuitem"
-          ref={logoRef}
-          className="rounded-full p-2 inline-flex items-center justify-center overflow-hidden"
-          style={{
-            width: 'var(--nav-h)',
-            height: 'var(--nav-h)',
-            background: 'var(--base, #000)'
-          }}
-        >
-          <img src={logo} alt={logoAlt} ref={logoImgRef} className="w-full h-full object-cover block" />
-        </Link>
+        {showLogo && (
+          <Link
+            href="/"
+            aria-label="Home"
+            onMouseEnter={handleLogoEnter}
+            role="menuitem"
+            ref={logoRef}
+            className="rounded-full p-2 inline-flex items-center justify-center overflow-hidden shrink-0"
+            style={{
+              width: 'var(--nav-h)',
+              height: 'var(--nav-h)',
+              background: 'var(--base, #000)'
+            }}
+          >
+            <img src={logo || 'https://picsum.photos/seed/fin-logo/100/100'} alt={logoAlt} ref={logoImgRef} className="w-full h-full object-cover block" />
+          </Link>
+        )}
 
         <div
           ref={navItemsRef}
-          className="relative items-center rounded-full hidden md:flex ml-4 shadow-xl"
+          className={`relative items-center rounded-full hidden md:flex ${showLogo ? 'ml-4' : ''} shadow-xl`}
           style={{
             height: 'var(--nav-h)',
             background: 'var(--base, #000)'

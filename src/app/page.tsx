@@ -120,15 +120,19 @@ export default function LandingPage() {
 
   const galleryItems = PlaceHolderImages.map(img => ({
     image: `${img.imageUrl}?grayscale`,
-    text: img.description.split(' ').slice(0, 2).join(' ') // Short label for gallery
+    text: img.description.split(' ').slice(0, 2).join(' ')
   }));
 
   const navItems = [
-    { label: "Dashboard", href: "/dashboard" },
-    { label: "Trade", href: "/trade" },
-    { label: "Predict", href: "/predict" },
-    { label: "Learn", href: "/learn" },
+    { label: "Stocks", href: "/dashboard" },
+    { label: "F&O", href: "/predict" },
+    { label: "Mutual Funds", href: "/learn" },
     { label: "News", href: "/news" }
+  ];
+
+  const heroItems = [
+    { label: "Get started", href: "/login" },
+    { label: "Explore Markets", href: "/trade" }
   ];
 
   if (loading || user) return null
@@ -154,14 +158,15 @@ export default function LandingPage() {
               </span>
             </Link>
             
-            <nav className="hidden lg:flex items-center gap-8 text-[15px] font-medium text-muted-foreground">
-              <Link href="/dashboard" className="hover:text-primary transition-colors">Stocks</Link>
-              <Link href="/predict" className="hover:text-primary transition-colors">F&O</Link>
-              <Link href="/learn" className="hover:text-primary transition-colors">Mutual Funds</Link>
-              <button className="flex items-center gap-1 hover:text-primary transition-colors">
-                More <ChevronDown size={14} />
-              </button>
-            </nav>
+            <div className="hidden lg:block">
+              <PillNav 
+                items={navItems}
+                showLogo={false}
+                className="py-0"
+                pillColor="transparent"
+                pillTextColor="hsl(var(--muted-foreground))"
+              />
+            </div>
           </div>
 
           <div className="flex items-center gap-4 flex-1 max-w-md mx-8 hidden md:flex">
@@ -214,15 +219,16 @@ export default function LandingPage() {
           <p className="text-lg md:text-xl text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-500">
             Trusted by millions of smart investors. The simplest, most transparent way to invest in stocks, mutual funds, and global indices.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-in fade-in zoom-in-95 duration-1000 delay-700">
-            <Link href="/login">
-              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg px-12 h-16 rounded-2xl shadow-xl shadow-primary/20 transition-all hover:scale-105 active:scale-95">
-                Get started
-              </Button>
-            </Link>
-            <Button variant="outline" className="text-lg px-12 h-16 rounded-2xl border-2 hover:bg-muted/50 transition-all">
-              Explore Markets
-            </Button>
+          <div className="animate-in fade-in zoom-in-95 duration-1000 delay-700">
+            <PillNav 
+              items={heroItems}
+              showLogo={false}
+              baseColor="hsl(var(--primary))"
+              pillColor="hsl(var(--card))"
+              hoveredPillTextColor="white"
+              pillTextColor="hsl(var(--foreground))"
+              className="py-0"
+            />
           </div>
         </div>
       </section>
@@ -370,24 +376,6 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Decorative Interactive Navigation Section */}
-      <section className="py-20 bg-muted/10 border-t border-border overflow-hidden">
-        <div className="container mx-auto px-4 text-center space-y-8">
-          <div className="space-y-2">
-            <h2 className="text-3xl font-headline font-bold">Quick Jump</h2>
-            <p className="text-muted-foreground text-sm">Explore our specialized market terminals with interactive ease.</p>
-          </div>
-          <PillNav 
-            logo="https://picsum.photos/seed/fin-logo/100/100" 
-            items={navItems}
-            baseColor="hsl(var(--primary))"
-            pillColor="hsl(var(--card))"
-            hoveredPillTextColor="white"
-            pillTextColor="hsl(var(--foreground))"
-          />
         </div>
       </section>
 
