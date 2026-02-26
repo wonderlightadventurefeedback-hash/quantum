@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -55,6 +54,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(true)
   const [theme, setTheme] = React.useState<"light" | "dark">("dark")
   const [isHeaderVisible, setIsHeaderVisible] = React.useState(true)
+  const [globalSearch, setGlobalSearch] = React.useState("")
   
   const scrollContainerRef = React.useRef<HTMLDivElement>(null)
   const lastScrollY = React.useRef(0)
@@ -138,12 +138,12 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    toast({
-      title: "Searching...",
-      description: "Searching our global market database.",
-    })
+    if (globalSearch.trim()) {
+      router.push(`/trade?q=${encodeURIComponent(globalSearch.trim())}`)
+      setGlobalSearch("")
+    }
   }
 
   if (loading) {
@@ -252,11 +252,13 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 <Button variant="ghost" size="icon" suppressHydrationWarning onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
                   <Menu className="size-5" />
                 </Button>
-                <form onSubmit={handleSearch} className="relative w-64 md:w-96 hidden md:block">
+                <form onSubmit={handleSearchSubmit} className="relative w-64 md:w-96 hidden md:block">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                   <Input 
-                    placeholder="Search stocks, news, lessons..." 
-                    className="pl-10 bg-muted/50 border-none focus-visible:ring-primary/50" 
+                    value={globalSearch}
+                    onChange={(e) => setGlobalSearch(e.target.value)}
+                    placeholder="Search stocks (e.g. NVDA, AAPL)..." 
+                    className="pl-10 bg-muted/50 border-none focus-visible:ring-primary/50 rounded-xl" 
                   />
                 </form>
               </div>

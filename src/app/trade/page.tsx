@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { DashboardShell } from "@/components/dashboard-shell"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -14,7 +14,10 @@ import {
   Info,
   RefreshCw,
   Loader2,
-  Globe
+  Globe,
+  TrendingUp,
+  TrendingDown,
+  XCircle
 } from "lucide-react"
 import { LineChart, Line, ResponsiveContainer } from "recharts"
 import { MOCK_STOCKS, MOCK_USER, Stock } from "@/lib/mock-data"
@@ -26,7 +29,9 @@ const FINNHUB_API_KEY = "d6g3c49r01qqnmbqk10gd6g3c49r01qqnmbqk110";
 export default function TradePage() {
   const { toast } = useToast()
   const router = useRouter()
-  const [searchQuery, setSearchQuery] = React.useState("")
+  const searchParams = useSearchParams()
+  
+  const [searchQuery, setSearchQuery] = React.useState(searchParams.get("q") || "")
   const [liveStocks, setLiveStocks] = React.useState<Stock[]>(MOCK_STOCKS)
   const [isRefreshing, setIsRefreshing] = React.useState(false)
 
@@ -35,20 +40,18 @@ export default function TradePage() {
     try {
       const updatedStocks = await Promise.all(
         MOCK_STOCKS.map(async (stock) => {
-          // Finnhub works best for US tickers.
           const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${stock.symbol}&token=${FINNHUB_API_KEY}`)
           if (res.ok) {
             const data = await res.json()
-            if (data.c && data.c !== 0) { // c is current price
+            if (data.c && data.c !== 0) {
               return {
                 ...stock,
                 price: data.c,
-                change: data.dp || stock.change, // dp is percent change
+                change: data.dp || stock.change,
                 trend: (data.dp || 0) >= 0 ? "UP" : "DOWN" as "UP" | "DOWN"
               }
             }
           }
-          // For local stocks or fallback, simulate a slight live oscillation
           const drift = (Math.random() - 0.5) * 0.5
           return {
             ...stock,
@@ -72,9 +75,15 @@ export default function TradePage() {
 
   React.useEffect(() => {
     fetchLivePrices()
-    const interval = setInterval(() => fetchLivePrices(), 30000) // Auto refresh every 30s
+    const interval = setInterval(() => fetchLivePrices(), 30000)
     return () => clearInterval(interval)
   }, [])
+
+  // Update search query when URL param changes
+  React.useEffect(() => {
+    const q = searchParams.get("q")
+    if (q) setSearchQuery(q)
+  }, [searchParams])
 
   const filteredStocks = liveStocks.filter(stock => 
     stock.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -112,94 +121,112 @@ export default function TradePage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           <div className="lg:col-span-3 space-y-6">
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
+            <div className="relative group">
+              <Search className="absolute left-5 top-1/2 -translate-y-1/2 size-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
               <Input 
-                placeholder="Search stocks by name or symbol (e.g. AAPL, AMZN, NVDA)..." 
-                className="pl-12 h-14 bg-card/50 border-border rounded-2xl focus-visible:ring-primary/40"
+                placeholder="Search stocks by name or symbol (e.g. NVDA, AAPL, RELIANCE)..." 
+                className="pl-14 h-16 bg-card/40 border-border/50 rounded-[1.5rem] focus-visible:ring-primary/40 text-lg font-medium shadow-lg shadow-black/5"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
+              {searchQuery && (
+                <button 
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <XCircle className="size-5" />
+                </button>
+              )}
             </div>
 
-            <Card className="glass-card border-none shadow-none bg-transparent overflow-hidden">
-              <CardContent className="p-0">
-                <div className="min-w-[800px] overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="text-left text-xs text-muted-foreground font-bold uppercase tracking-widest border-b border-border/50">
-                        <th className="px-6 py-4">Company</th>
-                        <th className="px-6 py-4 text-center">Market Chart</th>
-                        <th className="px-6 py-4 text-right">Price (Live)</th>
-                        <th className="px-6 py-4 text-right">Volume</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border/30">
-                      {filteredStocks.map((stock, i) => (
-                        <tr 
-                          key={stock.symbol} 
-                          className="group hover:bg-muted/5 transition-colors cursor-pointer animate-in fade-in slide-in-from-right-4"
-                          style={{ animationDelay: `${100 + (i * 30)}ms` }}
-                          onClick={() => handleStockClick(stock.symbol)}
-                        >
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-4">
-                              <div className="size-12 rounded-xl bg-muted/50 flex items-center justify-center shrink-0 font-bold text-primary text-base border border-border/50 transition-transform group-hover:scale-105">
-                                {stock.symbol[0]}
-                              </div>
-                              <div className="flex flex-col min-w-0">
-                                <div className="font-bold text-[14px] truncate flex items-center gap-2">
-                                  {stock.name}
-                                  {stock.category === "US Stocks" && <Globe className="size-3 text-primary/60" />}
-                                </div>
-                                <Badge variant="secondary" className="w-fit text-[9px] h-4 py-0 px-1.5 bg-muted/50 text-muted-foreground font-bold uppercase border-none rounded-sm">
-                                  {stock.symbol}
-                                </Badge>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="w-24 h-10 mx-auto">
-                              <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={stock.sparklineData}>
-                                  <Line 
-                                    type="monotone" 
-                                    dataKey="value" 
-                                    stroke={stock.trend === "UP" ? "#22c55e" : "#ef4444"} 
-                                    strokeWidth={2} 
-                                    dot={false} 
-                                  />
-                                </LineChart>
-                              </ResponsiveContainer>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <div className="flex flex-col items-end">
-                              <div className="text-[14px] font-bold">₹{stock.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                              <div className={cn(
-                                "text-[10px] font-bold flex items-center gap-1",
-                                stock.trend === "UP" ? "text-green-500" : "text-red-500"
-                              )}>
-                                {stock.trend === "UP" ? "+" : ""}{(stock.price * (stock.change / 100)).toFixed(2)} ({stock.change.toFixed(2)}%)
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <div className="text-xs font-medium text-muted-foreground">{stock.volume}</div>
-                          </td>
+            {filteredStocks.length > 0 ? (
+              <Card className="glass-card border-none shadow-none bg-transparent overflow-hidden">
+                <CardContent className="p-0">
+                  <div className="min-w-[800px] overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="text-left text-xs text-muted-foreground font-bold uppercase tracking-widest border-b border-border/50">
+                          <th className="px-6 py-4">Company</th>
+                          <th className="px-6 py-4 text-center">Market Chart</th>
+                          <th className="px-6 py-4 text-right">Price (Live)</th>
+                          <th className="px-6 py-4 text-right">Volume</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-border/30">
+                        {filteredStocks.map((stock, i) => (
+                          <tr 
+                            key={stock.symbol} 
+                            className="group hover:bg-muted/5 transition-colors cursor-pointer animate-in fade-in slide-in-from-right-4"
+                            style={{ animationDelay: `${100 + (i * 30)}ms` }}
+                            onClick={() => handleStockClick(stock.symbol)}
+                          >
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-4">
+                                <div className="size-12 rounded-xl bg-muted/50 flex items-center justify-center shrink-0 font-bold text-primary text-base border border-border/50 transition-transform group-hover:scale-105">
+                                  {stock.symbol[0]}
+                                </div>
+                                <div className="flex flex-col min-w-0">
+                                  <div className="font-bold text-[14px] truncate flex items-center gap-2">
+                                    {stock.name}
+                                    {stock.category === "US Stocks" && <Globe className="size-3 text-primary/60" />}
+                                  </div>
+                                  <Badge variant="secondary" className="w-fit text-[9px] h-4 py-0 px-1.5 bg-muted/50 text-muted-foreground font-bold uppercase border-none rounded-sm">
+                                    {stock.symbol}
+                                  </Badge>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="w-24 h-10 mx-auto">
+                                <ResponsiveContainer width="100%" height="100%">
+                                  <LineChart data={stock.sparklineData}>
+                                    <Line 
+                                      type="monotone" 
+                                      dataKey="value" 
+                                      stroke={stock.trend === "UP" ? "#22c55e" : "#ef4444"} 
+                                      strokeWidth={2} 
+                                      dot={false} 
+                                    />
+                                  </LineChart>
+                                </ResponsiveContainer>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <div className="flex flex-col items-end">
+                                <div className="text-[14px] font-bold">₹{stock.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                                <div className={cn(
+                                  "text-[10px] font-bold flex items-center gap-1",
+                                  stock.trend === "UP" ? "text-green-500" : "text-red-500"
+                                )}>
+                                  {stock.trend === "UP" ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
+                                  {stock.trend === "UP" ? "+" : ""}{(stock.price * (stock.change / 100)).toFixed(2)} ({stock.change.toFixed(2)}%)
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <div className="text-xs font-medium text-muted-foreground">{stock.volume}</div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="text-center py-32 bg-muted/20 rounded-[2.5rem] border-2 border-dashed border-border flex flex-col items-center justify-center space-y-4 animate-in fade-in zoom-in-95">
+                <div className="size-20 rounded-full bg-muted/50 flex items-center justify-center">
+                  <Search className="size-10 text-muted-foreground opacity-30" />
                 </div>
-              </CardContent>
-            </Card>
-
-            {filteredStocks.length === 0 && (
-              <div className="text-center py-20 bg-muted/20 rounded-3xl border border-dashed border-border">
-                <Search className="size-12 text-muted-foreground mx-auto mb-4 opacity-20" />
-                <h3 className="text-lg font-bold">No results found</h3>
-                <p className="text-muted-foreground">Try searching for another ticker symbol or company name.</p>
+                <div className="space-y-1">
+                  <h3 className="text-xl font-bold">No results for "{searchQuery}"</h3>
+                  <p className="text-muted-foreground max-w-xs mx-auto text-sm">
+                    We couldn't find any stocks matching your search. Try another symbol or company name.
+                  </p>
+                </div>
+                <Button variant="outline" className="rounded-xl" onClick={() => setSearchQuery("")}>
+                  Clear Search
+                </Button>
               </div>
             )}
           </div>
@@ -208,14 +235,20 @@ export default function TradePage() {
             <Card className="glass-card border-primary/20 bg-primary/5">
               <CardHeader>
                 <CardTitle className="text-sm uppercase tracking-widest font-bold text-primary flex items-center gap-2">
-                  <Zap className="size-4 fill-primary" /> Instant Buy
+                  <Zap className="size-4 fill-primary" /> Market Hot-Search
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-xs text-muted-foreground leading-relaxed">
-                  Toggle <span className="text-primary font-bold">One-Click Trading</span> for lightning-fast executions. Perfect for catching volatility.
-                </div>
-                <Button variant="outline" className="w-full text-xs h-9 rounded-lg">Configure Limits</Button>
+              <CardContent className="space-y-3">
+                {["NVDA", "AAPL", "RELIANCE", "TSLA"].map(sym => (
+                  <button 
+                    key={sym}
+                    onClick={() => setSearchQuery(sym)}
+                    className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-primary/10 transition-colors group"
+                  >
+                    <span className="text-sm font-bold">{sym}</span>
+                    <Search className="size-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </button>
+                ))}
               </CardContent>
             </Card>
 
@@ -242,7 +275,7 @@ export default function TradePage() {
             <Card className="glass-card bg-muted/30 border-none">
               <CardContent className="p-4 flex items-start gap-2 text-[10px] text-muted-foreground leading-tight">
                 <Info className="size-4 text-primary shrink-0" />
-                Live prices are fetched from the Finnhub API for global symbols. Commission is 0 INR for the first 100 trades of the month.
+                Search across {MOCK_STOCKS.length} global assets. Results update in real-time based on your input.
               </CardContent>
             </Card>
           </div>

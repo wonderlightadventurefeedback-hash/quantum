@@ -33,7 +33,7 @@ export const MOCK_STOCKS: Stock[] = [
     change: 1.15, 
     trend: "UP", 
     category: "US Stocks", 
-    volume: "5,20,00,000",
+    volume: "52.4M",
     sparklineData: [{value: 185}, {value: 187}, {value: 186}, {value: 188}, {value: 189}]
   },
   { 
@@ -43,7 +43,7 @@ export const MOCK_STOCKS: Stock[] = [
     change: 0.85, 
     trend: "UP", 
     category: "US Stocks", 
-    volume: "2,15,00,000",
+    volume: "21.5M",
     sparklineData: [{value: 410}, {value: 412}, {value: 411}, {value: 414}, {value: 415}]
   },
   { 
@@ -53,7 +53,7 @@ export const MOCK_STOCKS: Stock[] = [
     change: 3.42, 
     trend: "UP", 
     category: "US Stocks", 
-    volume: "4,10,00,000",
+    volume: "41.0M",
     sparklineData: [{value: 840}, {value: 855}, {value: 860}, {value: 870}, {value: 875}]
   },
   { 
@@ -63,7 +63,7 @@ export const MOCK_STOCKS: Stock[] = [
     change: -2.15, 
     trend: "DOWN", 
     category: "US Stocks", 
-    volume: "8,50,00,000",
+    volume: "85.0M",
     sparklineData: [{value: 180}, {value: 178}, {value: 179}, {value: 176}, {value: 175}]
   },
   { 
@@ -73,7 +73,7 @@ export const MOCK_STOCKS: Stock[] = [
     change: 1.45, 
     trend: "UP", 
     category: "US Stocks", 
-    volume: "2,80,00,000",
+    volume: "28.0M",
     sparklineData: [{value: 148}, {value: 150}, {value: 149}, {value: 151}, {value: 152}]
   },
   { 
@@ -83,7 +83,7 @@ export const MOCK_STOCKS: Stock[] = [
     change: 2.34, 
     trend: "UP", 
     category: "US Stocks", 
-    volume: "2,10,00,000",
+    volume: "21.0M",
     sparklineData: [{value: 470}, {value: 475}, {value: 480}, {value: 478}, {value: 482}, {value: 485}]
   },
   { 
@@ -93,7 +93,7 @@ export const MOCK_STOCKS: Stock[] = [
     change: 1.12, 
     trend: "UP", 
     category: "US Stocks", 
-    volume: "4,50,00,000",
+    volume: "45.0M",
     sparklineData: [{value: 170}, {value: 172}, {value: 171}, {value: 174}, {value: 173}, {value: 175}]
   },
   { 
@@ -103,7 +103,7 @@ export const MOCK_STOCKS: Stock[] = [
     change: 0.95, 
     trend: "UP", 
     category: "US Stocks", 
-    volume: "5,40,000",
+    volume: "540K",
     sparklineData: [{value: 600}, {value: 605}, {value: 602}, {value: 608}, {value: 610}]
   },
   { 
@@ -113,7 +113,7 @@ export const MOCK_STOCKS: Stock[] = [
     change: -1.20, 
     trend: "DOWN", 
     category: "Stocks", 
-    volume: "54,23,102",
+    volume: "5.4M",
     sparklineData: [{value: 3020}, {value: 3010}, {value: 3000}, {value: 3015}, {value: 2990}, {value: 2980}]
   },
   { 
@@ -123,9 +123,39 @@ export const MOCK_STOCKS: Stock[] = [
     change: 2.54, 
     trend: "UP", 
     category: "Stocks", 
-    volume: "1,46,97,484",
+    volume: "14.6M",
     sparklineData: [{value: 370}, {value: 375}, {value: 385}, {value: 380}, {value: 390}, {value: 391}]
   },
+  { 
+    symbol: "HDFCBANK", 
+    name: "HDFC Bank Ltd.", 
+    price: 1450.20, 
+    change: 0.45, 
+    trend: "UP", 
+    category: "Stocks", 
+    volume: "12.8M",
+    sparklineData: [{value: 1440}, {value: 1445}, {value: 1448}, {value: 1452}, {value: 1450}]
+  },
+  { 
+    symbol: "INFY", 
+    name: "Infosys Limited", 
+    price: 1612.35, 
+    change: -0.85, 
+    trend: "DOWN", 
+    category: "Stocks", 
+    volume: "8.2M",
+    sparklineData: [{value: 1630}, {value: 1625}, {value: 1620}, {value: 1615}, {value: 1612}]
+  },
+  { 
+    symbol: "AMD", 
+    name: "Advanced Micro Devices", 
+    price: 180.20, 
+    change: 2.15, 
+    trend: "UP", 
+    category: "US Stocks", 
+    volume: "62.4M",
+    sparklineData: [{value: 175}, {value: 178}, {value: 177}, {value: 181}, {value: 180}]
+  }
 ];
 
 export const MOCK_MUTUAL_FUNDS = [
