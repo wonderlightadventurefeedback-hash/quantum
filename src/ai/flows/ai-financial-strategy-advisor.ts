@@ -1,7 +1,8 @@
 
 'use server';
 /**
- * @fileOverview An AI financial advisor chatbot powered by Google Gemini Pro that provides personalized advice based on real-time market data from Finnhub.
+ * @fileOverview An AI financial advisor chatbot powered by OpenAI GPT-4o (ChatGPT) 
+ * that provides personalized advice based on real-time market data from Finnhub.
  *
  * - aiFinancialStrategyAdvisor - A function that handles the AI financial advisor chat process.
  * - AiFinancialAdvisorInput - The input type for the aiFinancialStrategyAdvisor function.
@@ -10,94 +11,48 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import OpenAI from 'openai';
 
 const FINNHUB_API_KEY = process.env.NEXT_PUBLIC_FINNHUB_API_KEY || 'd6g3c49r01qqnmbqk10gd6g3c49r01qqnmbqk110';
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+
+// Initialize OpenAI client
+const openai = new OpenAI({
+  apiKey: OPENAI_API_KEY,
+});
 
 // --- Tools for Real-Time Finance Data ---
 
-const getStockQuote = ai.defineTool(
-  {
-    name: 'getStockQuote',
-    description: 'Get the current real-time stock price and quote for a specific ticker symbol.',
-    inputSchema: z.object({
-      symbol: z.string().describe('The stock ticker symbol (e.g., AAPL, NVDA, RELIANCE).'),
-    }),
-    outputSchema: z.any(),
-  },
-  async (input) => {
-    try {
-      const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${input.symbol.toUpperCase()}&token=${FINNHUB_API_KEY}`);
-      if (!res.ok) return { error: "Failed to fetch quote" };
-      return res.json();
-    } catch (e) {
-      return { error: "Service unavailable" };
-    }
+async function getStockQuote(symbol: string) {
+  try {
+    const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol.toUpperCase()}&token=${FINNHUB_API_KEY}`);
+    if (!res.ok) return { error: "Failed to fetch quote" };
+    return res.json();
+  } catch (e) {
+    return { error: "Service unavailable" };
   }
-);
+}
 
-const getCompanyProfile = ai.defineTool(
-  {
-    name: 'getCompanyProfile',
-    description: 'Get basic company information, market cap, industry, and headquarters details.',
-    inputSchema: z.object({
-      symbol: z.string().describe('The stock ticker symbol.'),
-    }),
-    outputSchema: z.any(),
-  },
-  async (input) => {
-    try {
-      const res = await fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${input.symbol.toUpperCase()}&token=${FINNHUB_API_KEY}`);
-      if (!res.ok) return { error: "Failed to fetch profile" };
-      return res.json();
-    } catch (e) {
-      return { error: "Service unavailable" };
-    }
+async function getCompanyProfile(symbol: string) {
+  try {
+    const res = await fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol.toUpperCase()}&token=${FINNHUB_API_KEY}`);
+    if (!res.ok) return { error: "Failed to fetch profile" };
+    return res.json();
+  } catch (e) {
+    return { error: "Service unavailable" };
   }
-);
+}
 
-const getMarketNews = ai.defineTool(
-  {
-    name: 'getMarketNews',
-    description: 'Get the latest general market news or news for a specific category.',
-    inputSchema: z.object({
-      category: z.enum(['general', 'forex', 'crypto', 'merger']).default('general').describe('The news category.'),
-    }),
-    outputSchema: z.any(),
-  },
-  async (input) => {
-    try {
-      const res = await fetch(`https://finnhub.io/api/v1/news?category=${input.category}&token=${FINNHUB_API_KEY}`);
-      if (!res.ok) return { error: "Failed to fetch news" };
-      const data = await res.json();
-      return data.slice(0, 5); // Return top 5 headlines
-    } catch (e) {
-      return { error: "Service unavailable" };
-    }
+async function getMarketNews(category: 'general' | 'forex' | 'crypto' | 'merger' = 'general') {
+  try {
+    const res = await fetch(`https://finnhub.io/api/v1/news?category=${category}&token=${FINNHUB_API_KEY}`);
+    if (!res.ok) return { error: "Failed to fetch news" };
+    const data = await res.json();
+    return Array.isArray(data) ? data.slice(0, 5) : { error: "Invalid response" };
+  } catch (e) {
+    return { error: "Service unavailable" };
   }
-);
-
-const getCompanyNews = ai.defineTool(
-  {
-    name: 'getCompanyNews',
-    description: 'Get recent news headlines specifically for a given stock symbol.',
-    inputSchema: z.object({
-      symbol: z.string().describe('The stock ticker symbol.'),
-    }),
-    outputSchema: z.any(),
-  },
-  async (input) => {
-    try {
-      const today = new Date().toISOString().split('T')[0];
-      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      const res = await fetch(`https://finnhub.io/api/v1/company-news?symbol=${input.symbol.toUpperCase()}&from=${weekAgo}&to=${today}&token=${FINNHUB_API_KEY}`);
-      if (!res.ok) return { error: "Failed to fetch company news" };
-      const data = await res.json();
-      return data.slice(0, 5);
-    } catch (e) {
-      return { error: "Service unavailable" };
-    }
-  }
-);
+}
 
 // --- Flow Implementation ---
 
@@ -119,13 +74,22 @@ export async function aiFinancialStrategyAdvisor(input: AiFinancialAdvisorInput)
   return aiFinancialStrategyAdvisorFlow(input);
 }
 
-const aiFinancialAdvisorPrompt = ai.definePrompt({
-  name: 'aiFinancialAdvisorPrompt',
-  model: 'googleai/gemini-1.5-pro', // Using Gemini 1.5 Pro for expert-level financial reasoning
-  input: { schema: AiFinancialAdvisorInputSchema },
-  output: { schema: AiFinancialAdvisorOutputSchema },
-  tools: [getStockQuote, getCompanyProfile, getMarketNews, getCompanyNews],
-  system: `You are FinIntel AI, a high-performance Financial Strategy Advisor powered by Gemini 1.5 Pro.
+const aiFinancialStrategyAdvisorFlow = ai.defineFlow(
+  {
+    name: 'aiFinancialStrategyAdvisorFlow',
+    inputSchema: AiFinancialAdvisorInputSchema,
+    outputSchema: AiFinancialAdvisorOutputSchema,
+  },
+  async (input) => {
+    if (!OPENAI_API_KEY) {
+      return { response: "I'm currently missing my OpenAI Intelligence Key. Please add OPENAI_API_KEY to the environment variables to activate ChatGPT reasoning." };
+    }
+
+    try {
+      const messages: any[] = [
+        {
+          role: 'system',
+          content: `You are FinIntel AI, a high-performance Financial Strategy Advisor powered by ChatGPT (GPT-4o).
 Your core mission is to provide data-driven, professional, and actionable financial advice covering ALL areas of personal and professional finance.
 
 AREAS OF EXPERTISE:
@@ -136,32 +100,86 @@ AREAS OF EXPERTISE:
 - Technical Education (explaining complex instruments like F&O, Bonds, or ETFs)
 
 KEY GUIDELINES:
-1. USE TOOLS: You have access to the Finnhub Real-Time API. Always search for the LATEST prices and news when asked about specific assets or general market conditions.
-2. PERSONALIZED: Reference the user's demo portfolio and history if provided.
+1. USE TOOLS: You have access to real-time market data. Always check latest prices if asked about symbols.
+2. PERSONALIZED: Reference the user's portfolio context: ${input.portfolioData || 'No portfolio data provided'}.
 3. TONE: Professional, analytical, and supportive.
-4. DISCLAIMER: Always mention that this is for educational/demo purposes and not professional financial advice.
-5. FORMATTING: Use Markdown with bolding for tickers and figures.
+4. DISCLAIMER: Always mention that this is for educational purposes and not professional financial advice.
+5. FORMATTING: Use Markdown with bolding for tickers and figures.`
+        },
+        {
+          role: 'user',
+          content: input.userQuery
+        }
+      ];
 
-If the user asks for anything related to finance, use your extensive knowledge base and the provided real-time tools to give a definitive, expert answer.`,
-  prompt: `
-User's Query: {{{userQuery}}}
+      const tools = [
+        {
+          type: 'function',
+          function: {
+            name: 'get_stock_quote',
+            description: 'Get real-time price for a stock symbol',
+            parameters: {
+              type: 'object',
+              properties: { symbol: { type: 'string' } },
+              required: ['symbol']
+            }
+          }
+        },
+        {
+          type: 'function',
+          function: {
+            name: 'get_market_news',
+            description: 'Get latest general market news',
+            parameters: {
+              type: 'object',
+              properties: { category: { type: 'string', enum: ['general', 'crypto'] } }
+            }
+          }
+        }
+      ];
 
-User's Background Context:
-- Portfolio Holdings: {{{portfolioData}}}
-- Activity History: {{{predictionHistory}}}
-- Learning Progress: {{{learningProgress}}}
+      const response = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages,
+        tools: tools as any,
+        tool_choice: 'auto',
+      });
 
-Provide a comprehensive, expert-level response using live tools where necessary to give the most up-to-date market information.`,
-});
+      const responseMessage = response.choices[0].message;
 
-const aiFinancialStrategyAdvisorFlow = ai.defineFlow(
-  {
-    name: 'aiFinancialStrategyAdvisorFlow',
-    inputSchema: AiFinancialAdvisorInputSchema,
-    outputSchema: AiFinancialAdvisorOutputSchema,
-  },
-  async (input) => {
-    const { output } = await aiFinancialAdvisorPrompt(input);
-    return output!;
+      if (responseMessage.tool_calls) {
+        for (const toolCall of responseMessage.tool_calls) {
+          const functionName = toolCall.function.name;
+          const functionArgs = JSON.parse(toolCall.function.arguments);
+          let toolResult;
+
+          if (functionName === 'get_stock_quote') {
+            toolResult = await getStockQuote(functionArgs.symbol);
+          } else if (functionName === 'get_market_news') {
+            toolResult = await getMarketNews(functionArgs.category);
+          }
+
+          messages.push(responseMessage);
+          messages.push({
+            tool_call_id: toolCall.id,
+            role: 'tool',
+            name: functionName,
+            content: JSON.stringify(toolResult),
+          });
+        }
+
+        const secondResponse = await openai.chat.completions.create({
+          model: 'gpt-4o',
+          messages,
+        });
+
+        return { response: secondResponse.choices[0].message.content || "I processed the data but couldn't generate a text response." };
+      }
+
+      return { response: responseMessage.content || "I'm here to help with your financial questions." };
+    } catch (error: any) {
+      console.error("Advisor Flow Error:", error);
+      return { response: "I encountered an error while processing your request. This is usually due to a missing or invalid OpenAI API Key." };
+    }
   }
 );
