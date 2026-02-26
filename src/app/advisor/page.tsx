@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -9,8 +10,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Send, Bot, User, Sparkles, Loader2, Zap, Clock } from "lucide-react"
 import { aiFinancialStrategyAdvisor } from "@/ai/flows/ai-financial-strategy-advisor"
-import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from "@/firebase"
-import { collection, doc, query, orderBy, limit, addDoc, serverTimestamp, getDocs } from "firebase/firestore"
+import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase, addDocumentNonBlocking } from "@/firebase"
+import { collection, doc, query, orderBy, limit, serverTimestamp, getDocs } from "firebase/firestore"
 import { MOCK_USER } from "@/lib/mock-data"
 import { formatDistanceToNow } from "date-fns"
 
@@ -67,7 +68,7 @@ export default function AdvisorPage() {
     
     // Optimistic Update & Save to Firestore
     const userMsgRef = collection(db, 'users', user.uid, 'chat_messages')
-    addDoc(userMsgRef, {
+    addDocumentNonBlocking(userMsgRef, {
       role: 'user',
       content: userMsg,
       timestamp: serverTimestamp()
@@ -83,13 +84,13 @@ export default function AdvisorPage() {
         learningProgress: `${userProfile?.learningProgress || 0}% complete.`
       })
 
-      addDoc(userMsgRef, {
+      addDocumentNonBlocking(userMsgRef, {
         role: 'assistant',
         content: response.response,
         timestamp: serverTimestamp()
       })
     } catch (error) {
-      addDoc(userMsgRef, {
+      addDocumentNonBlocking(userMsgRef, {
         role: 'assistant',
         content: "I'm having trouble connecting to market feeds. Please check your connection.",
         timestamp: serverTimestamp()
@@ -124,7 +125,7 @@ export default function AdvisorPage() {
                 <Zap className="size-3 fill-primary animate-pulse" /> Live Analysis Mode
               </span>
             </div>
-            <p className="text-muted-foreground text-sm">Powered by Finnhub Real-Time API and Gemini 2.5.</p>
+            <p className="text-muted-foreground text-sm">Powered by Finnhub Real-Time API and Gemini 1.5 Pro.</p>
           </div>
           <div className="hidden md:flex items-center gap-2">
             <span className="size-2 bg-green-500 rounded-full animate-pulse"></span>

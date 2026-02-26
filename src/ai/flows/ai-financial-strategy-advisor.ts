@@ -1,7 +1,7 @@
 
 'use server';
 /**
- * @fileOverview An AI financial advisor chatbot powered by Google Gemini Pro that provides personalized advice based on real-time market data.
+ * @fileOverview An AI financial advisor chatbot powered by Google Gemini Pro that provides personalized advice based on real-time market data from Finnhub.
  *
  * - aiFinancialStrategyAdvisor - A function that handles the AI financial advisor chat process.
  * - AiFinancialAdvisorInput - The input type for the aiFinancialStrategyAdvisor function.
@@ -11,7 +11,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-const FINNHUB_API_KEY = process.env.NEXT_PUBLIC_FINNHUB_API_KEY;
+const FINNHUB_API_KEY = process.env.NEXT_PUBLIC_FINNHUB_API_KEY || 'd6g3c49r01qqnmbqk10gd6g3c49r01qqnmbqk110';
 
 // --- Tools for Real-Time Finance Data ---
 
@@ -136,7 +136,7 @@ AREAS OF EXPERTISE:
 - Technical Education (explaining complex instruments like F&O, Bonds, or ETFs)
 
 KEY GUIDELINES:
-1. USE TOOLS: You have access to the Finnhub Real-Time API. Always search for the LATEST prices and news when asked about specific assets.
+1. USE TOOLS: You have access to the Finnhub Real-Time API. Always search for the LATEST prices and news when asked about specific assets or general market conditions.
 2. PERSONALIZED: Reference the user's demo portfolio and history if provided.
 3. TONE: Professional, analytical, and supportive.
 4. DISCLAIMER: Always mention that this is for educational/demo purposes and not professional financial advice.
@@ -151,7 +151,7 @@ User's Background Context:
 - Activity History: {{{predictionHistory}}}
 - Learning Progress: {{{learningProgress}}}
 
-Provide a comprehensive, expert-level response using live tools where necessary.`,
+Provide a comprehensive, expert-level response using live tools where necessary to give the most up-to-date market information.`,
 });
 
 const aiFinancialStrategyAdvisorFlow = ai.defineFlow(
