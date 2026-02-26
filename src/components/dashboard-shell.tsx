@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -23,6 +24,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { MOCK_USER } from "@/lib/mock-data"
+import { useToast } from "@/hooks/use-toast"
 
 const navItems = [
   { name: "Overview", href: "/", icon: LayoutDashboard },
@@ -36,7 +38,23 @@ const navItems = [
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const { toast } = useToast()
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(true)
+
+  const handleHeaderAction = (action: string) => {
+    toast({
+      title: action,
+      description: `Feature coming soon: ${action} configuration.`,
+    })
+  }
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    toast({
+      title: "Searching...",
+      description: "Searching our global market database.",
+    })
+  }
 
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
@@ -88,6 +106,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 "w-full justify-start gap-4 p-2 h-auto",
                 !isSidebarOpen && "justify-center"
               )}
+              onClick={() => handleHeaderAction("Profile Settings")}
             >
               <Avatar className="size-8">
                 <AvatarImage src={MOCK_USER.avatar} />
@@ -112,20 +131,20 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
               <Menu className="size-5" />
             </Button>
-            <div className="relative w-64 md:w-96 hidden md:block">
+            <form onSubmit={handleSearch} className="relative w-64 md:w-96 hidden md:block">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input 
                 placeholder="Search stocks, news, lessons..." 
                 className="pl-10 bg-muted/50 border-none focus-visible:ring-primary/50" 
               />
-            </div>
+            </form>
           </div>
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" className="relative">
+            <Button variant="ghost" size="icon" className="relative" onClick={() => handleHeaderAction("Notifications")}>
               <Bell className="size-5" />
               <span className="absolute top-2 right-2 size-2 bg-primary rounded-full ring-2 ring-background"></span>
             </Button>
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" onClick={() => handleHeaderAction("Settings")}>
               <Settings className="size-5" />
             </Button>
           </div>

@@ -1,14 +1,38 @@
+
 "use client"
 
+import * as React from "react"
 import { DashboardShell } from "@/components/dashboard-shell"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { Newspaper, TrendingUp, TrendingDown, RefreshCw, BarChart3, ShieldAlert } from "lucide-react"
+import { Newspaper, TrendingUp, TrendingDown, RefreshCw, BarChart3, ShieldAlert, Loader2 } from "lucide-react"
 import { MOCK_NEWS } from "@/lib/mock-data"
+import { useToast } from "@/hooks/use-toast"
 
 export default function NewsPage() {
+  const { toast } = useToast()
+  const [isRefreshing, setIsRefreshing] = React.useState(false)
+
+  const handleRefresh = () => {
+    setIsRefreshing(true)
+    setTimeout(() => {
+      setIsRefreshing(false)
+      toast({
+        title: "Feed Updated",
+        description: "Successfully fetched latest market sentiment data.",
+      })
+    }, 1500)
+  }
+
+  const handleReadAnalysis = (title: string) => {
+    toast({
+      title: "Opening Analysis",
+      description: `Loading deep dive for: ${title}`,
+    })
+  }
+
   return (
     <DashboardShell>
       <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -17,8 +41,9 @@ export default function NewsPage() {
             <h1 className="text-3xl font-headline font-bold">News Intelligence</h1>
             <p className="text-muted-foreground">Real-time sentiment analysis of global financial markets.</p>
           </div>
-          <Button variant="outline" className="gap-2">
-            <RefreshCw className="size-4" /> Refresh Feed
+          <Button variant="outline" className="gap-2" onClick={handleRefresh} disabled={isRefreshing}>
+            {isRefreshing ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
+            Refresh Feed
           </Button>
         </div>
 
@@ -92,7 +117,13 @@ export default function NewsPage() {
                           ))}
                         </div>
                       </div>
-                      <Button variant="link" className="text-xs h-auto p-0 font-bold">Read Analysis</Button>
+                      <Button 
+                        variant="link" 
+                        className="text-xs h-auto p-0 font-bold"
+                        onClick={() => handleReadAnalysis(item.title)}
+                      >
+                        Read Analysis
+                      </Button>
                     </div>
                   </div>
                   <div className="w-full md:w-48 bg-muted/30 border-l border-border flex items-center justify-center p-6 text-center">

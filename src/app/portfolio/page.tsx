@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -9,10 +10,12 @@ import { BrainCircuit, ShieldCheck, PieChart as PieChartIcon, ArrowUpRight, Plus
 import { aiPortfolioImprovementInsights } from "@/ai/flows/ai-portfolio-improvement-insights"
 import { MOCK_PORTFOLIO } from "@/lib/mock-data"
 import { Badge } from "@/components/ui/badge"
+import { useToast } from "@/hooks/use-toast"
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))']
 
 export default function PortfolioPage() {
+  const { toast } = useToast()
   const [isAnalyzing, setIsAnalyzing] = React.useState(false)
   const [insights, setInsights] = React.useState<string | null>(null)
 
@@ -26,11 +29,26 @@ export default function PortfolioPage() {
         sectorDiversification: MOCK_PORTFOLIO.sectorDiversification
       })
       setInsights(result.insights)
+      toast({
+        title: "Analysis Complete",
+        description: "AI-driven portfolio insights generated successfully.",
+      })
     } catch (error) {
-      console.error(error)
+      toast({
+        variant: "destructive",
+        title: "Analysis Failed",
+        description: "Could not reach the AI advisor at this time.",
+      })
     } finally {
       setIsAnalyzing(false)
     }
+  }
+
+  const handleAddAsset = () => {
+    toast({
+      title: "Add Asset",
+      description: "Opening asset integration dialog...",
+    })
   }
 
   return (
@@ -42,7 +60,9 @@ export default function PortfolioPage() {
             <p className="text-muted-foreground">Comprehensive breakdown of your assets and risk profile.</p>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="outline" className="gap-2"><Plus className="size-4" /> Add Asset</Button>
+            <Button variant="outline" className="gap-2" onClick={handleAddAsset}>
+              <Plus className="size-4" /> Add Asset
+            </Button>
             <Button className="gap-2" onClick={handleRunAnalysis} disabled={isAnalyzing}>
               {isAnalyzing ? <RefreshCw className="size-4 animate-spin" /> : <BrainCircuit className="size-4" />}
               Generate AI Insights
@@ -156,7 +176,11 @@ export default function PortfolioPage() {
                     const pl = (holding.currentPrice - holding.purchasePrice) * holding.quantity
                     const plPercent = ((holding.currentPrice - holding.purchasePrice) / holding.purchasePrice) * 100
                     return (
-                      <tr key={holding.symbol} className="hover:bg-muted/10">
+                      <tr 
+                        key={holding.symbol} 
+                        className="hover:bg-muted/10 cursor-pointer"
+                        onClick={() => toast({ title: holding.symbol, description: `Holding detail: ${holding.quantity} units` })}
+                      >
                         <td className="px-6 py-4 font-bold">{holding.symbol}</td>
                         <td className="px-6 py-4">{holding.quantity}</td>
                         <td className="px-6 py-4">${holding.purchasePrice.toFixed(2)}</td>

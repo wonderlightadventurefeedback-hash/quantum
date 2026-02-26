@@ -1,3 +1,4 @@
+
 "use client"
 
 import { DashboardShell } from "@/components/dashboard-shell"
@@ -7,9 +8,19 @@ import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { BookOpen, CheckCircle2, PlayCircle, Trophy } from "lucide-react"
 import { MOCK_LEARNING_MODULES } from "@/lib/mock-data"
+import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
 
 export default function LearnPage() {
+  const { toast } = useToast()
+
+  const handleAction = (title: string, description: string) => {
+    toast({
+      title,
+      description,
+    })
+  }
+
   return (
     <DashboardShell>
       <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -70,7 +81,14 @@ export default function LearnPage() {
                   </div>
                 </CardContent>
                 <CardFooter className="pt-0">
-                  <Button className="w-full gap-2" variant={isCompleted ? "outline" : "default"}>
+                  <Button 
+                    className="w-full gap-2" 
+                    variant={isCompleted ? "outline" : "default"}
+                    onClick={() => handleAction(
+                      isCompleted ? "Reviewing Module" : "Starting Lesson",
+                      `Opening: ${module.title}`
+                    )}
+                  >
                     {isCompleted ? "Review Material" : isStarted ? "Continue Learning" : "Start Module"}
                     {!isCompleted && <PlayCircle className="size-4" />}
                   </Button>
@@ -99,7 +117,13 @@ export default function LearnPage() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button variant="secondary" className="font-bold text-primary">Take Quiz Now</Button>
+            <Button 
+              variant="secondary" 
+              className="font-bold text-primary"
+              onClick={() => handleAction("Quiz Started", "Good luck! You have 20 minutes.")}
+            >
+              Take Quiz Now
+            </Button>
           </CardFooter>
         </Card>
       </div>

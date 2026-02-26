@@ -1,11 +1,16 @@
+
 "use client"
 
+import * as React from "react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { DashboardShell } from "@/components/dashboard-shell"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
+import { useToast } from "@/hooks/use-toast"
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -38,6 +43,16 @@ const data = [
 ]
 
 export default function OverviewPage() {
+  const { toast } = useToast()
+  const router = useRouter()
+
+  const handleAction = (title: string, description: string) => {
+    toast({
+      title,
+      description,
+    })
+  }
+
   return (
     <DashboardShell>
       <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -48,10 +63,10 @@ export default function OverviewPage() {
             <p className="text-muted-foreground">Here's what's happening in the markets today.</p>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="outline" className="gap-2">
+            <Button variant="outline" className="gap-2" onClick={() => handleAction("Deposit Initiated", "Redirecting to secure payment gateway...")}>
               <Wallet className="size-4" /> Deposit
             </Button>
-            <Button className="gap-2">
+            <Button className="gap-2" onClick={() => handleAction("Quick Trade", "Trade execution panel opening...")}>
               <TrendingUp className="size-4" /> Quick Trade
             </Button>
           </div>
@@ -142,7 +157,11 @@ export default function OverviewPage() {
             <CardContent>
               <div className="space-y-4">
                 {MOCK_STOCKS.map((stock) => (
-                  <div key={stock.symbol} className="flex items-center justify-between group cursor-pointer">
+                  <div 
+                    key={stock.symbol} 
+                    className="flex items-center justify-between group cursor-pointer"
+                    onClick={() => handleAction(`Viewing ${stock.symbol}`, `Current price: $${stock.price}`)}
+                  >
                     <div className="flex items-center gap-3">
                       <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-xs">
                         {stock.symbol[0]}
@@ -164,7 +183,12 @@ export default function OverviewPage() {
                     </div>
                   </div>
                 ))}
-                <Button variant="ghost" className="w-full text-xs text-primary" size="sm">
+                <Button 
+                  variant="ghost" 
+                  className="w-full text-xs text-primary" 
+                  size="sm"
+                  onClick={() => handleAction("Market Explorer", "Redirecting to global market overview...")}
+                >
                   View full market <ArrowRight className="size-3 ml-2" />
                 </Button>
               </div>
@@ -195,6 +219,9 @@ export default function OverviewPage() {
                     </div>
                   </div>
                 ))}
+                <Link href="/news">
+                  <Button variant="link" className="w-full text-xs" size="sm">Go to News Intel</Button>
+                </Link>
               </div>
             </CardContent>
           </Card>
@@ -220,7 +247,7 @@ export default function OverviewPage() {
                 </div>
                 <Progress value={42} className="h-2" />
               </div>
-              <Button className="w-full">View Advisor Advice</Button>
+              <Button className="w-full" onClick={() => router.push('/advisor')}>View Advisor Advice</Button>
             </CardContent>
           </Card>
         </div>
