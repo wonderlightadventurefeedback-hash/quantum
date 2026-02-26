@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -26,6 +27,7 @@ import { useToast } from "@/hooks/use-toast"
 import emailjs from '@emailjs/browser'
 import CircularGallery from "@/components/circular-gallery"
 import { PlaceHolderImages } from "@/lib/placeholder-images"
+import PillNav from "@/components/pill-nav"
 
 export default function LandingPage() {
   const { user, loading } = useUser()
@@ -120,6 +122,14 @@ export default function LandingPage() {
     image: `${img.imageUrl}?grayscale`,
     text: img.description.split(' ').slice(0, 2).join(' ') // Short label for gallery
   }));
+
+  const navItems = [
+    { label: "Dashboard", href: "/dashboard" },
+    { label: "Trade", href: "/trade" },
+    { label: "Predict", href: "/predict" },
+    { label: "Learn", href: "/learn" },
+    { label: "News", href: "/news" }
+  ];
 
   if (loading || user) return null
 
@@ -360,6 +370,24 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Decorative Interactive Navigation Section */}
+      <section className="py-20 bg-muted/10 border-t border-border overflow-hidden">
+        <div className="container mx-auto px-4 text-center space-y-8">
+          <div className="space-y-2">
+            <h2 className="text-3xl font-headline font-bold">Quick Jump</h2>
+            <p className="text-muted-foreground text-sm">Explore our specialized market terminals with interactive ease.</p>
+          </div>
+          <PillNav 
+            logo="https://picsum.photos/seed/fin-logo/100/100" 
+            items={navItems}
+            baseColor="hsl(var(--primary))"
+            pillColor="hsl(var(--card))"
+            hoveredPillTextColor="white"
+            pillTextColor="hsl(var(--foreground))"
+          />
         </div>
       </section>
 
