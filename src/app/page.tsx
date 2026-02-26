@@ -57,8 +57,14 @@ export default function LandingPage() {
   if (loading || user) return null
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-body selection:bg-primary/30">
-      {/* Top Navigation Bar - Groww Style */}
+    <div className="min-h-screen bg-background text-foreground font-body selection:bg-primary/30 relative">
+      {/* Global Background Elements */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px] opacity-60" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/5 rounded-full blur-[120px] opacity-60" />
+      </div>
+
+      {/* Top Navigation Bar */}
       <header className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4 md:px-8 h-20 flex items-center justify-between">
           <div className="flex items-center gap-12">
@@ -108,7 +114,7 @@ export default function LandingPage() {
       </header>
 
       {/* Market Ticker */}
-      <div className="pt-20 bg-background border-b border-border h-12 flex items-center overflow-hidden">
+      <div className="pt-20 bg-background border-b border-border h-12 flex items-center overflow-hidden relative z-10">
         <div className="flex animate-marquee whitespace-nowrap">
           {[...MOCK_INDICES, ...MOCK_INDICES, ...MOCK_INDICES].map((index, i) => (
             <div key={i} className="flex items-center gap-2 px-6">
@@ -123,33 +129,32 @@ export default function LandingPage() {
       </div>
 
       {/* Hero Section */}
-      <section className="pt-24 pb-16 bg-background overflow-hidden">
+      <section className="pt-32 pb-40 bg-transparent overflow-hidden relative z-10">
         <div className="container mx-auto px-4 text-center">
+          <div className="inline-block px-4 py-1.5 mb-6 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-widest animate-in fade-in slide-in-from-top-4 duration-500">
+            The Future of Investing
+          </div>
           <h1 className="text-6xl md:text-8xl font-headline font-bold text-foreground mb-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
             Grow your wealth
           </h1>
-          <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-1000">
+          <p className="text-xl text-muted-foreground mb-12 max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-1000">
             Trusted by millions of users. The simple way to invest in stocks, mutual funds and more.
           </p>
-          <Link href="/login">
-            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg px-12 h-16 rounded-full shadow-lg shadow-primary/20">
-              Get started
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+            <Link href="/login">
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg px-12 h-16 rounded-full shadow-lg shadow-primary/20">
+                Get started
+              </Button>
+            </Link>
+            <Button variant="outline" className="text-lg px-12 h-16 rounded-full">
+              Explore Markets
             </Button>
-          </Link>
-
-          <div className="mt-16 max-w-5xl mx-auto relative h-[400px] md:h-[500px] animate-in fade-in slide-in-from-bottom-8 duration-1000">
-            <img 
-              src="https://picsum.photos/seed/financial-infrastructure/1200/800" 
-              alt="Financial Ecosystem" 
-              className="w-full h-full object-contain opacity-90 dark:opacity-80"
-              data-ai-hint="isometric finance"
-            />
           </div>
         </div>
       </section>
 
       {/* About Section */}
-      <section id="about" className="py-24 bg-muted/30">
+      <section id="about" className="py-24 bg-muted/30 relative z-10">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div className="space-y-6 text-left">
@@ -174,21 +179,23 @@ export default function LandingPage() {
             </div>
             <div className="relative">
               <div className="absolute inset-0 bg-primary/10 blur-[80px] rounded-full" />
-              <img 
-                src="https://picsum.photos/seed/app-interface/800/800" 
-                alt="Mobile App" 
-                className="relative rounded-3xl w-full h-auto shadow-xl border border-border"
-                data-ai-hint="mobile app"
-              />
+              <div className="relative rounded-3xl overflow-hidden border border-border shadow-2xl">
+                <img 
+                  src="https://picsum.photos/seed/app-interface/800/800" 
+                  alt="Mobile App" 
+                  className="w-full h-auto"
+                  data-ai-hint="mobile app"
+                />
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Contact Section */}
-      <section id="contact" className="py-24 bg-background">
+      <section id="contact" className="py-24 bg-background relative z-10">
         <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto rounded-[2rem] border border-border shadow-xl overflow-hidden">
+          <div className="max-w-4xl mx-auto rounded-[2rem] border border-border shadow-xl overflow-hidden bg-card">
             <div className="grid grid-cols-1 md:grid-cols-2">
               <div className="bg-primary p-12 text-primary-foreground flex flex-col justify-between">
                 <div>
@@ -206,7 +213,7 @@ export default function LandingPage() {
                   </div>
                 </div>
               </div>
-              <div className="p-12 bg-card">
+              <div className="p-12">
                 <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
                   <Input placeholder="Your Name" className="h-12 border-border bg-muted/50" />
                   <Input placeholder="Email Address" type="email" className="h-12 border-border bg-muted/50" />
@@ -222,7 +229,7 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-16 bg-muted/30 border-t border-border">
+      <footer className="py-16 bg-muted/30 border-t border-border relative z-10">
         <div className="container mx-auto px-4 text-center">
           <div className="flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="flex items-center gap-2">
