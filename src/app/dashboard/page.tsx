@@ -17,7 +17,8 @@ import {
   Globe,
   CircleDollarSign,
   ChevronRight,
-  Loader2
+  Loader2,
+  Activity
 } from "lucide-react"
 import { LineChart, Line, ResponsiveContainer } from "recharts"
 import { MOCK_USER, MOCK_STOCKS, MOCK_INDICES, MOCK_NEWS, Stock } from "@/lib/mock-data"
@@ -73,6 +74,10 @@ export default function DashboardOverview() {
   }, [])
 
   const navigateToExplore = (category: string) => {
+    if (category === "Live Trade") {
+      router.push('/predict')
+      return
+    }
     router.push(`/explore?category=${encodeURIComponent(category)}`)
   }
 
@@ -127,11 +132,12 @@ export default function DashboardOverview() {
           <h2 className="text-xl font-headline font-bold flex items-center gap-2">
             Invest in <ChevronRight className="size-5 text-primary" />
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
             {[
               { label: "Stocks", icon: Briefcase, color: "text-blue-500", bg: "bg-blue-500/10" },
               { label: "Mutual Funds", icon: PieChart, color: "text-green-500", bg: "bg-green-500/10" },
               { label: "US Stocks", icon: Globe, color: "text-indigo-500", bg: "bg-indigo-500/10" },
+              { label: "Live Trade", icon: Activity, color: "text-primary", bg: "bg-primary/10" },
               { label: "Fixed Deposits", icon: CircleDollarSign, color: "text-orange-500", bg: "bg-orange-500/10" },
             ].map((cat, i) => (
               <button 
@@ -143,7 +149,7 @@ export default function DashboardOverview() {
                 <div className={cn("size-14 rounded-full flex items-center justify-center transition-transform group-hover:scale-110", cat.bg)}>
                   <cat.icon className={cn("size-7", cat.color)} />
                 </div>
-                <span className="font-bold text-sm">{cat.label}</span>
+                <span className="font-bold text-sm text-center">{cat.label}</span>
               </button>
             ))}
           </div>
