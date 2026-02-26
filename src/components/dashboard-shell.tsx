@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -153,7 +154,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             "sticky top-0 z-40 transition-all duration-500 ease-in-out transform",
             isHeaderVisible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0 pointer-events-none"
           )}>
-            <header className="h-20 border-b border-border bg-background/95 backdrop-blur-md flex items-center justify-between px-8 pl-24">
+            <header className="h-20 border-b border-border bg-background/95 backdrop-blur-md flex items-center justify-between px-8 pl-44">
               <div className="flex items-center gap-6">
                 <form onSubmit={handleSearchSubmit} className="relative w-64 md:w-96 hidden md:block">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
