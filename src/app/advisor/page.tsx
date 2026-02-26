@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -25,7 +24,8 @@ import {
   TrendingDown,
   Globe,
   Search,
-  Cpu
+  Cpu,
+  Database
 } from "lucide-react"
 import { 
   AreaChart, 
@@ -39,7 +39,7 @@ import {
 import { aiFinancialStrategyAdvisor } from "@/ai/flows/ai-financial-strategy-advisor"
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase, addDocumentNonBlocking } from "@/firebase"
 import { collection, doc, query, orderBy, limit, serverTimestamp } from "firebase/firestore"
-import { MOCK_USER, MOCK_STOCKS } from "@/lib/mock-data"
+import { MOCK_USER } from "@/lib/mock-data"
 import { formatDistanceToNow } from "date-fns"
 import { cn } from "@/lib/utils"
 
@@ -66,7 +66,6 @@ export default function AdvisorPage() {
   
   const [chartData] = React.useState(generateMarketData(18500))
 
-  // Fetch real user data for context
   const userProfileRef = useMemoFirebase(() => {
     if (!db || !user) return null
     return doc(db, 'users', user.uid)
@@ -79,7 +78,6 @@ export default function AdvisorPage() {
   }, [db, user])
   const { data: holdings } = useCollection(holdingsQuery)
 
-  // Persistent Chat Logic
   const messagesQuery = useMemoFirebase(() => {
     if (!db || !user) return null
     return query(collection(db, 'users', user.uid, 'chat_messages'), orderBy('timestamp', 'asc'), limit(50))
@@ -91,7 +89,7 @@ export default function AdvisorPage() {
       setMessages(history.map(m => ({ role: m.role, content: m.content, timestamp: m.timestamp })))
     } else if (history && history.length === 0 && !isHistoryLoading) {
       setMessages([
-        { role: 'assistant', content: "Welcome to **QuantumF AI**. My reasoning engine is directly connected to OpenAI through ChatGPT. I research your questions and collect all relevant market information before responding. How can I help you optimize your wealth today?" }
+        { role: 'assistant', content: "Welcome to **QuantumF AI**. My reasoning engine researches your questions through ChatGPT and collects all relevant financial and stock market information before providing an output. How can I help you optimize your strategy today?" }
       ])
     }
   }, [history, isHistoryLoading])
@@ -127,7 +125,7 @@ export default function AdvisorPage() {
     } catch (error) {
       addDocumentNonBlocking(userMsgRef, {
         role: 'assistant',
-        content: "I encountered a communication error with my premium ChatGPT intelligence layer. Please verify your connection or try again shortly.",
+        content: "I encountered a communication error with my research intelligence layer. Please verify your connection or try again shortly.",
         timestamp: serverTimestamp()
       })
     } finally {
@@ -142,18 +140,17 @@ export default function AdvisorPage() {
   }, [messages, isLoading])
 
   const suggestions = [
+    "Research NVIDIA technicals",
     "Analyze my current holdings",
-    "Live price of NVIDIA?",
-    "Market news headlines",
-    "Explain Ethereum",
-    "Strategy for $50k"
+    "Collect latest bank news",
+    "Stock market trends today",
+    "Explain Bitcoin's value"
   ]
 
   return (
     <DashboardShell>
       <div className="h-[calc(100vh-12rem)] flex flex-col space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
         
-        {/* Terminal Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-4">
           <div className="space-y-1">
             <div className="flex items-center gap-3">
@@ -162,17 +159,17 @@ export default function AdvisorPage() {
                 <Search className="size-3 mr-1 inline animate-pulse" /> Research Mode
               </Badge>
               <Badge variant="outline" className="border-primary/30 text-primary text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">
-                <Cpu className="size-3 mr-1 inline" /> ChatGPT Powered
+                <Database className="size-3 mr-1 inline" /> ChatGPT Data Collect
               </Badge>
             </div>
             <p className="text-muted-foreground text-xs font-medium">
-              QuantumF AI researches your questions and collects all information through ChatGPT before outputting a professional strategy.
+              QuantumF researches your question and collects all information through ChatGPT before giving the output.
             </p>
           </div>
           <div className="flex items-center gap-4 bg-muted/30 border border-border/50 px-6 py-2.5 rounded-2xl">
             <div className="flex items-center gap-2 pr-4 border-r border-border/50">
               <span className="size-2 bg-green-500 rounded-full animate-pulse"></span>
-              <span className="text-[10px] font-black text-foreground uppercase tracking-widest">Research Sync</span>
+              <span className="text-[10px] font-black text-foreground uppercase tracking-widest">Global Sync</span>
             </div>
             <div className="text-[10px] font-black text-primary uppercase tracking-widest">Status: Ready</div>
           </div>
@@ -180,7 +177,6 @@ export default function AdvisorPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 overflow-hidden">
           
-          {/* Chat Column */}
           <Card className="lg:col-span-2 glass-card overflow-hidden flex flex-col border-none shadow-2xl relative bg-card/40 backdrop-blur-xl">
             <ScrollArea className="flex-1 px-6 py-8">
               <div className="space-y-8 max-w-4xl mx-auto">
@@ -238,7 +234,7 @@ export default function AdvisorPage() {
                         <span className="size-2 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]"></span>
                         <span className="size-2 bg-primary rounded-full animate-bounce"></span>
                       </div>
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">ChatGPT Researching & Collecting...</span>
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">ChatGPT Researching & Collecting Information...</span>
                     </div>
                   </div>
                 )}
@@ -246,7 +242,6 @@ export default function AdvisorPage() {
               </div>
             </ScrollArea>
 
-            {/* Quick Suggestions */}
             <div className="px-6 py-4 border-t border-border/50 flex gap-3 overflow-x-auto no-scrollbar bg-muted/5 backdrop-blur-sm">
               {suggestions.map((q) => (
                 <Button 
@@ -261,13 +256,12 @@ export default function AdvisorPage() {
               ))}
             </div>
 
-            {/* Input Area */}
             <div className="p-6 bg-muted/10 border-t border-border/50 backdrop-blur-md">
               <form onSubmit={handleSendMessage} className="relative max-w-4xl mx-auto">
                 <Input 
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="Ask a question for QuantumF to research through ChatGPT..." 
+                  placeholder="Research the finance and stock market through ChatGPT..." 
                   className="pr-16 h-16 bg-background border-border/50 rounded-2xl focus-visible:ring-primary/40 text-lg shadow-xl"
                 />
                 <Button 
@@ -283,19 +277,18 @@ export default function AdvisorPage() {
                 <div className="flex items-center gap-2">
                   <Info className="size-3 text-muted-foreground" />
                   <p className="text-[9px] text-muted-foreground uppercase font-black tracking-widest text-center">
-                    QuantumF researches the question and collects all information through ChatGPT before outputting the professional response
+                    QuantumF researches through ChatGPT and collects all information about finance and stocks before giving the output
                   </p>
                 </div>
               </div>
             </div>
           </Card>
 
-          {/* Charts Column */}
           <div className="hidden lg:flex flex-col gap-6 overflow-y-auto no-scrollbar pb-10">
             <Card className="glass-card bg-card/40 border-none shadow-xl overflow-hidden p-6 space-y-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary">Live Sentiment</h3>
-                <Badge variant="outline" className="text-[9px] uppercase font-black">Bullish</Badge>
+                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary">Market Pulse</h3>
+                <Badge variant="outline" className="text-[9px] uppercase font-black">Sentiment: Bullish</Badge>
               </div>
               <div className="h-48 w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -318,11 +311,11 @@ export default function AdvisorPage() {
               </div>
               <div className="flex items-center justify-between text-center gap-2">
                 <div className="flex-1 p-3 rounded-xl bg-primary/5 border border-primary/10">
-                  <div className="text-[9px] font-black text-muted-foreground uppercase">Index Value</div>
+                  <div className="text-[9px] font-black text-muted-foreground uppercase">Research Index</div>
                   <div className="text-lg font-black text-foreground">18,452.10</div>
                 </div>
                 <div className="flex-1 p-3 rounded-xl bg-green-500/5 border border-green-500/10">
-                  <div className="text-[9px] font-black text-muted-foreground uppercase">Daily Change</div>
+                  <div className="text-[9px] font-black text-muted-foreground uppercase">Global Intel</div>
                   <div className="text-lg font-black text-green-500">+1.24%</div>
                 </div>
               </div>
@@ -362,7 +355,7 @@ export default function AdvisorPage() {
                 <Globe size={120} />
               </div>
               <h4 className="text-[10px] font-black uppercase tracking-widest opacity-80 mb-2">Global Insight</h4>
-              <p className="text-sm font-bold leading-tight">QuantumF scanning 50+ global markets for strategic openings...</p>
+              <p className="text-sm font-bold leading-tight">QuantumF researching 50+ global markets through ChatGPT intelligence...</p>
               <Button size="sm" variant="secondary" className="mt-4 w-full rounded-xl font-black text-[10px] uppercase h-9 bg-white text-primary">
                 View Global Report
               </Button>

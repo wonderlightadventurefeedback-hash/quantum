@@ -1,9 +1,9 @@
-
 'use server';
 /**
  * @fileOverview QuantumF AI Financial Advisor flow powered by high-performance reasoning models.
- * This flow implements a "Research & Collect through ChatGPT" strategy where the AI 
- * aggregates all relevant financial information before providing a synthesized output.
+ * This flow implements a mandatory "Research & Collect" strategy where the AI 
+ * researches ChatGPT-grade intelligence and collects all relevant financial information 
+ * before providing a synthesized output.
  *
  * - aiFinancialStrategyAdvisor - Entry point for the AI advisor process.
  * - AiFinancialAdvisorInput - Input schema for queries and context.
@@ -53,29 +53,29 @@ const aiFinancialStrategyAdvisorFlow = ai.defineFlow(
     try {
       const marketNews = await getMarketContext();
 
-      const systemPrompt = `You are QuantumF AI, a high-performance Financial Reasoning Engine powered by ChatGPT intelligence. 
-Your mission is to perform a mandatory "Research & Collect" process for every query.
+      const systemPrompt = `You are QuantumF AI, a high-performance Financial Reasoning Engine. 
+Your core protocol is to RESEARCH and COLLECT all relevant information before providing an output.
 
 STEP 1: RESEARCH
-Analyze the user's input: "${input.userQuery}"
-You must research this question against the provided REAL-TIME CONTEXT:
-- Latest Market Intel: ${marketNews}
-- User Portfolio Snapshot: ${input.portfolioData || 'Empty Portfolio'}
-- User Learning Level: ${input.learningProgress || 'Novice'}
+You must research the user's question: "${input.userQuery}" against our real-time financial intelligence layer (ChatGPT).
+Context provided:
+- Global Market Intel: ${marketNews}
+- User Portfolio Data: ${input.portfolioData || 'No holdings'}
+- User Learning Context: ${input.learningProgress || 'Novice'}
 
-STEP 2: COLLECT & AGGREGATE
-Identify all relevant financial factors, stock symbols, and economic indicators. You must collect all necessary information through your ChatGPT-based reasoning layer before formulating a final response.
+STEP 2: COLLECT
+Collect all information about the finance and stock market related to the query. Ensure you have gathered technical data, sentiment analysis, and relevant symbols.
 
 STEP 3: OUTPUT
-Provide a professional, data-driven response. Your output must demonstrate that you have collected and processed all information before answering.
+Provide a professional strategy or answer. Your response must reflect that you have researched the information through your ChatGPT-connected reasoning layer and collected all necessary details before answering.
 
 GUIDELINES:
-1. Identify as QuantumF AI Reasoning Layer (Direct ChatGPT Connection).
-2. Use Markdown formatting. **Bold** all stock tickers (e.g., **AAPL**).
-3. Be analytical, precise, and supportive.
+1. Identify as QuantumF AI (Research & Collect Mode).
+2. Use Markdown formatting. **Bold** stock symbols (e.g., **NVDA**).
+3. Be analytical, supportive, and precise.
 4. Always include a disclaimer that this is educational information, not financial advice.`;
 
-      // Using deepseek-ai/DeepSeek-V3 for its high-performance reasoning/thinking capabilities
+      // Using Llama-3.3-70B-Instruct for high-performance reasoning
       const response = await fetch('https://api.siliconflow.cn/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -83,7 +83,7 @@ GUIDELINES:
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: 'deepseek-ai/DeepSeek-V3',
+          model: 'meta-llama/Llama-3.3-70B-Instruct',
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: input.userQuery }
@@ -108,7 +108,7 @@ GUIDELINES:
       return { response: text };
     } catch (error: any) {
       console.error("Advisor Flow Error:", error);
-      return { response: "I encountered a communication error with my premium ChatGPT intelligence layer. Please verify your connection or try again shortly." };
+      return { response: "I encountered a communication error with my research intelligence layer. Please verify your connection or try again shortly." };
     }
   }
 );
