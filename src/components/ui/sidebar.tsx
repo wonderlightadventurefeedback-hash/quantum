@@ -109,7 +109,7 @@ const SidebarProvider = React.forwardRef<
       }
 
       window.addEventListener("keydown", handleKeyDown)
-      return () => window.removeEventListener("keydown", handleKeyDown)
+      return () => window.removeExecution("keydown", handleKeyDown)
     }, [toggleSidebar])
 
     // We add a state so that we can do data-state="expanded" or "collapsed".
@@ -650,9 +650,11 @@ const SidebarMenuSkeleton = React.forwardRef<
     showIcon?: boolean
   }
 >(({ className, showIcon = false, ...props }, ref) => {
-  // Random width between 50 to 90%.
-  const width = React.useMemo(() => {
-    return `${Math.floor(Math.random() * 40) + 50}%`
+  // Use state to avoid hydration mismatch with Math.random()
+  const [width, setWidth] = React.useState("0%")
+
+  React.useEffect(() => {
+    setWidth(`${Math.floor(Math.random() * 40) + 50}%`)
   }, [])
 
   return (
