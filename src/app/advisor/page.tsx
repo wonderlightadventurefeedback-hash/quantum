@@ -89,7 +89,7 @@ export default function AdvisorPage() {
       setMessages(history.map(m => ({ role: m.role, content: m.content, timestamp: m.timestamp })))
     } else if (history && history.length === 0 && !isHistoryLoading) {
       setMessages([
-        { role: 'assistant', content: "Welcome to **QuantumF AI**. I am directly connected to OpenAI through ChatGPT to provide expert answers for all stock market and financial questions. How can I help you optimize your wealth today?" }
+        { role: 'assistant', content: "Welcome to **QuantumF AI**. I am directly connected to the **Ollama (Llama 3)** model to provide expert answers for all stock market and financial questions. How can I help you optimize your wealth today?" }
       ])
     }
   }, [history, isHistoryLoading])
@@ -125,7 +125,7 @@ export default function AdvisorPage() {
     } catch (error) {
       addDocumentNonBlocking(userMsgRef, {
         role: 'assistant',
-        content: "I'm having difficulty connecting to my ChatGPT intelligence layer right now. Please ensure your configuration is active or try again in a few moments.",
+        content: "I'm having difficulty connecting to my Ollama intelligence layer right now. Please ensure your configuration is active or try again in a few moments.",
         timestamp: serverTimestamp()
       })
     } finally {
@@ -157,11 +157,11 @@ export default function AdvisorPage() {
             <div className="flex items-center gap-3">
               <h1 className="text-3xl font-headline font-black uppercase tracking-tighter">Intelligence Terminal</h1>
               <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full">
-                <Zap className="size-3 fill-primary mr-1 inline animate-pulse" /> ChatGPT Active
+                <Zap className="size-3 fill-primary mr-1 inline animate-pulse" /> Ollama Active
               </Badge>
             </div>
             <p className="text-muted-foreground text-xs font-medium">
-              QuantumF AI is directly connected to OpenAI via ChatGPT for professional financial reasoning.
+              QuantumF AI is directly connected to the Ollama (Llama 3) engine for professional financial reasoning.
             </p>
           </div>
           <div className="flex items-center gap-4 bg-muted/30 border border-border/50 px-6 py-2.5 rounded-2xl">
@@ -186,7 +186,7 @@ export default function AdvisorPage() {
                 ) : messages.map((msg, i) => (
                   <div key={i} className={cn(
                     "flex gap-4 animate-in fade-in slide-in-from-bottom-2",
-                    msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'
+                    msg.role === 'user' ? 'flex-row-reverse text-right' : 'flex-row'
                   )}>
                     <Avatar className={cn(
                       "size-10 border-2 shrink-0 shadow-lg mt-1",
@@ -205,7 +205,7 @@ export default function AdvisorPage() {
                       "max-w-[85%] md:max-w-[75%] rounded-[2rem] px-6 py-4 text-[15px] leading-relaxed shadow-sm",
                       msg.role === 'user' 
                         ? 'bg-primary text-primary-foreground rounded-tr-none ml-auto' 
-                        : 'bg-background/80 border border-border/50 rounded-tl-none prose prose-sm dark:prose-invert max-w-none'
+                        : 'bg-background/80 border border-border/50 rounded-tl-none prose prose-sm dark:prose-invert max-w-none text-left'
                     )}>
                       {msg.content.split('\n').map((line, idx) => (
                         <p key={idx} className={cn(idx > 0 && "mt-2")}>{line}</p>
@@ -233,7 +233,7 @@ export default function AdvisorPage() {
                         <span className="size-2 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]"></span>
                         <span className="size-2 bg-primary rounded-full animate-bounce"></span>
                       </div>
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">QuantumF Processing...</span>
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Ollama Processing...</span>
                     </div>
                   </div>
                 )}
@@ -262,7 +262,7 @@ export default function AdvisorPage() {
                 <Input 
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="Ask about markets, portfolio strategies, or finance..." 
+                  placeholder="Ask about stock markets or finance (Powered by Ollama)..." 
                   className="pr-16 h-16 bg-background border-border/50 rounded-2xl focus-visible:ring-primary/40 text-lg shadow-xl"
                 />
                 <Button 
@@ -278,7 +278,7 @@ export default function AdvisorPage() {
                 <div className="flex items-center gap-2">
                   <Info className="size-3 text-muted-foreground" />
                   <p className="text-[9px] text-muted-foreground uppercase font-black tracking-widest">
-                    Direct OpenAI ChatGPT connection
+                    Direct Ollama (Llama 3) connection
                   </p>
                 </div>
               </div>

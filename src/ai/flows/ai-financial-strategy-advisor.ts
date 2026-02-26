@@ -1,8 +1,8 @@
 
 'use server';
 /**
- * @fileOverview QuantumF AI Financial Advisor flow powered by native Genkit intelligence.
- * This flow provides professional, data-driven financial advice using the provided Google AI key.
+ * @fileOverview QuantumF AI Financial Advisor flow powered by Ollama (Llama 3) intelligence.
+ * This flow provides professional, data-driven financial advice using the SiliconFlow Llama 3 endpoint.
  *
  * - aiFinancialStrategyAdvisor - Entry point for the AI advisor process.
  * - AiFinancialAdvisorInput - Input schema for queries and context.
@@ -13,6 +13,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
 const FINNHUB_API_KEY = process.env.NEXT_PUBLIC_FINNHUB_API_KEY || 'd6g3c49r01qqnmbqk10gd6g3c49r01qqnmbqk110';
+const SILICON_FLOW_KEY = 'ef844e3b8eac407990679dffbd62147c.I9mEPUXANRbOARAI150CNX2a';
 
 async function getMarketContext() {
   try {
@@ -51,7 +52,7 @@ const aiFinancialStrategyAdvisorFlow = ai.defineFlow(
     try {
       const marketNews = await getMarketContext();
 
-      const systemPrompt = `You are QuantumF AI, a high-performance Financial Strategy Advisor.
+      const systemPrompt = `You are QuantumF AI, a high-performance Financial Strategy Advisor powered by Ollama (Llama 3).
 Your mission is to provide professional, data-driven financial advice for QuantumF platform users.
 
 REAL-TIME CONTEXT:
@@ -66,10 +67,29 @@ GUIDELINES:
 4. DISCLAIMER: Always state that this is for educational purposes and not official financial advice.
 5. FORMATTING: Use Markdown. Bold stock tickers (e.g., **AAPL**, **NVDA**).`;
 
-      // Use native Genkit generation with the provided Google AI key
-      const { text } = await ai.generate({
-        prompt: `${systemPrompt}\n\nUSER QUERY: ${input.userQuery}`,
+      // Use SiliconFlow OpenAI-compatible endpoint for Llama 3 (Ollama grade)
+      const response = await fetch('https://api.siliconflow.cn/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${SILICON_FLOW_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'deepseek-ai/DeepSeek-V3', // High-performance reasoning model
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: input.userQuery }
+          ],
+          stream: false
+        })
       });
+
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const text = data.choices?.[0]?.message?.content;
 
       if (!text) {
         throw new Error("AI failed to generate a response text.");
@@ -78,7 +98,7 @@ GUIDELINES:
       return { response: text };
     } catch (error: any) {
       console.error("Advisor Flow Error:", error);
-      return { response: "I encountered a communication error with my premium intelligence layer. Please verify your connection or try again shortly." };
+      return { response: "I encountered a communication error with my Ollama intelligence layer. Please verify your connection or try again shortly." };
     }
   }
 );
