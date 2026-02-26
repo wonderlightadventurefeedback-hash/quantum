@@ -43,6 +43,7 @@ export const MOCK_LEARNING_MODULES = [
   {
     id: "m1",
     title: "Stock Market Basics",
+    category: "Markets",
     description: "Learn the fundamentals of how markets work and basic terminology.",
     lessons: 5,
     completed: 5,
@@ -50,27 +51,48 @@ export const MOCK_LEARNING_MODULES = [
   },
   {
     id: "m2",
-    title: "Risk Management",
-    description: "Master the art of protecting your capital through proven strategies.",
-    lessons: 4,
-    completed: 2,
-    image: "https://picsum.photos/seed/risk/400/300"
+    title: "Technical Analysis 101",
+    category: "Trading",
+    description: "Master chart patterns, indicators, and price action strategies.",
+    lessons: 8,
+    completed: 3,
+    image: "https://picsum.photos/seed/trading/400/300"
   },
   {
     id: "m3",
     title: "Portfolio Diversification",
-    description: "Avoid putting all your eggs in one basket with smart allocation.",
+    category: "Investing",
+    description: "Avoid putting all your eggs in one basket with smart asset allocation.",
     lessons: 6,
     completed: 0,
     image: "https://picsum.photos/seed/diversify/400/300"
   },
   {
     id: "m4",
-    title: "Market Psychology",
-    description: "Understand the emotional cycles of bull and bear markets.",
+    title: "Risk Management",
+    category: "Trading",
+    description: "Learn how to protect your capital and manage position sizes effectively.",
     lessons: 4,
+    completed: 2,
+    image: "https://picsum.photos/seed/risk/400/300"
+  },
+  {
+    id: "m5",
+    title: "Financial Planning",
+    category: "Finance",
+    description: "Structured path to budgeting, saving, and long-term wealth building.",
+    lessons: 10,
+    completed: 1,
+    image: "https://picsum.photos/seed/finance/400/300"
+  },
+  {
+    id: "m6",
+    title: "Options Strategy",
+    category: "Trading",
+    description: "Advanced strategies for calls, puts, and complex derivative spreads.",
+    lessons: 12,
     completed: 0,
-    image: "https://picsum.photos/seed/psych/400/300"
+    image: "https://picsum.photos/seed/options/400/300"
   }
 ];
 
