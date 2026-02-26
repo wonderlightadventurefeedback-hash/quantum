@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -14,7 +13,8 @@ import {
   Zap,
   Info,
   RefreshCw,
-  Loader2
+  Loader2,
+  Globe
 } from "lucide-react"
 import { LineChart, Line, ResponsiveContainer } from "recharts"
 import { MOCK_STOCKS, MOCK_USER, Stock } from "@/lib/mock-data"
@@ -35,18 +35,16 @@ export default function TradePage() {
     try {
       const updatedStocks = await Promise.all(
         MOCK_STOCKS.map(async (stock) => {
-          // Finnhub works best for US tickers. For others, we simulate based on real volatility.
-          if (stock.category === "US Stocks") {
-            const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${stock.symbol}&token=${FINNHUB_API_KEY}`)
-            if (res.ok) {
-              const data = await res.json()
-              if (data.c) { // c is current price
-                return {
-                  ...stock,
-                  price: data.c,
-                  change: data.dp || stock.change, // dp is percent change
-                  trend: (data.dp || 0) >= 0 ? "UP" : "DOWN" as "UP" | "DOWN"
-                }
+          // Finnhub works best for US tickers.
+          const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${stock.symbol}&token=${FINNHUB_API_KEY}`)
+          if (res.ok) {
+            const data = await res.json()
+            if (data.c && data.c !== 0) { // c is current price
+              return {
+                ...stock,
+                price: data.c,
+                change: data.dp || stock.change, // dp is percent change
+                trend: (data.dp || 0) >= 0 ? "UP" : "DOWN" as "UP" | "DOWN"
               }
             }
           }
@@ -117,7 +115,7 @@ export default function TradePage() {
             <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
               <Input 
-                placeholder="Search stocks by name or symbol (e.g. AAPL, AMZN)..." 
+                placeholder="Search stocks by name or symbol (e.g. AAPL, AMZN, NVDA)..." 
                 className="pl-12 h-14 bg-card/50 border-border rounded-2xl focus-visible:ring-primary/40"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -150,7 +148,10 @@ export default function TradePage() {
                                 {stock.symbol[0]}
                               </div>
                               <div className="flex flex-col min-w-0">
-                                <div className="font-bold text-[14px] truncate">{stock.name}</div>
+                                <div className="font-bold text-[14px] truncate flex items-center gap-2">
+                                  {stock.name}
+                                  {stock.category === "US Stocks" && <Globe className="size-3 text-primary/60" />}
+                                </div>
                                 <Badge variant="secondary" className="w-fit text-[9px] h-4 py-0 px-1.5 bg-muted/50 text-muted-foreground font-bold uppercase border-none rounded-sm">
                                   {stock.symbol}
                                 </Badge>
@@ -174,9 +175,9 @@ export default function TradePage() {
                           </td>
                           <td className="px-6 py-4 text-right">
                             <div className="flex flex-col items-end">
-                              <div className="text-[14px] font-bold">₹{stock.price.toLocaleString()}</div>
+                              <div className="text-[14px] font-bold">₹{stock.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                               <div className={cn(
-                                "text-[10px] font-bold",
+                                "text-[10px] font-bold flex items-center gap-1",
                                 stock.trend === "UP" ? "text-green-500" : "text-red-500"
                               )}>
                                 {stock.trend === "UP" ? "+" : ""}{(stock.price * (stock.change / 100)).toFixed(2)} ({stock.change.toFixed(2)}%)
@@ -241,7 +242,7 @@ export default function TradePage() {
             <Card className="glass-card bg-muted/30 border-none">
               <CardContent className="p-4 flex items-start gap-2 text-[10px] text-muted-foreground leading-tight">
                 <Info className="size-4 text-primary shrink-0" />
-                Live prices are fetched from the Finnhub API. Commission is 0 INR for the first 100 trades of the month.
+                Live prices are fetched from the Finnhub API for global symbols. Commission is 0 INR for the first 100 trades of the month.
               </CardContent>
             </Card>
           </div>

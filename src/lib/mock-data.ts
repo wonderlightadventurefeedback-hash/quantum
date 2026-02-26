@@ -10,8 +10,8 @@ export const MOCK_USER = {
 export const MOCK_INDICES = [
   { name: "NIFTY 50", value: "22,415.85", change: "+125.40", percent: "+0.56%", trend: "UP" },
   { name: "SENSEX", value: "73,806.15", change: "+412.10", percent: "+0.54%", trend: "UP" },
-  { name: "BANK NIFTY", value: "47,286.40", change: "-85.20", percent: "-0.18%", trend: "DOWN" },
-  { name: "IT INDEX", value: "35,120.90", change: "+210.15", percent: "+0.60%", trend: "UP" },
+  { name: "NASDAQ 100", value: "18,210.30", change: "+155.20", percent: "+0.86%", trend: "UP" },
+  { name: "S&P 500", value: "5,137.08", change: "+40.22", percent: "+0.80%", trend: "UP" },
 ];
 
 export interface Stock {
@@ -27,74 +27,64 @@ export interface Stock {
 
 export const MOCK_STOCKS: Stock[] = [
   { 
-    symbol: "BOB", 
-    name: "Bank of Baroda", 
-    price: 324.45, 
-    change: 2.72, 
+    symbol: "AAPL", 
+    name: "Apple Inc.", 
+    price: 189.43, 
+    change: 1.15, 
     trend: "UP", 
-    category: "Stocks", 
-    volume: "2,05,02,406",
-    sparklineData: [{value: 300}, {value: 310}, {value: 305}, {value: 320}, {value: 315}, {value: 324}]
+    category: "US Stocks", 
+    volume: "5,20,00,000",
+    sparklineData: [{value: 185}, {value: 187}, {value: 186}, {value: 188}, {value: 189}]
   },
   { 
-    symbol: "TATAMOTORS", 
-    name: "Tata Motors Passenger", 
-    price: 391.55, 
-    change: 2.54, 
+    symbol: "MSFT", 
+    name: "Microsoft Corp.", 
+    price: 415.50, 
+    change: 0.85, 
     trend: "UP", 
-    category: "Stocks", 
-    volume: "1,46,97,484",
-    sparklineData: [{value: 370}, {value: 375}, {value: 385}, {value: 380}, {value: 390}, {value: 391}]
+    category: "US Stocks", 
+    volume: "2,15,00,000",
+    sparklineData: [{value: 410}, {value: 412}, {value: 411}, {value: 414}, {value: 415}]
   },
   { 
-    symbol: "EICHERMOT", 
-    name: "Eicher Motors", 
-    price: 8190.00, 
-    change: 2.27, 
+    symbol: "NVDA", 
+    name: "NVIDIA Corporation", 
+    price: 875.25, 
+    change: 3.42, 
     trend: "UP", 
-    category: "Stocks", 
-    volume: "4,27,401",
-    sparklineData: [{value: 8000}, {value: 8050}, {value: 8100}, {value: 8080}, {value: 8150}, {value: 8190}]
+    category: "US Stocks", 
+    volume: "4,10,00,000",
+    sparklineData: [{value: 840}, {value: 855}, {value: 860}, {value: 870}, {value: 875}]
   },
   { 
-    symbol: "BEL", 
-    name: "Bharat Electronics", 
-    price: 449.05, 
-    change: 2.22, 
-    trend: "UP", 
-    category: "Stocks", 
-    volume: "1,37,38,213",
-    sparklineData: [{value: 430}, {value: 435}, {value: 440}, {value: 438}, {value: 445}, {value: 449}]
-  },
-  { 
-    symbol: "SOLARINDS", 
-    name: "Solar Industries", 
-    price: 13755.00, 
-    change: 2.20, 
-    trend: "UP", 
-    category: "Stocks", 
-    volume: "1,48,694",
-    sparklineData: [{value: 13400}, {value: 13500}, {value: 13600}, {value: 13550}, {value: 13700}, {value: 13755}]
-  },
-  { 
-    symbol: "ZYDUSLIFE", 
-    name: "Zydus", 
-    price: 938.50, 
-    change: 2.05, 
-    trend: "UP", 
-    category: "Stocks", 
-    volume: "14,36,917",
-    sparklineData: [{value: 910}, {value: 920}, {value: 915}, {value: 925}, {value: 930}, {value: 938}]
-  },
-  { 
-    symbol: "RELIANCE", 
-    name: "Reliance Industries", 
-    price: 2980.45, 
-    change: -1.20, 
+    symbol: "TSLA", 
+    name: "Tesla, Inc.", 
+    price: 175.20, 
+    change: -2.15, 
     trend: "DOWN", 
-    category: "Stocks", 
-    volume: "54,23,102",
-    sparklineData: [{value: 3020}, {value: 3010}, {value: 3000}, {value: 3015}, {value: 2990}, {value: 2980}]
+    category: "US Stocks", 
+    volume: "8,50,00,000",
+    sparklineData: [{value: 180}, {value: 178}, {value: 179}, {value: 176}, {value: 175}]
+  },
+  { 
+    symbol: "GOOGL", 
+    name: "Alphabet Inc.", 
+    price: 152.12, 
+    change: 1.45, 
+    trend: "UP", 
+    category: "US Stocks", 
+    volume: "2,80,00,000",
+    sparklineData: [{value: 148}, {value: 150}, {value: 149}, {value: 151}, {value: 152}]
+  },
+  { 
+    symbol: "META", 
+    name: "Meta Platforms", 
+    price: 485.58, 
+    change: 2.34, 
+    trend: "UP", 
+    category: "US Stocks", 
+    volume: "2,10,00,000",
+    sparklineData: [{value: 470}, {value: 475}, {value: 480}, {value: 478}, {value: 482}, {value: 485}]
   },
   { 
     symbol: "AMZN", 
@@ -107,14 +97,34 @@ export const MOCK_STOCKS: Stock[] = [
     sparklineData: [{value: 170}, {value: 172}, {value: 171}, {value: 174}, {value: 173}, {value: 175}]
   },
   { 
-    symbol: "META", 
-    name: "Meta Platforms", 
-    price: 485.58, 
-    change: 2.34, 
+    symbol: "NFLX", 
+    name: "Netflix, Inc.", 
+    price: 610.45, 
+    change: 0.95, 
     trend: "UP", 
     category: "US Stocks", 
-    volume: "2,10,00,000",
-    sparklineData: [{value: 470}, {value: 475}, {value: 480}, {value: 478}, {value: 482}, {value: 485}]
+    volume: "5,40,000",
+    sparklineData: [{value: 600}, {value: 605}, {value: 602}, {value: 608}, {value: 610}]
+  },
+  { 
+    symbol: "RELIANCE", 
+    name: "Reliance Industries", 
+    price: 2980.45, 
+    change: -1.20, 
+    trend: "DOWN", 
+    category: "Stocks", 
+    volume: "54,23,102",
+    sparklineData: [{value: 3020}, {value: 3010}, {value: 3000}, {value: 3015}, {value: 2990}, {value: 2980}]
+  },
+  { 
+    symbol: "TATAMOTORS", 
+    name: "Tata Motors Passenger", 
+    price: 391.55, 
+    change: 2.54, 
+    trend: "UP", 
+    category: "Stocks", 
+    volume: "1,46,97,484",
+    sparklineData: [{value: 370}, {value: 375}, {value: 385}, {value: 380}, {value: 390}, {value: 391}]
   },
 ];
 
