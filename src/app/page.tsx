@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -132,7 +131,7 @@ export default function LandingPage() {
       </div>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-48 lg:pt-48 lg:pb-64 bg-transparent overflow-hidden relative z-10">
+      <section className="pt-20 pb-48 lg:pt-32 lg:pb-64 bg-transparent overflow-hidden relative z-10">
         <div className="container mx-auto px-4 text-center max-w-4xl">
           <div className="inline-block px-4 py-1.5 mb-8 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-widest animate-in fade-in slide-in-from-top-4 duration-500">
             Intelligent Investing for Everyone
