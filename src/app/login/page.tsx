@@ -43,25 +43,21 @@ export default function LoginPage() {
   const initializeDemoUser = async (user: any, name: string) => {
     if (!db) return
     const userRef = doc(db, 'users', user.uid)
-    
-    // Use setDoc with merge: true to ensure the balance is always set to 50,000 on first initialization
-    // but without overwriting existing data if it's already there (though snap.exists check is safer)
     const snap = await getDoc(userRef)
     
-    if (!snap.exists()) {
+    // Robust initialization: Set balance to 50,000 if it's a new user or the field is missing
+    if (!snap.exists() || snap.data().balance === undefined) {
+      const existingData = snap.exists() ? snap.data() : {}
       await setDoc(userRef, {
         id: user.uid,
-        email: user.email,
-        displayName: name || user.displayName || 'Demo User',
+        email: user.email || '',
+        displayName: name || user.displayName || existingData.displayName || 'Demo User',
         balance: 50000,
-        learningProgress: 0,
-        predictionAccuracy: 0,
-        createdAt: serverTimestamp(),
+        learningProgress: existingData.learningProgress ?? 0,
+        predictionAccuracy: existingData.predictionAccuracy ?? 0,
+        createdAt: existingData.createdAt || serverTimestamp(),
         updatedAt: serverTimestamp()
-      })
-    } else {
-      // If user exists but balance is somehow lost/negative, we don't force reset here
-      // unless the user clicks the reset button in settings.
+      }, { merge: true })
     }
   }
 
@@ -74,7 +70,7 @@ export default function LoginPage() {
       await initializeDemoUser(result.user, result.user.displayName || '')
       toast({
         title: "Welcome to FinIntel AI Demo",
-        description: "Successfully signed in. ₹50,000 demo capital credited.",
+        description: "Successfully signed in. ₹50,000 demo capital ready.",
       })
     } catch (error: any) {
       toast({
@@ -109,7 +105,8 @@ export default function LoginPage() {
           description: "₹50,000 demo capital has been added to your portfolio.",
         })
       } else {
-        await signInWithEmailAndPassword(auth, email, password)
+        const userCredential = await signInWithEmailAndPassword(auth, email, password)
+        await initializeDemoUser(userCredential.user, '')
         toast({
           title: "Welcome back",
           description: "Accessing your demo portfolio.",

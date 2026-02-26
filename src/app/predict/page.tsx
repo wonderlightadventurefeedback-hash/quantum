@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -19,7 +20,8 @@ import {
   Activity,
   ArrowUpRight,
   ArrowDownRight,
-  Trophy
+  Trophy,
+  Loader2
 } from "lucide-react"
 import { 
   Area, 
@@ -96,12 +98,14 @@ export default function PredictionArenaPage() {
   const executeTrade = async (dir: "UP" | "DOWN") => {
     if (!db || !user || isTrading) return
     const amount = parseFloat(tradeAmount)
+    const currentBalance = userProfile?.balance ?? 50000
+
     if (amount <= 0 || isNaN(amount)) {
       toast({ title: "Invalid Amount", variant: "destructive" })
       return
     }
-    if (amount > balance) {
-      toast({ title: "Insufficient Demo Capital", variant: "destructive" })
+    if (amount > currentBalance) {
+      toast({ title: "Insufficient Demo Capital", description: "You need more virtual funds to open this position.", variant: "destructive" })
       return
     }
 
@@ -112,9 +116,11 @@ export default function PredictionArenaPage() {
     setTradeResult(null)
 
     const userRef = doc(db, 'users', user.uid)
-    // Use setDocumentNonBlocking with merge: true for robustness
+    const newBalance = currentBalance - amount
+    
+    // Explicitly set the new balance to ensure no negative unitialized start
     setDocumentNonBlocking(userRef, { 
-      balance: increment(-amount),
+      balance: newBalance,
       updatedAt: serverTimestamp()
     }, { merge: true })
     
@@ -207,7 +213,7 @@ export default function PredictionArenaPage() {
           <div className="flex items-center gap-4">
             <div className="bg-muted/30 px-6 py-2 rounded-2xl border border-border/50">
               <div className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">Demo Balance</div>
-              <div className="text-xl font-black font-headline text-primary">₹{balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+              <div className="text-xl font-black font-headline text-primary">₹{balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
             </div>
             <div className="h-10 w-px bg-border mx-2" />
             <Button variant="outline" className="rounded-xl border-2 font-bold h-12" onClick={() => router.push('/dashboard')}>

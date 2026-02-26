@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -20,7 +21,8 @@ import {
   ArrowUpCircle,
   ArrowDownCircle,
   LineChart as LineChartIcon,
-  CandlestickChart as CandleIcon
+  CandlestickChart as CandleIcon,
+  Loader2
 } from "lucide-react"
 import { 
   BarChart,
@@ -38,7 +40,7 @@ import {
 import { MOCK_STOCKS } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
-import { useUser, useFirestore, useDoc, useMemoFirebase, updateDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase"
+import { useUser, useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking } from "@/firebase"
 import { doc, serverTimestamp, getDoc, increment } from "firebase/firestore"
 
 const FINNHUB_API_KEY = "d6g3c49r01qqnmbqk10gd6g3c49r01qqnmbqk110";
@@ -191,10 +193,17 @@ export default function StockDetailsPage() {
       toast({ title: "Invalid Quantity", variant: "destructive" })
       return
     }
+    
+    // Ensure we are using the real Firestore balance or the default starting capital
+    const currentBalance = userProfile?.balance ?? 50000
     const totalValue = orderQty * stock.price
 
-    if (type === "BUY" && totalValue > balance) {
-      toast({ title: "Insufficient Demo Funds", description: "You need more demo capital to complete this virtual purchase.", variant: "destructive" })
+    if (type === "BUY" && totalValue > currentBalance) {
+      toast({ 
+        title: "Insufficient Demo Funds", 
+        description: `This virtual purchase costs ₹${totalValue.toLocaleString()}. Your demo balance is ₹${currentBalance.toLocaleString()}.`, 
+        variant: "destructive" 
+      })
       return
     }
 
@@ -212,9 +221,10 @@ export default function StockDetailsPage() {
           lastUpdated: serverTimestamp() 
         }, { merge: true })
         
-        // Use setDocumentNonBlocking with merge: true for the user profile to be safer than updateDoc
+        // Calculate new balance based on actual current balance to avoid negative results from missing fields
+        const newBalance = currentBalance - totalValue
         setDocumentNonBlocking(userRef, { 
-          balance: increment(-totalValue),
+          balance: newBalance,
           updatedAt: serverTimestamp()
         }, { merge: true })
         
@@ -230,8 +240,9 @@ export default function StockDetailsPage() {
           lastUpdated: serverTimestamp() 
         }, { merge: true })
         
+        const newBalance = currentBalance + totalValue
         setDocumentNonBlocking(userRef, { 
-          balance: increment(totalValue),
+          balance: newBalance,
           updatedAt: serverTimestamp()
         }, { merge: true })
         
@@ -247,11 +258,13 @@ export default function StockDetailsPage() {
   const executeLiveTrade = async (dir: "HIGHER" | "LOWER") => {
     if (!db || !user || isTradingLive) return
     const amount = parseFloat(tradeAmount)
+    const currentBalance = userProfile?.balance ?? 50000
+
     if (amount <= 0 || isNaN(amount)) {
       toast({ title: "Invalid Amount", variant: "destructive" })
       return
     }
-    if (amount > balance) {
+    if (amount > currentBalance) {
       toast({ title: "Insufficient Balance", variant: "destructive" })
       return
     }
@@ -262,8 +275,9 @@ export default function StockDetailsPage() {
     setTradeTimer(TRADE_DURATION)
 
     const userRef = doc(db, 'users', user.uid)
+    const newBalance = currentBalance - amount
     setDocumentNonBlocking(userRef, { 
-      balance: increment(-amount),
+      balance: newBalance,
       updatedAt: serverTimestamp()
     }, { merge: true })
     
@@ -278,6 +292,8 @@ export default function StockDetailsPage() {
       const finalPrice = stock.price + (Math.random() - 0.45) * 2;
       const isWin = (prediction === "HIGHER" && finalPrice > entryPrice) || (prediction === "LOWER" && finalPrice < entryPrice);
       const amount = parseFloat(tradeAmount)
+      const currentBalanceRef = userProfile?.balance ?? 0 // We'll fetch again or use increment
+      
       setIsTradingLive(false)
       if (isWin && db && user) {
         const userRef = doc(db, 'users', user.uid)
@@ -291,7 +307,7 @@ export default function StockDetailsPage() {
       }
     }
     return () => clearInterval(interval)
-  }, [isTradingLive, tradeTimer, db, user, prediction, entryPrice, stock.price, tradeAmount])
+  }, [isTradingLive, tradeTimer, db, user, prediction, entryPrice, stock.price, tradeAmount, userProfile?.balance])
 
   if (!isMounted) return null;
 
@@ -485,7 +501,7 @@ export default function StockDetailsPage() {
                     className="h-12 rounded-xl bg-green-500 font-bold hover:bg-green-600" 
                     disabled={isProcessing}
                   >
-                    Buy
+                    {isProcessing ? <Loader2 className="animate-spin size-4" /> : "Buy"}
                   </Button>
                   <Button 
                     variant="outline" 
@@ -493,7 +509,7 @@ export default function StockDetailsPage() {
                     className="h-12 rounded-xl border-2 border-red-500 text-red-500 font-bold hover:bg-red-50" 
                     disabled={isProcessing}
                   >
-                    Sell
+                    {isProcessing ? <Loader2 className="animate-spin size-4" /> : "Sell"}
                   </Button>
                 </div>
                 <div className="pt-2 text-center">
@@ -503,7 +519,7 @@ export default function StockDetailsPage() {
                 </div>
                 <div className="mt-4 p-4 rounded-xl bg-muted/30 border border-border/50">
                   <div className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1">Available Demo Balance</div>
-                  <div className="text-lg font-black text-primary">₹{balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                  <div className="text-lg font-black text-primary">₹{balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                 </div>
               </CardContent>
             </Card>
