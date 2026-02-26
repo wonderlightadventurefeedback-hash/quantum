@@ -81,4 +81,21 @@
   .glass-card {
     @apply bg-card/60 backdrop-blur-md border border-border/50 shadow-lg hover:shadow-primary/10 transition-all duration-300;
   }
+  
+  .animate-marquee {
+    animation: marquee 60s linear infinite;
+  }
+
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }

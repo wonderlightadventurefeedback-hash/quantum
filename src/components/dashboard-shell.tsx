@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -8,6 +7,7 @@ import {
   LayoutDashboard, 
   BookOpen, 
   TrendingUp, 
+  TrendingDown,
   Newspaper, 
   PieChart, 
   MessageSquare, 
@@ -16,14 +16,15 @@ import {
   Bell,
   Settings,
   Menu,
-  X
+  X,
+  Zap
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { MOCK_USER } from "@/lib/mock-data"
+import { MOCK_USER, MOCK_NEWS } from "@/lib/mock-data"
 import { useToast } from "@/hooks/use-toast"
 
 const navItems = [
@@ -149,6 +150,35 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             </Button>
           </div>
         </header>
+
+        {/* Realtime Market Ticker */}
+        <div className="bg-primary/5 border-b border-border h-10 flex items-center overflow-hidden shrink-0">
+          <div className="flex items-center gap-2 px-4 bg-background border-r border-border h-full z-10 font-bold text-[10px] text-primary uppercase tracking-widest shrink-0">
+            <Zap className="size-3 fill-primary animate-pulse" /> Market Pulse
+          </div>
+          <div className="flex animate-marquee hover:[animation-play-state:paused] whitespace-nowrap">
+            {[...MOCK_NEWS, ...MOCK_NEWS, ...MOCK_NEWS].map((news, i) => (
+              <div key={i} className="flex items-center gap-6 px-4 group cursor-pointer" onClick={() => toast({ title: news.title, description: `Source: ${news.source}` })}>
+                <div className="flex items-center gap-2 text-[11px] font-medium">
+                  <span className="text-muted-foreground">{news.time}</span>
+                  <span className="group-hover:text-primary transition-colors">{news.title}</span>
+                  {news.sentiment === "POSITIVE" ? (
+                    <TrendingUp className="size-3 text-green-500" />
+                  ) : (
+                    <TrendingDown className="size-3 text-red-500" />
+                  )}
+                  <span className={cn(
+                    "font-bold",
+                    news.sentiment === "POSITIVE" ? "text-green-500" : "text-red-500"
+                  )}>
+                    {news.score}%
+                  </span>
+                </div>
+                <span className="text-border">|</span>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* Page Content */}
         <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
