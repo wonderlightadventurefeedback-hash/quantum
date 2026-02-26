@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -8,9 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { 
   Search, 
-  ArrowRight, 
   TrendingUp, 
-  TrendingDown,
   ShieldCheck,
   Globe,
   LayoutDashboard,
@@ -33,7 +32,7 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-white text-[#44475b] font-body selection:bg-[#00d09c]/30">
-      {/* Top Navigation Bar - Exact Groww Style */}
+      {/* Top Navigation Bar - Groww Style */}
       <header className="fixed top-0 w-full z-50 bg-white border-b border-gray-100">
         <div className="container mx-auto px-4 md:px-8 h-20 flex items-center justify-between">
           <div className="flex items-center gap-12">
@@ -79,7 +78,7 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* Market Ticker - Exact Marquee Location */}
+      {/* Market Ticker */}
       <div className="pt-20 bg-white border-b border-gray-50 h-12 flex items-center overflow-hidden">
         <div className="flex animate-marquee whitespace-nowrap">
           {[...MOCK_INDICES, ...MOCK_INDICES, ...MOCK_INDICES].map((index, i) => (
@@ -94,22 +93,22 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Hero Section - Matched to Screenshot */}
+      {/* Hero Section */}
       <section className="pt-24 pb-16 bg-white overflow-hidden">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-6xl md:text-8xl font-headline font-bold text-[#44475b] mb-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
             Grow your wealth
           </h1>
           <p className="text-xl text-gray-500 mb-10 max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-1000">
-            Trust by millions of users. The simple way to invest in stocks, mutual funds and more.
+            Trusted by millions of users. The simple way to invest in stocks, mutual funds and more.
           </p>
           <Link href="/login">
-            <Button className="bg-[#00d09c] hover:bg-[#00b085] text-white font-bold text-lg px-12 h-16 rounded-full shadow-lg shadow-[#00d09c]/20 animate-in fade-in zoom-in duration-1000">
+            <Button className="bg-[#00d09c] hover:bg-[#00b085] text-white font-bold text-lg px-12 h-16 rounded-full shadow-lg shadow-[#00d09c]/20">
               Get started
             </Button>
           </Link>
 
-          <div className="mt-16 max-w-5xl mx-auto relative h-[400px] md:h-[600px] animate-in fade-in slide-in-from-bottom-8 duration-1000">
+          <div className="mt-16 max-w-5xl mx-auto relative h-[400px] md:h-[500px] animate-in fade-in slide-in-from-bottom-8 duration-1000">
             <img 
               src="https://picsum.photos/seed/financial-infrastructure/1200/800" 
               alt="Financial Ecosystem" 
@@ -129,18 +128,18 @@ export default function LandingPage() {
                 Invest everywhere, <span className="text-[#00d09c]">anytime.</span>
               </h2>
               <p className="text-lg text-gray-500 leading-relaxed">
-                Stay on top of the markets with our real-time tracking, AI-powered predictions, and personalized news sentiment analysis. Whether you are at home or on the go, FinIntel keeps you ahead.
+                Stay on top of the markets with our real-time tracking, AI-powered predictions, and personalized news sentiment analysis. Whether you are at home or on the go, FinIntel keeps you ahead of the curve.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 pt-6">
                 <div className="p-6 bg-white rounded-2xl shadow-sm border border-gray-100">
                   <TrendingUp className="size-8 text-[#00d09c] mb-4" />
                   <h3 className="font-bold text-lg mb-2 text-[#44475b]">AI Insights</h3>
-                  <p className="text-sm text-gray-400">Get predictive analysis on market trends before they happen.</p>
+                  <p className="text-sm text-gray-400">Get predictive analysis on market trends before they happen with our advanced GenAI models.</p>
                 </div>
                 <div className="p-6 bg-white rounded-2xl shadow-sm border border-gray-100">
                   <ShieldCheck className="size-8 text-[#00d09c] mb-4" />
                   <h3 className="font-bold text-lg mb-2 text-[#44475b]">Safe & Secure</h3>
-                  <p className="text-sm text-gray-400">Your data and investments are protected by bank-grade security.</p>
+                  <p className="text-sm text-gray-400">Your data and investments are protected by bank-grade encryption and Firebase security.</p>
                 </div>
               </div>
             </div>
@@ -165,24 +164,24 @@ export default function LandingPage() {
               <div className="bg-[#00d09c] p-12 text-white flex flex-col justify-between">
                 <div>
                   <h2 className="text-3xl font-headline font-bold mb-4">Contact us</h2>
-                  <p className="opacity-80">Our support team is available 24/7 to help you with any queries.</p>
+                  <p className="opacity-80">Our support team is available 24/7 to help you with any queries about your trading account.</p>
                 </div>
                 <div className="space-y-4 mt-8">
                   <div className="flex items-center gap-3">
                     <Globe size={18} />
-                    <span className="text-sm font-medium">help@finintel.ai</span>
+                    <span className="text-sm font-medium">support@finintel.ai</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <LayoutDashboard size={18} />
-                    <span className="text-sm font-medium">Main Office: Mumbai, India</span>
+                    <span className="text-sm font-medium">Headquarters: Mumbai, India</span>
                   </div>
                 </div>
               </div>
               <div className="p-12">
-                <form className="space-y-4">
+                <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
                   <Input placeholder="Your Name" className="h-12 border-gray-100 bg-gray-50/50" />
                   <Input placeholder="Email Address" type="email" className="h-12 border-gray-100 bg-gray-50/50" />
-                  <Textarea placeholder="Message" className="min-h-[120px] border-gray-100 bg-gray-50/50" />
+                  <Textarea placeholder="How can we help you?" className="min-h-[120px] border-gray-100 bg-gray-50/50" />
                   <Button className="w-full h-12 bg-[#00d09c] hover:bg-[#00b085] font-bold">
                     Send message
                   </Button>
@@ -209,7 +208,7 @@ export default function LandingPage() {
               <Link href="#" className="hover:text-[#00d09c]">Help Center</Link>
             </div>
             <p className="text-sm text-gray-400">
-              © 2024 FinIntel AI. All rights reserved.
+              © 2024 FinIntel AI. All rights reserved. Built for professional traders.
             </p>
           </div>
         </div>
