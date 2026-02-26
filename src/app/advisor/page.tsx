@@ -54,7 +54,7 @@ export default function AdvisorPage() {
       setMessages(history.map(m => ({ role: m.role, content: m.content, timestamp: m.timestamp })))
     } else if (history && history.length === 0 && !isHistoryLoading) {
       setMessages([
-        { role: 'assistant', content: "Hello! I'm **FinIntel AI**, your real-time financial advisor. I have access to live market feeds and your portfolio. How can I help you today?" }
+        { role: 'assistant', content: "Hello! I'm **FinIntel AI**, your expert financial advisor connected directly to OpenAI through ChatGPT. I have access to live market feeds and your portfolio to give you the best stock and finance answers. How can I help you today?" }
       ])
     }
   }, [history, isHistoryLoading])
@@ -92,7 +92,7 @@ export default function AdvisorPage() {
     } catch (error) {
       addDocumentNonBlocking(userMsgRef, {
         role: 'assistant',
-        content: "I'm having trouble connecting to market feeds. Please check your connection.",
+        content: "I'm having trouble connecting to my intelligence layer. Please check your configuration.",
         timestamp: serverTimestamp()
       })
     } finally {
@@ -122,10 +122,10 @@ export default function AdvisorPage() {
             <div className="flex items-center gap-3">
               <h1 className="text-3xl font-headline font-bold">FinIntel Advisor</h1>
               <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-black text-primary uppercase tracking-widest">
-                <Zap className="size-3 fill-primary animate-pulse" /> Live Analysis Mode
+                <Zap className="size-3 fill-primary animate-pulse" /> Ollama Active
               </span>
             </div>
-            <p className="text-muted-foreground text-sm">Powered by Finnhub Real-Time API and Gemini 1.5 Pro.</p>
+            <p className="text-muted-foreground text-sm">Powered by OpenAI ChatGPT and Finnhub Real-Time API.</p>
           </div>
           <div className="hidden md:flex items-center gap-2">
             <span className="size-2 bg-green-500 rounded-full animate-pulse"></span>
@@ -182,7 +182,7 @@ export default function AdvisorPage() {
                       <span className="size-2 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]"></span>
                       <span className="size-2 bg-primary rounded-full animate-bounce"></span>
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-2">Analyzing Live Market Feeds...</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-2">ChatGPT Analyzing Markets...</span>
                   </div>
                 </div>
               )}
@@ -211,7 +211,7 @@ export default function AdvisorPage() {
               <Input 
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask about your portfolio, live prices, or market trends..." 
+                placeholder="Ask about stock markets or finance..." 
                 className="pr-16 h-16 bg-background border-border/50 rounded-2xl focus-visible:ring-primary/40 text-lg shadow-xl shadow-black/5"
               />
               <Button 
@@ -225,11 +225,11 @@ export default function AdvisorPage() {
             </form>
             <div className="flex items-center justify-center gap-4 mt-4">
               <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">
-                Agentic Intelligence Enabled
+                ChatGPT Intelligence Enabled
               </p>
               <div className="h-3 w-px bg-border" />
               <p className="text-[10px] text-muted-foreground italic">
-                Data provided by Finnhub. Educational analysis only.
+                Answers all finance questions using Ollama and OpenAI logic.
               </p>
             </div>
           </div>

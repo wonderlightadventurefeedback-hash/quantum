@@ -1,8 +1,8 @@
 
 'use server';
 /**
- * @fileOverview An AI financial advisor chatbot powered by high-performance LLM intelligence
- * (Ollama/OpenAI compatible) that provides personalized advice based on real-time market data.
+ * @fileOverview An AI financial advisor chatbot powered by high-performance Ollama/OpenAI intelligence.
+ * This flow provides personalized advice based on real-time market data from Finnhub.
  *
  * - aiFinancialStrategyAdvisor - A function that handles the AI financial advisor chat process.
  * - AiFinancialAdvisorInput - The input type for the aiFinancialStrategyAdvisor function.
@@ -75,7 +75,6 @@ const aiFinancialStrategyAdvisorFlow = ai.defineFlow(
     outputSchema: AiFinancialAdvisorOutputSchema,
   },
   async (input) => {
-    // Priority: Ollama/OpenAI Key provided by user
     const API_KEY = process.env.OPENAI_API_KEY;
 
     if (!API_KEY) {
@@ -83,17 +82,17 @@ const aiFinancialStrategyAdvisorFlow = ai.defineFlow(
     }
 
     try {
-      // Initialize client inside flow to avoid startup crashes if key is missing
+      // Using OpenAI library to communicate with the high-performance Ollama/OpenAI compatible endpoint
       const openai = new OpenAI({
         apiKey: API_KEY,
-        // If using a specific Ollama endpoint, baseURL would go here. 
-        // Defaulting to OpenAI compatible structure.
+        // If a specific base URL is needed for this Ollama key, it can be added here.
+        // Defaulting to OpenAI standard as requested.
       });
 
       const messages: any[] = [
         {
           role: 'system',
-          content: `You are FinIntel AI, a high-performance Financial Strategy Advisor powered by advanced LLM intelligence.
+          content: `You are FinIntel AI, a high-performance Financial Strategy Advisor.
 Your core mission is to provide data-driven, professional, and actionable financial advice covering ALL areas of personal and professional finance.
 
 AREAS OF EXPERTISE:
@@ -154,9 +153,8 @@ KEY GUIDELINES:
         }
       ];
 
-      // Use a standard robust model like gpt-4o for tool calling compatibility
       const response = await openai.chat.completions.create({
-        model: 'gpt-4o',
+        model: 'gpt-4o', // Using gpt-4o logic for high-performance reasoning
         messages,
         tools: tools as any,
         tool_choice: 'auto',
@@ -164,7 +162,6 @@ KEY GUIDELINES:
 
       const responseMessage = response.choices[0].message;
 
-      // Handle tool calls if the model decides to fetch live data
       if (responseMessage.tool_calls) {
         for (const toolCall of responseMessage.tool_calls) {
           const functionName = toolCall.function.name;
@@ -199,7 +196,7 @@ KEY GUIDELINES:
       return { response: responseMessage.content || "I'm here to help with your financial questions." };
     } catch (error: any) {
       console.error("Advisor Flow Error:", error);
-      return { response: "I encountered an error while communicating with my intelligence layer. Please check your API configuration or try again shortly." };
+      return { response: "I encountered an error while communicating with my intelligence layer. Please check your configuration or try again shortly." };
     }
   }
 );
