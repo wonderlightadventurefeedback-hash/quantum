@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -13,7 +12,13 @@ import {
   LogOut,
   TrendingUp,
   TrendingDown,
-  Loader2
+  Loader2,
+  LayoutDashboard,
+  BookOpen,
+  Newspaper,
+  PieChart,
+  Bot,
+  User
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -27,14 +32,14 @@ import { signOut } from "firebase/auth"
 import { StaggeredMenu } from "./staggered-menu"
 
 const navItems = [
-  { name: "Overview", href: "/dashboard" },
-  { name: "Trade", href: "/trade" },
-  { name: "Learn", href: "/learn" },
-  { name: "Prediction Arena", href: "/predict" },
-  { name: "News Intel", href: "/news" },
-  { name: "Portfolio Analyzer", href: "/portfolio" },
-  { name: "AI Advisor", href: "/advisor" },
-  { name: "Account", href: "/settings" },
+  { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Trade", href: "/trade", icon: TrendingUp },
+  { name: "Learn", href: "/learn", icon: BookOpen },
+  { name: "Prediction Arena", href: "/predict", icon: Zap },
+  { name: "News Intel", href: "/news", icon: Newspaper },
+  { name: "Portfolio Analyzer", href: "/portfolio", icon: PieChart },
+  { name: "AI Advisor", href: "/advisor", icon: Bot },
+  { name: "Account", href: "/settings", icon: User },
 ]
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
@@ -126,7 +131,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const staggeredItems = navItems.map(item => ({
     label: item.name,
     ariaLabel: item.name,
-    link: item.href
+    link: item.href,
+    icon: item.icon
   }))
 
   const socialItems = [

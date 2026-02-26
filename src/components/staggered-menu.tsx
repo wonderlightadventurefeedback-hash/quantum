@@ -3,11 +3,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import Link from 'next/link';
+import { type LucideIcon } from 'lucide-react';
 
 export interface StaggeredMenuItem {
   label: string;
   ariaLabel: string;
   link: string;
+  icon?: LucideIcon;
 }
 
 export interface StaggeredMenuSocialItem {
@@ -127,7 +129,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
     const layerStates = layers.map(el => ({ el, start: Number(gsap.getProperty(el, 'xPercent')) }));
     const panelStart = Number(gsap.getProperty(panel, 'xPercent'));
 
-    if (itemEls.length) gsap.set(itemEls, { yPercent: 140, rotate: 10 });
+    if (itemEls.length) gsap.set(itemEls, { yPercent: 140, rotate: 5 });
     if (numberEls.length) gsap.set(numberEls, { ['--sm-num-opacity' as any]: 0 });
     if (socialTitle) gsap.set(socialTitle, { opacity: 0 });
     if (socialLinks.length) gsap.set(socialLinks, { y: 25, opacity: 0 });
@@ -198,7 +200,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
       overwrite: 'auto',
       onComplete: () => {
         const itemEls = Array.from(panel.querySelectorAll('.sm-panel-itemLabel')) as HTMLElement[];
-        if (itemEls.length) gsap.set(itemEls, { yPercent: 140, rotate: 10 });
+        if (itemEls.length) gsap.set(itemEls, { yPercent: 140, rotate: 5 });
         const numberEls = Array.from(panel.querySelectorAll('.sm-panel-list[data-numbering] .sm-panel-item')) as HTMLElement[];
         if (numberEls.length) gsap.set(numberEls, { ['--sm-num-opacity' as any]: 0 });
         const socialTitle = panel.querySelector('.sm-socials-title') as HTMLElement | null;
@@ -328,13 +330,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
           ))}
         </div>
 
-        <header className={`staggered-menu-header fixed top-0 left-0 w-full flex items-center justify-between p-8 bg-transparent pointer-events-none z-[110] ${position === 'left' ? 'flex-row-reverse' : 'flex-row'}`} aria-label="Main navigation header">
-          <div className="sm-logo flex items-center select-none pointer-events-auto" aria-label="Logo">
-            {logoUrl && (
-              <img src={logoUrl} alt="Logo" className="sm-logo-img block h-10 w-auto object-contain" draggable={false} />
-            )}
-          </div>
-
+        <header className={`staggered-menu-header fixed top-0 left-0 w-full flex items-center justify-between p-8 bg-transparent pointer-events-none z-[110] ${position === 'left' ? 'flex-row' : 'flex-row-reverse'}`} aria-label="Main navigation header">
           <button ref={toggleBtnRef} className={`sm-toggle relative inline-flex items-center gap-2 px-5 py-2.5 rounded-full border shadow-xl shadow-primary/20 cursor-pointer font-bold leading-none overflow-visible pointer-events-auto transition-all duration-300 ${open ? 'text-black bg-white border-white' : 'text-white bg-primary border-primary hover:scale-105 active:scale-95'}`}
                   aria-label={open ? 'Close menu' : 'Open menu'} aria-expanded={open} aria-controls="staggered-menu-panel" onClick={toggleMenu} type="button">
             <span ref={textWrapRef} className="sm-toggle-textWrap relative inline-block h-[1em] overflow-hidden whitespace-nowrap min-w-[3rem]" aria-hidden="true">
@@ -349,6 +345,12 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
               <span ref={plusVRef} className="sm-icon-line sm-icon-line-v absolute left-1/2 top-1/2 w-full h-[2px] bg-current rounded-full -translate-x-1/2 -translate-y-1/2" />
             </span>
           </button>
+
+          <div className="sm-logo flex items-center select-none pointer-events-auto" aria-label="Logo">
+            {logoUrl && (
+              <img src={logoUrl} alt="Logo" className="sm-logo-img block h-10 w-auto object-contain" draggable={false} />
+            )}
+          </div>
         </header>
 
         <aside id="staggered-menu-panel" ref={panelRef} className="staggered-menu-panel absolute top-0 right-0 h-full bg-white flex flex-col p-24 pt-32 overflow-y-auto z-10 backdrop-blur-xl pointer-events-auto" aria-hidden={!open}>
@@ -357,7 +359,12 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
               {(items || []).map((it, idx) => (
                 <li className="sm-panel-itemWrap relative overflow-hidden leading-none" key={it.label + idx}>
                   <Link className="sm-panel-item relative text-black font-medium text-lg md:text-xl cursor-pointer leading-none tracking-tighter uppercase transition-colors inline-block no-underline pr-12" href={it.link} aria-label={it.ariaLabel} data-index={idx + 1} onClick={closeMenu}>
-                    <span className="sm-panel-itemLabel inline-block transform-gpu">{it.label}</span>
+                    <span className="sm-panel-itemLabel inline-block transform-gpu">
+                      <span className="flex items-center gap-4">
+                        {it.icon && <it.icon className="size-6 text-primary" />}
+                        {it.label}
+                      </span>
+                    </span>
                   </Link>
                 </li>
               ))}
