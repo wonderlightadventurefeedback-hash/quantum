@@ -32,12 +32,13 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Loader2,
-  Clock
+  Clock,
+  RefreshCw
 } from "lucide-react"
 import { MOCK_USER } from "@/lib/mock-data"
 import { useToast } from "@/hooks/use-toast"
-import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase"
-import { doc, collection, query, orderBy, limit } from "firebase/firestore"
+import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection, setDocumentNonBlocking } from "@/firebase"
+import { doc, collection, query, orderBy, limit, serverTimestamp } from "firebase/firestore"
 import { cn } from "@/lib/utils"
 import { formatDistanceToNow } from "date-fns"
 
@@ -46,6 +47,7 @@ export default function SettingsPage() {
   const { user } = useUser()
   const db = useFirestore()
   const [isSaving, setIsSaving] = React.useState(false)
+  const [isResetting, setIsResetting] = React.useState(false)
 
   const userProfileRef = useMemoFirebase(() => {
     if (!db || !user) return null
@@ -105,6 +107,32 @@ export default function SettingsPage() {
     }, 1000)
   }
 
+  const handleResetBalance = async () => {
+    if (!db || !user) return
+    setIsResetting(true)
+    const userRef = doc(db, 'users', user.uid)
+    
+    try {
+      setDocumentNonBlocking(userRef, {
+        balance: 50000,
+        updatedAt: serverTimestamp()
+      }, { merge: true })
+      
+      toast({
+        title: "Demo Balance Reset",
+        description: "Your virtual capital has been restored to ₹50,000.00",
+      })
+    } catch (e) {
+      toast({
+        variant: "destructive",
+        title: "Reset Failed",
+        description: "Could not reset demo balance. Please try again.",
+      })
+    } finally {
+      setIsResetting(false)
+    }
+  }
+
   return (
     <DashboardShell>
       <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -143,7 +171,7 @@ export default function SettingsPage() {
                   <div className="relative group">
                     <Avatar className="size-32 rounded-[1.5rem] border-4 border-background">
                       <AvatarImage src={user?.photoURL || MOCK_USER.avatar} />
-                      <AvatarFallback className="text-3xl font-black">AT</AvatarFallback>
+                      <AvatarFallback className="text-3xl font-black">{userProfile?.displayName?.[0] || 'T'}</AvatarFallback>
                     </Avatar>
                     <button className="absolute inset-0 flex items-center justify-center bg-black/40 text-white rounded-[1.5rem] opacity-0 group-hover:opacity-100 transition-opacity">
                       <Camera className="size-8" />
@@ -163,11 +191,19 @@ export default function SettingsPage() {
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-4">
-                    <div className="bg-muted/30 px-6 py-3 rounded-2xl border border-border/50 text-center min-w-[120px]">
+                    <div className="bg-muted/30 px-6 py-3 rounded-2xl border border-border/50 text-center min-w-[140px] group relative">
                       <div className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1 flex items-center justify-center gap-1.5">
                         <Wallet className="size-3 text-primary" /> Demo Balance
                       </div>
                       <div className="text-lg font-black font-headline">₹{balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                      <button 
+                        onClick={handleResetBalance}
+                        disabled={isResetting}
+                        className="absolute -top-2 -right-2 size-6 bg-primary text-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-all hover:scale-110 active:scale-95"
+                        title="Reset to ₹50,000"
+                      >
+                        {isResetting ? <Loader2 className="size-3 animate-spin" /> : <RefreshCw className="size-3" />}
+                      </button>
                     </div>
                     <div className="bg-muted/30 px-6 py-3 rounded-2xl border border-border/50 text-center min-w-[120px]">
                       <div className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1 flex items-center justify-center gap-1.5">
@@ -269,8 +305,8 @@ export default function SettingsPage() {
                                   {trade.userPredictionMatched ? 'WIN' : 'LOSS'}
                                 </Badge>
                               </td>
-                              <td className={cn("px-6 py-4 text-right font-black", trade.profit > 0 ? "text-primary" : "text-destructive")}>
-                                {trade.profit > 0 ? "+" : ""}₹{(trade.profit || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                              <td className={cn("px-6 py-4 text-right font-black", (trade.profit || 0) > 0 ? "text-primary" : "text-destructive")}>
+                                {(trade.profit || 0) > 0 ? "+" : ""}₹{(trade.profit || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                               </td>
                             </tr>
                           ))}
@@ -391,6 +427,17 @@ export default function SettingsPage() {
                       </div>
                     </div>
                     <Button variant="outline" className="rounded-xl border-2 font-bold">Enable 2FA</Button>
+                  </div>
+                  <div className="pt-6">
+                    <Button 
+                      variant="destructive" 
+                      className="gap-2 h-12 px-8 rounded-xl font-bold"
+                      onClick={handleResetBalance}
+                      disabled={isResetting}
+                    >
+                      {isResetting ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
+                      Reset Demo Capital to ₹50,000
+                    </Button>
                   </div>
                 </div>
               </CardContent>

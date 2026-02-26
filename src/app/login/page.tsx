@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -42,6 +43,9 @@ export default function LoginPage() {
   const initializeDemoUser = async (user: any, name: string) => {
     if (!db) return
     const userRef = doc(db, 'users', user.uid)
+    
+    // Use setDoc with merge: true to ensure the balance is always set to 50,000 on first initialization
+    // but without overwriting existing data if it's already there (though snap.exists check is safer)
     const snap = await getDoc(userRef)
     
     if (!snap.exists()) {
@@ -55,6 +59,9 @@ export default function LoginPage() {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       })
+    } else {
+      // If user exists but balance is somehow lost/negative, we don't force reset here
+      // unless the user clicks the reset button in settings.
     }
   }
 
