@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -16,10 +17,11 @@ import {
   Bell,
   Settings,
   Menu,
-  X,
   Zap,
   Moon,
-  Sun
+  Sun,
+  LogOut,
+  LogIn
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -28,6 +30,8 @@ import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { MOCK_USER, MOCK_NEWS } from "@/lib/mock-data"
 import { useToast } from "@/hooks/use-toast"
+import { useUser, useAuth } from "@/firebase"
+import { signOut } from "firebase/auth"
 
 const navItems = [
   { name: "Overview", href: "/", icon: LayoutDashboard },
@@ -42,6 +46,8 @@ const navItems = [
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
+  const auth = useAuth()
+  const { user, loading } = useUser()
   const { toast } = useToast()
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(true)
   const [theme, setTheme] = React.useState<"light" | "dark">("dark")
@@ -65,6 +71,24 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       title: `${newTheme.charAt(0).toUpperCase() + newTheme.slice(1)} Mode Enabled`,
       description: `Interface updated to ${newTheme} aesthetic.`,
     })
+  }
+
+  const handleLogout = async () => {
+    if (!auth) return
+    try {
+      await signOut(auth)
+      toast({
+        title: "Signed Out",
+        description: "You have been successfully logged out.",
+      })
+      router.push('/login')
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Logout failed",
+        description: error.message,
+      })
+    }
   }
 
   const handleHeaderAction = (action: string) => {
@@ -131,26 +155,45 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
           {/* User Section */}
           <div className="p-4 border-t border-border">
-            <Button
-              variant="ghost"
-              suppressHydrationWarning
-              className={cn(
-                "w-full justify-start gap-4 p-2 h-auto hover:bg-muted",
-                !isSidebarOpen && "justify-center"
-              )}
-              onClick={() => handleHeaderAction("Profile Settings")}
-            >
-              <Avatar className="size-8">
-                <AvatarImage src={MOCK_USER.avatar} />
-                <AvatarFallback>AT</AvatarFallback>
-              </Avatar>
-              {isSidebarOpen && (
-                <div className="flex flex-col items-start text-sm">
-                  <span className="font-medium truncate max-w-[120px]">{MOCK_USER.name}</span>
-                  <span className="text-xs text-muted-foreground truncate max-w-[120px]">Pro Member</span>
-                </div>
-              )}
-            </Button>
+            {user ? (
+              <div className="flex flex-col gap-2">
+                <Button
+                  variant="ghost"
+                  suppressHydrationWarning
+                  className={cn(
+                    "w-full justify-start gap-4 p-2 h-auto hover:bg-muted",
+                    !isSidebarOpen && "justify-center"
+                  )}
+                  onClick={() => handleHeaderAction("Profile Settings")}
+                >
+                  <Avatar className="size-8">
+                    <AvatarImage src={user.photoURL || MOCK_USER.avatar} />
+                    <AvatarFallback>{user.displayName?.charAt(0) || user.email?.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  {isSidebarOpen && (
+                    <div className="flex flex-col items-start text-sm overflow-hidden">
+                      <span className="font-medium truncate w-full">{user.displayName || 'User'}</span>
+                      <span className="text-xs text-muted-foreground truncate w-full">Pro Member</span>
+                    </div>
+                  )}
+                </Button>
+                {isSidebarOpen && (
+                  <Button variant="ghost" size="sm" className="w-full justify-start gap-4 text-muted-foreground hover:text-destructive" onClick={handleLogout}>
+                    <LogOut className="size-4" />
+                    <span>Logout</span>
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <Button 
+                variant="default" 
+                className={cn("w-full gap-2", !isSidebarOpen && "px-0 justify-center")}
+                onClick={() => router.push('/login')}
+              >
+                <LogIn className="size-4" />
+                {isSidebarOpen && <span>Login</span>}
+              </Button>
+            )}
           </div>
         </div>
       </aside>

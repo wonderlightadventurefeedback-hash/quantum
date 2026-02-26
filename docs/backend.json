@@ -1,0 +1,28 @@
+
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "User account information and preferences.",
+      "type": "object",
+      "properties": {
+        "displayName": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "photoURL": { "type": "string" },
+        "balance": { "type": "number", "description": "User's current portfolio balance." },
+        "learningProgress": { "type": "integer", "min": 0, "max": 100 },
+        "predictionAccuracy": { "type": "integer", "min": 0, "max": 100 }
+      },
+      "required": ["email"]
+    }
+  },
+  "auth": {
+    "providers": ["google.com"]
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "#/entities/UserProfile",
+      "description": "Public and private user profile data."
+    }
+  }
+}
