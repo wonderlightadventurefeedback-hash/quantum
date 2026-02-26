@@ -48,7 +48,7 @@ export default function LoginPage() {
       await setDoc(userRef, {
         email: user.email,
         displayName: name || user.displayName || 'Demo User',
-        balance: 10000,
+        balance: 50000,
         learningProgress: 0,
         predictionAccuracy: 0,
         createdAt: serverTimestamp()
@@ -65,7 +65,7 @@ export default function LoginPage() {
       await initializeDemoUser(result.user, result.user.displayName || '')
       toast({
         title: "Welcome to FinIntel AI Demo",
-        description: "Successfully signed in. ₹10,000 demo capital credited.",
+        description: "Successfully signed in. ₹50,000 demo capital credited.",
       })
     } catch (error: any) {
       toast({
@@ -97,7 +97,7 @@ export default function LoginPage() {
         await initializeDemoUser(userCredential.user, displayName)
         toast({
           title: "Demo Account created",
-          description: "₹10,000 demo capital has been added to your portfolio.",
+          description: "₹50,000 demo capital has been added to your portfolio.",
         })
       } else {
         await signInWithEmailAndPassword(auth, email, password)

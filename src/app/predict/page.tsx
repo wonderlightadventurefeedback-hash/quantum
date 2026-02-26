@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -68,7 +67,7 @@ export default function PredictionArenaPage() {
   const [prediction, setPrediction] = React.useState<"UP" | "DOWN" | null>(null)
   const [entryPrice, setEntryPrice] = React.useState(0)
   const [tradeResult, setTradeResult] = React.useState<any>(null)
-  const [userBalance, setUserBalance] = React.useState(0)
+  const [userBalance, setUserBalance] = React.useState(50000)
   const [isAnalyzing, setIsAnalyzing] = React.useState(false)
 
   const TRADE_DURATION = 15;
@@ -81,7 +80,7 @@ export default function PredictionArenaPage() {
     async function fetchBalance() {
       if (!db || !user) return
       const snap = await getDoc(doc(db, 'users', user.uid))
-      if (snap.exists()) setUserBalance(snap.data().balance || 0)
+      if (snap.exists()) setUserBalance(snap.data().balance || 50000)
     }
     fetchBalance()
   }, [selectedStock, db, user])
