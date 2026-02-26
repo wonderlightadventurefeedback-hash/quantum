@@ -52,7 +52,7 @@ const navItems = [
   { name: "Account", href: "/settings", icon: User },
 ]
 
-const FINNHUB_API_KEY = process.env.NEXT_PUBLIC_FINNHUB_API_KEY;
+const FINNHUB_API_KEY = process.env.NEXT_PUBLIC_FINNHUB_API_KEY || 'd6g3c49r01qqnmbqk10gd6g3c49r01qqnmbqk110';
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -121,7 +121,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             })
           }
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error("Watcher Error:", e);
+      }
     }
 
     const interval = setInterval(checkNews, 300000) // Check every 5 minutes
