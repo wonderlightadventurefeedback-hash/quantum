@@ -18,7 +18,8 @@ import {
   Newspaper,
   PieChart,
   Bot,
-  User
+  User,
+  Bookmark
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -33,6 +34,7 @@ import { StaggeredMenu } from "./staggered-menu"
 
 const navItems = [
   { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Watchlist", href: "/watchlist", icon: Bookmark },
   { name: "Trade", href: "/trade", icon: TrendingUp },
   { name: "Learn", href: "/learn", icon: BookOpen },
   { name: "Prediction Arena", href: "/predict", icon: Zap },
@@ -182,6 +184,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 <Button variant="ghost" size="icon" className="relative text-muted-foreground">
                   <Bell className="size-5" />
                   <span className="absolute top-2.5 right-2.5 size-2 bg-primary rounded-full ring-2 ring-background"></span>
+                </Button>
+                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary" onClick={() => router.push('/watchlist')}>
+                  <Bookmark className="size-5" />
                 </Button>
                 <div className="h-8 w-px bg-border mx-2" />
                 <Button
