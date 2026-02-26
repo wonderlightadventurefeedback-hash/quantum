@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -10,23 +11,15 @@ import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { 
-  ArrowLeft, 
   Plus, 
   MoreVertical, 
   TrendingUp, 
   TrendingDown, 
   Wallet, 
-  Loader2, 
   Zap,
   Timer,
-  Trophy,
-  AlertCircle,
   ArrowUpCircle,
   ArrowDownCircle,
-  Search,
-  Bookmark,
-  BarChart3,
-  Code,
   LineChart as LineChartIcon,
   CandlestickChart as CandleIcon
 } from "lucide-react"
@@ -46,7 +39,7 @@ import {
 import { MOCK_STOCKS } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
-import { useUser, useFirestore, updateDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase"
+import { useUser, useFirestore, useDoc, useMemoFirebase, updateDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase"
 import { doc, serverTimestamp, getDoc, increment } from "firebase/firestore"
 
 const FINNHUB_API_KEY = "d6g3c49r01qqnmbqk10gd6g3c49r01qqnmbqk110";
@@ -62,7 +55,7 @@ interface OHLCData {
   low: number;
   body: [number, number];
   wick: [number, number];
-  price: number; // for area chart
+  price: number;
 }
 
 const generateMarketData = (points: number, basePrice: number, tf: string): OHLCData[] => {
@@ -134,8 +127,16 @@ export default function StockDetailsPage() {
   const [activeTimeframe, setActiveTimeframe] = React.useState<Timeframe>("1D")
   const [chartType, setChartType] = React.useState<ChartType>("AREA")
   const [qty, setQty] = React.useState("1")
-  const [userBalance, setUserBalance] = React.useState<number>(0)
   const [isBuying, setIsBuying] = React.useState(false)
+
+  // Real-time Balance and Profile
+  const userProfileRef = useMemoFirebase(() => {
+    if (!db || !user) return null
+    return doc(db, 'users', user.uid)
+  }, [db, user])
+
+  const { data: userProfile } = useDoc(userProfileRef)
+  const balance = userProfile?.balance ?? 50000
 
   // Live Prediction Mode State
   const [isLiveMode, setIsLiveMode] = React.useState(false)
@@ -143,7 +144,6 @@ export default function StockDetailsPage() {
   const [prediction, setPrediction] = React.useState<"HIGHER" | "LOWER" | null>(null)
   const [entryPrice, setEntryPrice] = React.useState<number>(0)
   const [tradeTimer, setTradeTimer] = React.useState(0)
-  const [tradeResult, setTradeResult] = React.useState<"WIN" | "LOSS" | null>(null)
   const [tradeAmount, setTradeAmount] = React.useState("100")
   const TRADE_DURATION = 15;
   const PAYOUT_RATIO = 1.8;
@@ -160,18 +160,7 @@ export default function StockDetailsPage() {
 
   React.useEffect(() => {
     setIsMounted(true);
-    async function fetchUserData() {
-      if (!db || !user) return
-      try {
-        const userRef = doc(db, 'users', user.uid)
-        const userSnap = await getDoc(userRef)
-        if (userSnap.exists()) {
-          setUserBalance(userSnap.data().balance || 0)
-        }
-      } catch (err) {}
-    }
-    fetchUserData()
-  }, [db, user])
+  }, [])
 
   const fetchLiveQuote = React.useCallback(async () => {
     try {
@@ -199,10 +188,14 @@ export default function StockDetailsPage() {
   const handleTrade = async (type: "BUY" | "SELL") => {
     if (!db || !user) return
     const orderQty = parseFloat(qty)
-    const totalCost = orderQty * stock.price
+    if (isNaN(orderQty) || orderQty <= 0) {
+      toast({ title: "Invalid Quantity", variant: "destructive" })
+      return
+    }
+    const totalValue = orderQty * stock.price
 
-    if (type === "BUY" && totalCost > userBalance) {
-      toast({ title: "Insufficient Funds", variant: "destructive" })
+    if (type === "BUY" && totalValue > balance) {
+      toast({ title: "Insufficient Demo Funds", description: "You need more demo capital to complete this virtual purchase.", variant: "destructive" })
       return
     }
 
@@ -212,24 +205,24 @@ export default function StockDetailsPage() {
 
     try {
       if (type === "BUY") {
-        // Use non-blocking set with merge
         setDocumentNonBlocking(holdingRef, { 
           symbol, 
+          name: stock.name,
           quantity: increment(orderQty), 
           averagePrice: stock.price, 
           lastUpdated: serverTimestamp() 
         }, { merge: true })
         
         updateDocumentNonBlocking(userRef, { 
-          balance: increment(-totalCost),
+          balance: increment(-totalValue),
           updatedAt: serverTimestamp()
         })
         
-        setUserBalance(prev => prev - totalCost)
+        toast({ title: "Virtual Buy Success", description: `Added ${orderQty} shares of ${symbol} to your demo portfolio.` })
       } else {
         const snap = await getDoc(holdingRef);
         if (!snap.exists() || snap.data().quantity < orderQty) {
-          throw new Error("Insufficient holdings");
+          throw new Error("You don't own enough shares to sell this quantity.");
         }
         
         updateDocumentNonBlocking(holdingRef, { 
@@ -238,15 +231,14 @@ export default function StockDetailsPage() {
         })
         
         updateDocumentNonBlocking(userRef, { 
-          balance: increment(totalCost),
+          balance: increment(totalValue),
           updatedAt: serverTimestamp()
         })
         
-        setUserBalance(prev => prev + totalCost)
+        toast({ title: "Virtual Sell Success", description: `Sold ${orderQty} shares of ${symbol}. Funds added to demo balance.` })
       }
-      toast({ title: `${type} Successful`, description: `${orderQty} units of ${symbol} processed.` })
     } catch (e: any) {
-      toast({ title: "Trade Failed", description: e.message || "An error occurred", variant: "destructive" })
+      toast({ title: "Trade Error", description: e.message || "An error occurred", variant: "destructive" })
     } finally {
       setIsBuying(false)
     }
@@ -259,7 +251,7 @@ export default function StockDetailsPage() {
       toast({ title: "Invalid Amount", variant: "destructive" })
       return
     }
-    if (amount > userBalance) {
+    if (amount > balance) {
       toast({ title: "Insufficient Balance", variant: "destructive" })
       return
     }
@@ -268,16 +260,14 @@ export default function StockDetailsPage() {
     setPrediction(dir)
     setEntryPrice(stock.price)
     setTradeTimer(TRADE_DURATION)
-    setTradeResult(null)
 
     const userRef = doc(db, 'users', user.uid)
     updateDocumentNonBlocking(userRef, { 
       balance: increment(-amount),
       updatedAt: serverTimestamp()
     })
-    setUserBalance(prev => prev - amount)
     
-    toast({ title: "Trade Open", description: `Predicted ${dir} for ${symbol} @ ${stock.price.toFixed(2)}` })
+    toast({ title: "Position Opened", description: `Predicted ${dir} for ${symbol} @ ${stock.price.toFixed(2)}` })
   }
 
   React.useEffect(() => {
@@ -288,7 +278,6 @@ export default function StockDetailsPage() {
       const finalPrice = stock.price + (Math.random() - 0.45) * 2;
       const isWin = (prediction === "HIGHER" && finalPrice > entryPrice) || (prediction === "LOWER" && finalPrice < entryPrice);
       const amount = parseFloat(tradeAmount)
-      setTradeResult(isWin ? "WIN" : "LOSS")
       setIsTradingLive(false)
       if (isWin && db && user) {
         const userRef = doc(db, 'users', user.uid)
@@ -296,14 +285,13 @@ export default function StockDetailsPage() {
           balance: increment(amount * PAYOUT_RATIO),
           updatedAt: serverTimestamp()
         })
-        setUserBalance(prev => prev + (amount * PAYOUT_RATIO))
-        toast({ title: "PROFIT! Secured virtual returns." })
+        toast({ title: "TRADE WON", description: `Profited ₹${(amount * 0.8).toFixed(2)} in virtual returns.` })
       } else {
-        toast({ variant: "destructive", title: "TRADE EXPIRED" })
+        toast({ variant: "destructive", title: "TRADE EXPIRED", description: "Market moved against your prediction." })
       }
     }
     return () => clearInterval(interval)
-  }, [isTradingLive, tradeTimer])
+  }, [isTradingLive, tradeTimer, db, user, prediction, entryPrice, stock.price, tradeAmount])
 
   if (!isMounted) return null;
 
@@ -476,18 +464,46 @@ export default function StockDetailsPage() {
 
           <div className="space-y-8">
             <Card className="glass-card bg-primary/5 border-primary/20 rounded-[2.5rem] p-6 shadow-xl">
-              <CardHeader className="pb-4 px-0"><CardTitle className="text-lg font-headline flex items-center gap-2"><Wallet className="size-5 text-primary" /> Instant Trade</CardTitle></CardHeader>
+              <CardHeader className="pb-4 px-0">
+                <CardTitle className="text-lg font-headline flex items-center gap-2">
+                  <Wallet className="size-5 text-primary" /> Instant Trade
+                </CardTitle>
+              </CardHeader>
               <CardContent className="space-y-6 px-0">
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase text-muted-foreground">Quantity</Label>
-                  <Input type="number" value={qty} onChange={e => setQty(e.target.value)} className="h-12 bg-background border-none rounded-xl text-lg font-bold" />
+                  <Input 
+                    type="number" 
+                    value={qty} 
+                    onChange={e => setQty(e.target.value)} 
+                    className="h-12 bg-background border-none rounded-xl text-lg font-bold" 
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <Button onClick={() => handleTrade("BUY")} className="h-12 rounded-xl bg-green-500 font-bold hover:bg-green-600" disabled={isBuying}>Buy</Button>
-                  <Button variant="outline" onClick={() => handleTrade("SELL")} className="h-12 rounded-xl border-2 border-red-500 text-red-500 font-bold hover:bg-red-50" disabled={isBuying}>Sell</Button>
+                  <Button 
+                    onClick={() => handleTrade("BUY")} 
+                    className="h-12 rounded-xl bg-green-500 font-bold hover:bg-green-600" 
+                    disabled={isBuying}
+                  >
+                    Buy
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => handleTrade("SELL")} 
+                    className="h-12 rounded-xl border-2 border-red-500 text-red-500 font-bold hover:bg-red-50" 
+                    disabled={isBuying}
+                  >
+                    Sell
+                  </Button>
                 </div>
                 <div className="pt-2 text-center">
-                  <span className="text-xs text-muted-foreground">Estimated Cost: <span className="font-bold text-foreground">₹{(parseFloat(qty) * stock.price).toFixed(2)}</span></span>
+                  <span className="text-xs text-muted-foreground">
+                    Estimated Cost: <span className="font-bold text-foreground">₹{(parseFloat(qty) * stock.price || 0).toFixed(2)}</span>
+                  </span>
+                </div>
+                <div className="mt-4 p-4 rounded-xl bg-muted/30 border border-border/50">
+                  <div className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1">Available Demo Balance</div>
+                  <div className="text-lg font-black text-primary">₹{balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
                 </div>
               </CardContent>
             </Card>
