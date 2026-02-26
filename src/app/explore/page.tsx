@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import { DashboardShell } from "@/components/dashboard-shell"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils"
 import Link from "next/link"
 
 export default function ExplorePage() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const initialCategory = searchParams.get("category") || "Stocks"
   const [activeTab, setActiveTab] = React.useState(initialCategory)
@@ -22,6 +23,10 @@ export default function ExplorePage() {
   React.useEffect(() => {
     setActiveTab(searchParams.get("category") || "Stocks")
   }, [searchParams])
+
+  const handleAssetClick = (symbol: string) => {
+    router.push(`/trade/${symbol}`)
+  }
 
   const renderContent = () => {
     if (activeTab === "Stocks" || activeTab === "US Stocks") {
@@ -32,7 +37,11 @@ export default function ExplorePage() {
       return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {stocks.map((stock) => (
-            <Card key={stock.symbol} className="glass-card hover:border-primary/50 transition-all cursor-pointer group">
+            <Card 
+              key={stock.symbol} 
+              className="glass-card hover:border-primary/50 transition-all cursor-pointer group"
+              onClick={() => handleAssetClick(stock.symbol)}
+            >
               <CardContent className="p-6">
                 <div className="flex justify-between items-start mb-4">
                   <div className="size-12 rounded-2xl bg-muted/50 flex items-center justify-center font-bold text-primary group-hover:scale-110 transition-transform">
@@ -45,7 +54,7 @@ export default function ExplorePage() {
                 <h3 className="text-lg font-bold">{stock.name}</h3>
                 <p className="text-sm text-muted-foreground mb-4">{stock.symbol}</p>
                 <div className="flex justify-between items-end">
-                  <div className="text-2xl font-bold">${stock.price}</div>
+                  <div className="text-2xl font-bold">₹{stock.price.toLocaleString()}</div>
                   <Button variant="ghost" size="sm" className="text-primary font-bold">Invest Now</Button>
                 </div>
               </CardContent>
