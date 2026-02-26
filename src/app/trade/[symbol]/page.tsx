@@ -73,16 +73,16 @@ const generateChartData = (basePrice: number, isBullish: boolean, timeframe: Tim
   const startTime = new Date();
   
   return Array.from({ length: points }, (_, i) => {
-    const volatility = basePrice * 0.015; // Increased volatility for better candle design
+    const volatility = basePrice * 0.02; 
     const trend = isBullish ? (basePrice * 0.08) / points : -(basePrice * 0.08) / points;
     
     const open = currentPrice;
     const change = (Math.random() - 0.45) * volatility + trend;
     const close = open + change;
     
-    // Hammer style wicks logic: more prominent lows/highs
-    const wickHigh = Math.random() * (volatility * 1.5);
-    const wickLow = Math.random() * (volatility * 1.8); 
+    // Hammer style wicks logic: very thin long wicks, smaller bodies
+    const wickHigh = Math.random() * (volatility * 2);
+    const wickLow = Math.random() * (volatility * 2.5); 
     
     const high = Math.max(open, close) + wickHigh;
     const low = Math.min(open, close) - wickLow;
@@ -541,6 +541,22 @@ export default function StockDetailPage() {
               </div>
             </div>
 
+            {/* Create SIP Card - Moved after graph */}
+            <Card className="glass-card border-border/40 bg-background/30 rounded-[1.2rem] p-6 group cursor-pointer hover:bg-muted/5 transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="size-10 rounded-xl bg-muted flex items-center justify-center">
+                    <Calendar className="size-5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm">Create Stock SIP</h3>
+                    <p className="text-xs text-muted-foreground">Automate your investments in {stock.symbol}</p>
+                  </div>
+                </div>
+                <ChevronRight className="size-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+              </div>
+            </Card>
+
             {/* Sub-Tabs Section */}
             <div className="space-y-6">
               <div className="flex items-center gap-8 border-b border-border/40 pb-2 overflow-x-auto no-scrollbar">
@@ -562,22 +578,6 @@ export default function StockDetailPage() {
                 {renderActiveTabContent()}
               </div>
             </div>
-
-            {/* Create SIP Card */}
-            <Card className="glass-card border-border/40 bg-background/30 rounded-[1.2rem] p-6 group cursor-pointer hover:bg-muted/5 transition-colors mt-8">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="size-10 rounded-xl bg-muted flex items-center justify-center">
-                    <Calendar className="size-5 text-muted-foreground" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-sm">Create Stock SIP</h3>
-                    <p className="text-xs text-muted-foreground">Automate your investments in {stock.symbol}</p>
-                  </div>
-                </div>
-                <ChevronRight className="size-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
-              </div>
-            </Card>
           </div>
 
           {/* Trade Terminal Section */}
