@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -7,8 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { Progress } from "@/components/ui/progress"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { 
@@ -17,11 +16,8 @@ import {
   MoreVertical, 
   TrendingUp, 
   TrendingDown, 
-  ChevronDown, 
-  Info,
-  Wallet,
-  Loader2,
-  RefreshCw,
+  Wallet, 
+  Loader2, 
   Zap,
   Timer,
   Trophy,
@@ -34,8 +30,9 @@ import {
   Code
 } from "lucide-react"
 import { 
-  Area, 
-  AreaChart, 
+  BarChart,
+  Bar,
+  Cell,
   XAxis, 
   YAxis, 
   CartesianGrid, 
@@ -43,7 +40,7 @@ import {
   ResponsiveContainer, 
   ReferenceLine 
 } from "recharts"
-import { MOCK_STOCKS, Stock } from "@/lib/mock-data"
+import { MOCK_STOCKS } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { useUser, useFirestore } from "@/firebase"
@@ -53,18 +50,59 @@ const FINNHUB_API_KEY = "d6g3c49r01qqnmbqk10gd6g3c49r01qqnmbqk110";
 
 type Timeframe = "1D" | "5D" | "1M" | "6M" | "YTD" | "1Y" | "5Y" | "Max";
 
-const generateAreaChartData = (basePrice: number, isBullish: boolean) => {
-  const points = 40;
-  let currentPrice = basePrice * (isBullish ? 0.97 : 1.03);
-  return Array.from({ length: points }, (_, i) => {
-    const drift = (Math.random() - 0.48) * (basePrice * 0.01);
-    currentPrice += drift;
-    return {
-      time: `${9 + Math.floor(i/6)}:${(i%6)*10} am`,
-      price: +currentPrice.toFixed(2),
-    };
-  })
+interface OHLCData {
+  time: string;
+  open: number;
+  close: number;
+  high: number;
+  low: number;
+  body: [number, number];
+  wick: [number, number];
 }
+
+const generateCandleData = (points: number, basePrice: number, tf: string): OHLCData[] => {
+  let currentPrice = basePrice * 0.98;
+  return Array.from({ length: points }, (_, i) => {
+    const open = currentPrice;
+    const volatility = basePrice * 0.01;
+    const close = currentPrice + (Math.random() - 0.48) * volatility;
+    const high = Math.max(open, close) + Math.random() * (volatility * 0.5);
+    const low = Math.min(open, close) - Math.random() * (volatility * 0.5);
+    currentPrice = close;
+    
+    return {
+      time: tf === "1D" ? `${9 + Math.floor(i/6)}:${(i%6)*10}` : `Day ${i + 1}`,
+      open: +open.toFixed(2),
+      close: +close.toFixed(2),
+      high: +high.toFixed(2),
+      low: +low.toFixed(2),
+      body: [Math.min(open, close), Math.max(open, close)],
+      wick: [low, high]
+    };
+  });
+};
+
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    const isUp = data.close >= data.open;
+    return (
+      <div className="bg-background border border-border p-3 rounded-xl shadow-2xl space-y-1">
+        <div className="text-[10px] font-black text-muted-foreground uppercase">{data.time}</div>
+        <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+          <div className="text-[10px] text-muted-foreground">OPEN: <span className="text-foreground font-bold">{data.open}</span></div>
+          <div className="text-[10px] text-muted-foreground">CLOSE: <span className="text-foreground font-bold">{data.close}</span></div>
+          <div className="text-[10px] text-muted-foreground">HIGH: <span className="text-foreground font-bold">{data.high}</span></div>
+          <div className="text-[10px] text-muted-foreground">LOW: <span className="text-foreground font-bold">{data.low}</span></div>
+        </div>
+        <div className={cn("text-xs font-black mt-1", isUp ? "text-green-500" : "text-red-500")}>
+          {isUp ? "BULLISH" : "BEARISH"}
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
 
 export default function StockDetailsPage() {
   const params = useParams()
@@ -94,7 +132,13 @@ export default function StockDetailsPage() {
   const PAYOUT_RATIO = 1.8;
 
   const isUp = stock.change >= 0;
-  const chartData = React.useMemo(() => isMounted ? generateAreaChartData(stock.price, isUp) : [], [stock.price, isUp, isMounted])
+  
+  const chartData = React.useMemo(() => {
+    if (!isMounted) return [];
+    const points = activeTimeframe === "1D" ? 40 : activeTimeframe === "5D" ? 60 : 30;
+    return generateCandleData(points, stock.price, activeTimeframe);
+  }, [stock.price, activeTimeframe, isMounted])
+
   const prevClose = stock.price * (isUp ? 0.985 : 1.015)
 
   React.useEffect(() => {
@@ -180,13 +224,11 @@ export default function StockDetailsPage() {
 
   const executeLiveTrade = async (dir: "HIGHER" | "LOWER") => {
     if (!db || !user || isTradingLive) return
-    
     const amount = parseFloat(tradeAmount)
     if (amount <= 0 || isNaN(amount)) {
       toast({ title: "Invalid Amount", variant: "destructive" })
       return
     }
-
     if (amount > userBalance) {
       toast({ title: "Insufficient Balance", variant: "destructive" })
       return
@@ -198,20 +240,14 @@ export default function StockDetailsPage() {
     setTradeTimer(TRADE_DURATION)
     setTradeResult(null)
 
-    const userRef = doc(db, 'users', user.uid)
     try {
-      await updateDoc(userRef, { balance: increment(-amount) })
+      await updateDoc(doc(db, 'users', user.uid), { balance: increment(-amount) })
       setUserBalance(prev => prev - amount)
     } catch (err) {
       setIsTradingLive(false)
-      toast({ title: "Execution Error", variant: "destructive" })
       return
     }
-
-    toast({
-      title: "Trade Open",
-      description: `Predicted ${dir} for ${symbol} @ ${stock.price.toFixed(2)}`,
-    })
+    toast({ title: "Trade Open", description: `Predicted ${dir} for ${symbol} @ ${stock.price.toFixed(2)}` })
   }
 
   React.useEffect(() => {
@@ -219,24 +255,21 @@ export default function StockDetailsPage() {
     if (isTradingLive && tradeTimer > 0) {
       interval = setInterval(() => setTradeTimer(t => t - 1), 1000)
     } else if (isTradingLive && tradeTimer === 0) {
-      const drift = (Math.random() - 0.45) * 2;
-      const finalPrice = entryPrice + drift;
-      const isHigher = finalPrice > entryPrice;
-      const isWin = (prediction === "HIGHER" && isHigher) || (prediction === "LOWER" && !isHigher);
+      const finalPrice = stock.price + (Math.random() - 0.45) * 2;
+      const isWin = (prediction === "HIGHER" && finalPrice > entryPrice) || (prediction === "LOWER" && finalPrice < entryPrice);
       const amount = parseFloat(tradeAmount)
-      const winAmount = amount * PAYOUT_RATIO
       setTradeResult(isWin ? "WIN" : "LOSS")
       setIsTradingLive(false)
       if (isWin && db && user) {
-        updateDoc(doc(db, 'users', user.uid), { balance: increment(winAmount) })
-        setUserBalance(prev => prev + winAmount)
-        toast({ title: "PROFIT! +₹" + (winAmount - amount).toFixed(2) })
+        updateDoc(doc(db, 'users', user.uid), { balance: increment(amount * PAYOUT_RATIO) })
+        setUserBalance(prev => prev + (amount * PAYOUT_RATIO))
+        toast({ title: "PROFIT! Secured virtual returns." })
       } else {
         toast({ variant: "destructive", title: "TRADE EXPIRED" })
       }
     }
     return () => clearInterval(interval)
-  }, [isTradingLive, tradeTimer, tradeAmount, db, user, toast, entryPrice, prediction])
+  }, [isTradingLive, tradeTimer])
 
   if (!isMounted) return null;
 
@@ -301,21 +334,28 @@ export default function StockDetailsPage() {
 
               <div className="h-[480px] w-full p-8 relative">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={isUp ? "#22c55e" : "#ef4444"} stopOpacity={0.15}/>
-                        <stop offset="95%" stopColor={isUp ? "#22c55e" : "#ef4444"} stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
+                  <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.3} />
                     <XAxis dataKey="time" hide />
                     <YAxis domain={['auto', 'auto']} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
                     <ReferenceLine y={prevClose} stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3" />
                     {isTradingLive && <ReferenceLine y={entryPrice} stroke="#f59e0b" strokeWidth={2} label={{ position: 'right', value: 'ENTRY', fill: '#f59e0b', fontSize: 10, fontWeight: 'bold' }} />}
-                    <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' }} itemStyle={{ color: isUp ? '#22c55e' : '#ef4444', fontWeight: 'bold' }} />
-                    <Area type="monotone" dataKey="price" stroke={isUp ? "#22c55e" : "#ef4444"} strokeWidth={3} fillOpacity={1} fill="url(#colorPrice)" activeDot={{ r: 6, strokeWidth: 0 }} />
-                  </AreaChart>
+                    <Tooltip content={<CustomTooltip />} />
+                    
+                    {/* Candle Wicks */}
+                    <Bar dataKey="wick" fill="#8884d8" barSize={1}>
+                      {chartData.map((entry, index) => (
+                        <Cell key={`wick-${index}`} fill={entry.close >= entry.open ? '#22c55e' : '#ef4444'} />
+                      ))}
+                    </Bar>
+                    
+                    {/* Candle Bodies */}
+                    <Bar dataKey="body" barSize={12}>
+                      {chartData.map((entry, index) => (
+                        <Cell key={`body-${index}`} fill={entry.close >= entry.open ? '#22c55e' : '#ef4444'} />
+                      ))}
+                    </Bar>
+                  </BarChart>
                 </ResponsiveContainer>
 
                 {isLiveMode && (
@@ -324,7 +364,7 @@ export default function StockDetailsPage() {
                       <div className="space-y-8">
                         <div className="flex items-center justify-between">
                           <Badge className="bg-primary/20 text-primary border-none gap-1.5 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest">
-                            <Zap className="size-3 fill-primary" /> Live Speculation
+                            Live Speculation
                           </Badge>
                           <div className="flex items-center gap-2 text-xs font-black text-muted-foreground uppercase tracking-widest bg-muted/30 px-3 py-1 rounded-full">
                             <Timer className="size-3.5 text-primary" /> {isTradingLive ? `${tradeTimer}s` : "Waiting"}
@@ -333,7 +373,7 @@ export default function StockDetailsPage() {
 
                         {isTradingLive ? (
                           <div className="space-y-6 py-6 text-center">
-                            <h4 className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em]">Pending Settlement</h4>
+                            <h4 className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em]">Settlement Pending</h4>
                             <div className="text-3xl font-black font-headline">{prediction}</div>
                             <Progress value={(tradeTimer/TRADE_DURATION)*100} className="h-2.5 bg-muted/50 rounded-full" />
                           </div>
