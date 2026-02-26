@@ -1,11 +1,11 @@
 'use server';
 /**
- * @fileOverview An AI financial advisor chatbot powered by RapidAPI Llama.
- * This flow provides expert answers on the stock market and finance.
+ * @fileOverview QuantumF AI Financial Advisor flow powered by RapidAPI ChatGPT integration.
+ * This flow provides professional, data-driven financial advice.
  *
- * - aiFinancialStrategyAdvisor - A function that handles the AI financial advisor chat process.
- * - AiFinancialAdvisorInput - The input type for the aiFinancialStrategyAdvisor function.
- * - AiFinancialAdvisorOutput - The return type for the aiFinancialStrategyAdvisor function.
+ * - aiFinancialStrategyAdvisor - Entry point for the AI advisor process.
+ * - AiFinancialAdvisorInput - Input schema for queries and context.
+ * - AiFinancialAdvisorOutput - Standardized AI response format.
  */
 
 import { ai } from '@/ai/genkit';
@@ -13,32 +13,26 @@ import { z } from 'genkit';
 
 const FINNHUB_API_KEY = process.env.NEXT_PUBLIC_FINNHUB_API_KEY || 'd6g3c49r01qqnmbqk10gd6g3c49r01qqnmbqk110';
 
-// --- Tools for Real-Time Finance Data ---
-
-async function getMarketNews() {
+async function getMarketContext() {
   try {
     const res = await fetch(`https://finnhub.io/api/v1/news?category=general&token=${FINNHUB_API_KEY}`);
-    if (!res.ok) return { error: "Failed to fetch news" };
+    if (!res.ok) return "N/A";
     const data = await res.json();
-    return Array.isArray(data) ? data.slice(0, 3) : { error: "Invalid response" };
+    return Array.isArray(data) ? data.slice(0, 5).map((n: any) => n.headline).join(' | ') : "N/A";
   } catch (e) {
-    return { error: "Service unavailable" };
+    return "N/A";
   }
 }
 
-// --- Flow Implementation ---
-
 const AiFinancialAdvisorInputSchema = z.object({
-  userQuery: z.string().describe("The user's question or request for the financial advisor."),
-  portfolioData: z.string().optional().describe("JSON string representing the user's investment portfolio data."),
-  predictionHistory: z.string().optional().describe("JSON string representing the user's stock prediction history."),
-  newsSentiment: z.string().optional().describe("JSON string summarizing the user's relevant financial news sentiment."),
-  learningProgress: z.string().optional().describe("JSON string indicating the user's financial learning progress."),
+  userQuery: z.string().describe("The user's question or request."),
+  portfolioData: z.string().optional().describe("User's investment portfolio context."),
+  learningProgress: z.string().optional().describe("User's educational status."),
 });
 export type AiFinancialAdvisorInput = z.infer<typeof AiFinancialAdvisorInputSchema>;
 
 const AiFinancialAdvisorOutputSchema = z.object({
-  response: z.string().describe("The AI financial advisor's response, advice, or explanation."),
+  response: z.string().describe("The AI advisor's professional response."),
 });
 export type AiFinancialAdvisorOutput = z.infer<typeof AiFinancialAdvisorOutputSchema>;
 
@@ -53,26 +47,25 @@ const aiFinancialStrategyAdvisorFlow = ai.defineFlow(
     outputSchema: AiFinancialAdvisorOutputSchema,
   },
   async (input) => {
-    // RapidAPI Key provided by user
     const API_KEY = process.env.RAPIDAPI_KEY || 'ef844e3b8eac407990679dffbd62147c.I9mEPUXANRbOARAI150CNX2a';
 
     try {
-      // Prefetch some market context to make the AI "Expert"
-      const news = await getMarketNews();
-      const newsSummary = Array.isArray(news) ? news.map((n: any) => n.headline).join(' | ') : "N/A";
+      const marketNews = await getMarketContext();
 
-      const systemPrompt = `You are QuantumF, a high-performance Financial Strategy Advisor directly connected to OpenAI intelligence. 
-Your core mission is to provide data-driven, professional, and actionable financial advice covering stock markets and personal finance.
+      const systemPrompt = `You are QuantumF AI, a high-performance Financial Strategy Advisor directly connected to OpenAI intelligence. 
+Your mission is to provide professional, data-driven financial advice for QuantumF platform users.
 
-CURRENT MARKET CONTEXT:
-Latest News: ${newsSummary}
+REAL-TIME CONTEXT:
+Latest Headlines: ${marketNews}
 User Portfolio: ${input.portfolioData || 'No active holdings'}
+Learning Status: ${input.learningProgress || 'Just starting'}
 
-KEY GUIDELINES:
-1. PERSONALIZED: Reference the user's portfolio context.
-2. TONE: Professional, analytical, and supportive.
-3. DISCLAIMER: Always mention that this is for educational purposes and not professional financial advice.
-4. FORMATTING: Use Markdown with bolding for tickers and figures.`;
+GUIDELINES:
+1. QUANTUMF BRAND: Always identify as QuantumF AI.
+2. PROFESSIONAL: Use clear, analytical, and supportive language.
+3. CONTEXTUAL: Reference the user's portfolio if provided.
+4. DISCLAIMER: Always state that this is for educational purposes and not official financial advice.
+5. FORMATTING: Use Markdown. Bold stock tickers (e.g., **AAPL**, **NVDA**).`;
 
       const response = await fetch('https://open-ai21.p.rapidapi.com/conversationllama', {
         method: 'POST',
@@ -85,28 +78,24 @@ KEY GUIDELINES:
           messages: [
             { 
               role: 'user', 
-              content: `${systemPrompt}\n\nUSER QUESTION: ${input.userQuery}` 
+              content: `${systemPrompt}\n\nUSER QUERY: ${input.userQuery}` 
             }
           ],
           web_access: false
         })
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("RapidAPI Error:", errorText);
-        throw new Error(`Intelligence Layer Unavailable (Status: ${response.status})`);
-      }
+      if (!response.ok) throw new Error("RapidAPI Service Unavailable");
 
       const result = await response.json();
       
-      // Handle the common RapidAPI open-ai21 response format
-      const botResponse = result.BOT || result.result || result.response || "I have analyzed the market data but could not generate a textual response. Please try asking about a specific stock symbol.";
+      // Handle various response keys from RapidAPI Llama endpoints
+      const botResponse = result.BOT || result.result || result.response || result.output || "I have processed your request but could not generate a text response. Please try asking about a specific market sector.";
 
       return { response: botResponse };
     } catch (error: any) {
       console.error("Advisor Flow Error:", error);
-      return { response: "I'm having difficulty connecting to my ChatGPT intelligence layer right now. Please ensure your configuration is active or try again in a few moments." };
+      return { response: "I encountered a communication error with my premium ChatGPT intelligence layer. Please verify your connection or try again shortly." };
     }
   }
 );
