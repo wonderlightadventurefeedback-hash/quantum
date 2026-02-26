@@ -7,23 +7,23 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Send, Bot, User, Sparkles, Loader2, Zap } from "lucide-react"
+import { Send, Bot, User, Sparkles, Loader2, Zap, Clock } from "lucide-react"
 import { aiFinancialStrategyAdvisor } from "@/ai/flows/ai-financial-strategy-advisor"
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from "@/firebase"
-import { collection, doc, query, orderBy, limit } from "firebase/firestore"
+import { collection, doc, query, orderBy, limit, addDoc, serverTimestamp, getDocs } from "firebase/firestore"
 import { MOCK_USER } from "@/lib/mock-data"
+import { formatDistanceToNow } from "date-fns"
 
 type Message = {
   role: 'user' | 'assistant'
   content: string
+  timestamp?: any
 }
 
 export default function AdvisorPage() {
   const { user } = useUser()
   const db = useFirestore()
-  const [messages, setMessages] = React.useState<Message[]>([
-    { role: 'assistant', content: "Hello! I'm **FinIntel AI**, your real-time financial intelligence advisor. I have access to live market feeds via Finnhub. How can I help you analyze the markets today?" }
-  ])
+  const [messages, setMessages] = React.useState<Message[]>([])
   const [input, setInput] = React.useState("")
   const [isLoading, setIsLoading] = React.useState(false)
   const scrollRef = React.useRef<HTMLDivElement>(null)
@@ -41,25 +41,59 @@ export default function AdvisorPage() {
   }, [db, user])
   const { data: holdings } = useCollection(holdingsQuery)
 
+  // Persistent Chat Logic
+  const messagesQuery = useMemoFirebase(() => {
+    if (!db || !user) return null
+    return query(collection(db, 'users', user.uid, 'chat_messages'), orderBy('timestamp', 'asc'))
+  }, [db, user])
+  const { data: history, isLoading: isHistoryLoading } = useCollection(messagesQuery)
+
+  React.useEffect(() => {
+    if (history && history.length > 0) {
+      setMessages(history.map(m => ({ role: m.role, content: m.content, timestamp: m.timestamp })))
+    } else if (history && history.length === 0 && !isHistoryLoading) {
+      setMessages([
+        { role: 'assistant', content: "Hello! I'm **FinIntel AI**, your real-time financial advisor. I have access to live market feeds and your portfolio. How can I help you today?" }
+      ])
+    }
+  }, [history, isHistoryLoading])
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!input.trim() || isLoading) return
+    if (!input.trim() || isLoading || !db || !user) return
 
     const userMsg = input.trim()
     setInput("")
-    setMessages(prev => [...prev, { role: 'user', content: userMsg }])
+    
+    // Optimistic Update & Save to Firestore
+    const userMsgRef = collection(db, 'users', user.uid, 'chat_messages')
+    addDoc(userMsgRef, {
+      role: 'user',
+      content: userMsg,
+      timestamp: serverTimestamp()
+    })
+
     setIsLoading(true)
 
     try {
       const response = await aiFinancialStrategyAdvisor({
         userQuery: userMsg,
         portfolioData: JSON.stringify(holdings || []),
-        predictionHistory: "Available via user profile activity logs.",
+        predictionHistory: "User transaction logs available in activity collection.",
         learningProgress: `${userProfile?.learningProgress || 0}% complete.`
       })
-      setMessages(prev => [...prev, { role: 'assistant', content: response.response }])
+
+      addDoc(userMsgRef, {
+        role: 'assistant',
+        content: response.response,
+        timestamp: serverTimestamp()
+      })
     } catch (error) {
-      setMessages(prev => [...prev, { role: 'assistant', content: "I'm sorry, I'm having trouble connecting to the real-time market data feed. Please try again in a moment." }])
+      addDoc(userMsgRef, {
+        role: 'assistant',
+        content: "I'm having trouble connecting to market feeds. Please check your connection.",
+        timestamp: serverTimestamp()
+      })
     } finally {
       setIsLoading(false)
     }
@@ -72,11 +106,11 @@ export default function AdvisorPage() {
   }, [messages, isLoading])
 
   const suggestions = [
-    "What is the live price of NVDA?",
-    "Show me latest market news",
-    "Analyze Apple's company profile",
-    "Should I diversify my current holdings?",
-    "Explain current market trends"
+    "Review my current holdings",
+    "Live price of NVIDIA?",
+    "Analyze Tesla's company profile",
+    "Latest market news headlines",
+    "Should I diversify further?"
   ]
 
   return (
@@ -85,23 +119,27 @@ export default function AdvisorPage() {
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-headline font-bold">Market Intel Advisor</h1>
+              <h1 className="text-3xl font-headline font-bold">FinIntel Advisor</h1>
               <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-black text-primary uppercase tracking-widest">
-                <Zap className="size-3 fill-primary animate-pulse" /> Live Data Enabled
+                <Zap className="size-3 fill-primary animate-pulse" /> Live Analysis Mode
               </span>
             </div>
-            <p className="text-muted-foreground text-sm">Powered by Finnhub Real-Time API and advanced GenAI.</p>
+            <p className="text-muted-foreground text-sm">Powered by Finnhub Real-Time API and Gemini 2.5.</p>
           </div>
           <div className="hidden md:flex items-center gap-2">
             <span className="size-2 bg-green-500 rounded-full animate-pulse"></span>
-            <span className="text-sm font-medium">Systems Online</span>
+            <span className="text-sm font-medium">Synced with Portfolio</span>
           </div>
         </div>
 
         <Card className="flex-1 glass-card overflow-hidden flex flex-col border-none shadow-2xl">
           <ScrollArea className="flex-1 p-6 lg:p-10">
             <div className="space-y-8 max-w-4xl mx-auto">
-              {messages.map((msg, i) => (
+              {isHistoryLoading && messages.length === 0 ? (
+                <div className="h-full flex items-center justify-center py-20">
+                  <Loader2 className="size-8 animate-spin text-primary" />
+                </div>
+              ) : messages.map((msg, i) => (
                 <div key={i} className={`flex gap-6 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
                   <Avatar className={`size-12 border-2 shrink-0 ${msg.role === 'assistant' ? 'border-primary/20 shadow-lg shadow-primary/5' : 'border-muted'}`}>
                     {msg.role === 'assistant' ? (
@@ -121,6 +159,12 @@ export default function AdvisorPage() {
                     {msg.content.split('\n').map((line, idx) => (
                       <p key={idx} className={idx > 0 ? "mt-2" : ""}>{line}</p>
                     ))}
+                    {msg.timestamp && (
+                      <div className="mt-3 pt-3 border-t border-current/10 flex items-center gap-1.5 text-[9px] font-black uppercase opacity-50">
+                        <Clock className="size-2" />
+                        {formatDistanceToNow(msg.timestamp.toDate(), { addSuffix: true })}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -137,7 +181,7 @@ export default function AdvisorPage() {
                       <span className="size-2 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]"></span>
                       <span className="size-2 bg-primary rounded-full animate-bounce"></span>
                     </div>
-                    <span className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-2">Consulting Market Feeds...</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-2">Analyzing Live Market Feeds...</span>
                   </div>
                 </div>
               )}
@@ -166,7 +210,7 @@ export default function AdvisorPage() {
               <Input 
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask about any stock, news, or portfolio advice..." 
+                placeholder="Ask about your portfolio, live prices, or market trends..." 
                 className="pr-16 h-16 bg-background border-border/50 rounded-2xl focus-visible:ring-primary/40 text-lg shadow-xl shadow-black/5"
               />
               <Button 
@@ -180,7 +224,7 @@ export default function AdvisorPage() {
             </form>
             <div className="flex items-center justify-center gap-4 mt-4">
               <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">
-                Real-Time Analysis Mode Active
+                Agentic Intelligence Enabled
               </p>
               <div className="h-3 w-px bg-border" />
               <p className="text-[10px] text-muted-foreground italic">

@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -40,23 +39,21 @@ export default function LoginPage() {
     }
   }, [user, loading, router])
 
-  const initializeDemoUser = async (user: any, name: string) => {
+  const initializeDemoUser = async (firebaseUser: any, name: string) => {
     if (!db) return
-    const userRef = doc(db, 'users', user.uid)
+    const userRef = doc(db, 'users', firebaseUser.uid)
     const snap = await getDoc(userRef)
     
-    const data = snap.data()
-    // Robust Balance Guardian: Set or Reset balance to 50,000 if new, missing, or negative
-    if (!snap.exists() || data?.balance === undefined || (typeof data.balance === 'number' && data.balance < 0)) {
-      const existingData = snap.exists() ? snap.data() : {}
+    // Robust Initialization: Ensure balance is set to 50,000 for any new or corrupted profile
+    if (!snap.exists() || snap.data()?.balance === undefined || (snap.data()?.balance < 0)) {
       await setDoc(userRef, {
-        id: user.uid,
-        email: user.email || '',
-        displayName: name || user.displayName || existingData.displayName || 'Demo User',
+        id: firebaseUser.uid,
+        email: firebaseUser.email || '',
+        displayName: name || firebaseUser.displayName || 'Demo Trader',
         balance: 50000,
-        learningProgress: existingData.learningProgress ?? 0,
-        predictionAccuracy: existingData.predictionAccuracy ?? 0,
-        createdAt: existingData.createdAt || serverTimestamp(),
+        learningProgress: 0,
+        predictionAccuracy: 0,
+        createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       }, { merge: true })
     }
@@ -110,7 +107,7 @@ export default function LoginPage() {
         await initializeDemoUser(userCredential.user, '')
         toast({
           title: "Welcome back",
-          description: "Accessing your demo portfolio.",
+          description: "Accessing your demo terminal.",
         })
       }
     } catch (error: any) {
@@ -157,7 +154,7 @@ export default function LoginPage() {
             {isSignUp ? "Start Demo" : "Welcome Back"}
           </CardTitle>
           <CardDescription className="text-muted-foreground text-sm max-w-[280px] mx-auto leading-relaxed">
-            Join the demo experience and trade risk-free with virtual capital.
+            Join the demo terminal and trade risk-free with virtual capital.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6 px-10 pt-4">
