@@ -72,7 +72,7 @@ export default function SettingsPage() {
   const { data: activityLog, isLoading: historyLoading } = useCollection(activityQuery)
 
   const performanceStats = React.useMemo(() => {
-    if (!activityLog) return { netProfit: 0, netLoss: 0, activeTrades: 0, accuracy: 0 }
+    if (!activityLog) return { netProfit: 0, netLoss: 0, activeTrades: 0, accuracy: 0, platformNet: balance - 50000 }
     
     let profit = 0;
     let loss = 0;
@@ -98,9 +98,10 @@ export default function SettingsPage() {
       netProfit: profit, 
       netLoss: loss, 
       activeTrades: settledTrades,
-      accuracy: accuracy
+      accuracy: accuracy,
+      platformNet: balance - 50000
     }
-  }, [activityLog])
+  }, [activityLog, balance])
 
   const handleSave = (section: string) => {
     setIsSaving(true)
@@ -233,10 +234,12 @@ export default function SettingsPage() {
                     <Card className="bg-primary/5 border-primary/20 p-6 rounded-2xl shadow-sm">
                       <div className="flex items-center justify-between mb-4">
                         <TrendingUp className="size-5 text-primary" />
-                        <Badge className="bg-primary/20 text-primary border-none text-[10px]">Arena Gains</Badge>
+                        <Badge className="bg-primary/20 text-primary border-none text-[10px]">Net Platform Profit</Badge>
                       </div>
-                      <div className="text-2xl font-black text-primary">₹{performanceStats.netProfit.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
-                      <p className="text-[10px] text-muted-foreground mt-1 uppercase font-bold tracking-wider">Cumulative virtual profit</p>
+                      <div className={cn("text-2xl font-black", performanceStats.platformNet >= 0 ? "text-primary" : "text-destructive")}>
+                        ₹{performanceStats.platformNet.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-1 uppercase font-bold tracking-wider">Total realized platform gains</p>
                     </Card>
                     <Card className="bg-destructive/5 border-destructive/20 p-6 rounded-2xl shadow-sm">
                       <div className="flex items-center justify-between mb-4">
