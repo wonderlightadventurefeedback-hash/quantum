@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -17,17 +18,28 @@ import {
   Sun,
   Mail,
   MapPin,
-  Phone
+  Phone,
+  Loader2
 } from "lucide-react"
 import { useUser } from "@/firebase"
 import { MOCK_INDICES } from "@/lib/mock-data"
 import { useToast } from "@/hooks/use-toast"
+import emailjs from '@emailjs/browser'
 
 export default function LandingPage() {
   const { user, loading } = useUser()
   const router = useRouter()
   const { toast } = useToast()
   const [theme, setTheme] = React.useState<"light" | "dark">("light")
+  
+  // Contact Form State
+  const [isSending, setIsSending] = React.useState(false)
+  const [formData, setFormData] = React.useState({
+    name: '',
+    email: '',
+    subject: '',
+    message: ''
+  })
 
   React.useEffect(() => {
     if (!loading && user) {
@@ -54,6 +66,55 @@ export default function LandingPage() {
       title: `${newTheme.charAt(0).toUpperCase() + newTheme.slice(1)} Mode Enabled`,
       description: `Interface updated to ${newTheme} aesthetic.`,
     })
+  }
+
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!formData.name || !formData.email || !formData.message) {
+      toast({
+        variant: "destructive",
+        title: "Missing Fields",
+        description: "Please fill in all required fields.",
+      })
+      return
+    }
+
+    setIsSending(true)
+
+    try {
+      // NOTE: You must provide your EmailJS Public Key here.
+      // If you haven't set one, you can find it in your EmailJS Dashboard -> Account.
+      const result = await emailjs.send(
+        'service_hzskuno',
+        'template_acfg77l',
+        {
+          from_name: formData.name,
+          from_email: formData.email,
+          subject: formData.subject,
+          message: formData.message,
+          to_name: 'FinIntel Support'
+        },
+        'YOUR_PUBLIC_KEY' // PLEASE REPLACE WITH YOUR ACTUAL PUBLIC KEY
+      )
+
+      if (result.status === 200) {
+        toast({
+          title: "Message Sent!",
+          description: "Thank you for reaching out. We'll get back to you soon.",
+        })
+        setFormData({ name: '', email: '', subject: '', message: '' })
+      }
+    } catch (error: any) {
+      console.error('EmailJS Error:', error)
+      toast({
+        variant: "destructive",
+        title: "Message Failed",
+        description: "Something went wrong. Please try again later or check your Public Key.",
+      })
+    } finally {
+      setIsSending(false)
+    }
   }
 
   if (loading || user) return null
@@ -234,15 +295,50 @@ export default function LandingPage() {
                   <h3 className="text-2xl font-headline font-bold text-foreground">Send a Message</h3>
                   <p className="text-sm text-muted-foreground">We'll get back to you within 24 hours.</p>
                 </div>
-                <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+                <form className="space-y-4" onSubmit={handleContactSubmit}>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Input placeholder="Your Name" className="h-14 border-border bg-muted/30 rounded-xl focus:ring-primary/20" />
-                    <Input placeholder="Email Address" type="email" className="h-14 border-border bg-muted/30 rounded-xl focus:ring-primary/20" />
+                    <Input 
+                      placeholder="Your Name" 
+                      className="h-14 border-border bg-muted/30 rounded-xl focus:ring-primary/20"
+                      value={formData.name}
+                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      required
+                    />
+                    <Input 
+                      placeholder="Email Address" 
+                      type="email" 
+                      className="h-14 border-border bg-muted/30 rounded-xl focus:ring-primary/20"
+                      value={formData.email}
+                      onChange={(e) => setFormData({...formData, email: e.target.value})}
+                      required
+                    />
                   </div>
-                  <Input placeholder="Subject" className="h-14 border-border bg-muted/30 rounded-xl focus:ring-primary/20" />
-                  <Textarea placeholder="Describe your inquiry..." className="min-h-[160px] border-border bg-muted/30 rounded-xl focus:ring-primary/20 resize-none" />
-                  <Button className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg rounded-xl shadow-lg shadow-primary/10 transition-all hover:scale-[1.01]">
-                    Send message
+                  <Input 
+                    placeholder="Subject" 
+                    className="h-14 border-border bg-muted/30 rounded-xl focus:ring-primary/20"
+                    value={formData.subject}
+                    onChange={(e) => setFormData({...formData, subject: e.target.value})}
+                  />
+                  <Textarea 
+                    placeholder="Describe your inquiry..." 
+                    className="min-h-[160px] border-border bg-muted/30 rounded-xl focus:ring-primary/20 resize-none"
+                    value={formData.message}
+                    onChange={(e) => setFormData({...formData, message: e.target.value})}
+                    required
+                  />
+                  <Button 
+                    type="submit"
+                    className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg rounded-xl shadow-lg shadow-primary/10 transition-all hover:scale-[1.01] gap-2"
+                    disabled={isSending}
+                  >
+                    {isSending ? (
+                      <>
+                        <Loader2 className="size-5 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      "Send message"
+                    )}
                   </Button>
                 </form>
               </div>
