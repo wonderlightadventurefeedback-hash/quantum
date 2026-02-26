@@ -335,7 +335,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
             )}
           </div>
 
-          <button ref={toggleBtnRef} className={`sm-toggle relative inline-flex items-center gap-2 bg-background/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 cursor-pointer font-bold leading-none overflow-visible pointer-events-auto transition-colors ${open ? 'text-black bg-white' : 'text-white'}`}
+          <button ref={toggleBtnRef} className={`sm-toggle relative inline-flex items-center gap-2 px-5 py-2.5 rounded-full border shadow-xl shadow-primary/20 cursor-pointer font-bold leading-none overflow-visible pointer-events-auto transition-all duration-300 ${open ? 'text-black bg-white border-white' : 'text-white bg-primary border-primary hover:scale-105 active:scale-95'}`}
                   aria-label={open ? 'Close menu' : 'Open menu'} aria-expanded={open} aria-controls="staggered-menu-panel" onClick={toggleMenu} type="button">
             <span ref={textWrapRef} className="sm-toggle-textWrap relative inline-block h-[1em] overflow-hidden whitespace-nowrap min-w-[3rem]" aria-hidden="true">
               <span ref={textInnerRef} className="sm-toggle-textInner flex flex-col leading-none">
@@ -356,7 +356,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
             <ul className="sm-panel-list list-none m-0 p-0 flex flex-col gap-4" role="list" data-numbering={displayItemNumbering || undefined}>
               {(items || []).map((it, idx) => (
                 <li className="sm-panel-itemWrap relative overflow-hidden leading-none" key={it.label + idx}>
-                  <Link className="sm-panel-item relative text-black font-bold text-3xl md:text-5xl cursor-pointer leading-none tracking-tighter uppercase transition-colors inline-block no-underline pr-12" href={it.link} aria-label={it.ariaLabel} data-index={idx + 1} onClick={closeMenu}>
+                  <Link className="sm-panel-item relative text-black font-bold text-2xl md:text-3xl cursor-pointer leading-none tracking-tighter uppercase transition-colors inline-block no-underline pr-12" href={it.link} aria-label={it.ariaLabel} data-index={idx + 1} onClick={closeMenu}>
                     <span className="sm-panel-itemLabel inline-block transform-gpu">{it.label}</span>
                   </Link>
                 </li>
@@ -400,7 +400,17 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
           opacity: var(--sm-num-opacity, 0);
         }
         .sm-scope .sm-panel-item {
-          font-size: 2.2rem;
+          font-size: 1.8rem;
+        }
+        .sm-scope .sm-toggle {
+          position: relative;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          cursor: pointer;
+          font-weight: 700;
+          line-height: 1;
+          overflow: visible;
         }
         @media (max-width: 1024px) {
           .sm-scope .staggered-menu-panel {
@@ -408,7 +418,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
             padding: 8rem 2rem 2rem 2rem;
           }
           .sm-scope .sm-panel-item {
-            font-size: 2.5rem;
+            font-size: 2.2rem;
           }
         }
       `}</style>
