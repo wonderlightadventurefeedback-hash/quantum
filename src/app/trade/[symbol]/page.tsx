@@ -16,17 +16,18 @@ import {
   TrendingUp,
   LineChart as LineChartIcon,
   BarChart2,
-  Maximize2,
-  Minimize2,
   Zap,
   ShieldCheck,
   Wallet,
   Code,
   Bell,
-  Link as LinkIcon,
   ChevronRight,
   Calendar,
-  Layers
+  Layers,
+  Activity,
+  Newspaper,
+  History,
+  Target
 } from "lucide-react"
 import { 
   AreaChart, 
@@ -38,10 +39,9 @@ import {
   ResponsiveContainer,
   Bar,
   ComposedChart,
-  Cell,
-  ReferenceLine
+  Cell
 } from "recharts"
-import { MOCK_STOCKS } from "@/lib/mock-data"
+import { MOCK_STOCKS, MOCK_NEWS } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { useUser, useFirestore, useDoc } from "@/firebase"
@@ -51,7 +51,7 @@ import { FirestorePermissionError } from "@/firebase/errors"
 
 const FINNHUB_API_KEY = "d6g3c49r01qqnmbqk10gd6g3c49r01qqnmbqk110";
 
-type Timeframe = "1D" | "1W" | "1M" | "3M" | "6M" | "1Y" | "3Y" | "5Y" | "All";
+type Timeframe = "1D" | "1W" | "1M" | "3M" | "6M" | "1Y" | "5Y" | "All";
 
 const generateChartData = (basePrice: number, isBullish: boolean, timeframe: Timeframe) => {
   let points = 60;
@@ -64,7 +64,6 @@ const generateChartData = (basePrice: number, isBullish: boolean, timeframe: Tim
     case "3M": points = 90; intervalMinutes = 1440; break;
     case "6M": points = 120; intervalMinutes = 1440; break;
     case "1Y": points = 100; intervalMinutes = 4320; break;
-    case "3Y": points = 110; intervalMinutes = 12960; break;
     case "5Y": points = 120; intervalMinutes = 21600; break;
     case "All": points = 150; intervalMinutes = 43200; break;
     default: points = 60;
@@ -74,16 +73,16 @@ const generateChartData = (basePrice: number, isBullish: boolean, timeframe: Tim
   const startTime = new Date();
   
   return Array.from({ length: points }, (_, i) => {
-    const volatility = basePrice * 0.012;
-    const trend = isBullish ? (basePrice * 0.06) / points : -(basePrice * 0.06) / points;
+    const volatility = basePrice * 0.015; // Increased volatility for better candle design
+    const trend = isBullish ? (basePrice * 0.08) / points : -(basePrice * 0.08) / points;
     
     const open = currentPrice;
-    const change = (Math.random() - 0.48) * volatility + trend;
+    const change = (Math.random() - 0.45) * volatility + trend;
     const close = open + change;
     
-    const hasLongWick = Math.random() > 0.85;
-    const wickHigh = Math.random() * (volatility * (hasLongWick ? 1.4 : 0.3));
-    const wickLow = Math.random() * (volatility * (hasLongWick ? 1.6 : 0.8)); 
+    // Hammer style wicks logic: more prominent lows/highs
+    const wickHigh = Math.random() * (volatility * 1.5);
+    const wickLow = Math.random() * (volatility * 1.8); 
     
     const high = Math.max(open, close) + wickHigh;
     const low = Math.min(open, close) - wickLow;
@@ -123,9 +122,10 @@ export default function StockDetailPage() {
   const [isLoading, setIsLoading] = React.useState(true)
   const [isMounted, setIsMounted] = React.useState(false)
   const [activeOrderTab, setActiveOrderTab] = React.useState("BUY")
+  const [activeInfoTab, setActiveInfoTab] = React.useState("Overview")
   const [qty, setQty] = React.useState("1")
   const [price, setPrice] = React.useState(initialStock.price.toString())
-  const [chartType, setChartType] = React.useState<'area' | 'candle'>('area')
+  const [chartType, setChartType] = React.useState<'area' | 'candle'>('candle')
   const [timeframe, setTimeframe] = React.useState<Timeframe>("1D")
   const [userBalance, setUserBalance] = React.useState<number>(0)
   const [tradeMode, setTradeMode] = React.useState("Delivery")
@@ -177,11 +177,8 @@ export default function StockDetailPage() {
           }))
           setPrice(data.c.toString())
         }
-      } else {
-        throw new Error("Price fetch failed")
       }
     } catch (error) {
-      // Fallback with small drift to simulate live movement if API fails
       const drift = (Math.random() - 0.5) * 0.1;
       setStock(prev => ({
         ...prev,
@@ -263,6 +260,143 @@ export default function StockDetailPage() {
     }
   }
 
+  const renderActiveTabContent = () => {
+    switch (activeInfoTab) {
+      case "Overview":
+        return (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 animate-in fade-in duration-500">
+            <div className="space-y-1">
+              <span className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">Market Cap</span>
+              <p className="font-bold text-sm">₹{((stock.price * 100000) / 100).toFixed(2)} Cr</p>
+            </div>
+            <div className="space-y-1">
+              <span className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">P/E Ratio</span>
+              <p className="font-bold text-sm">24.52</p>
+            </div>
+            <div className="space-y-1">
+              <span className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">52W High</span>
+              <p className="font-bold text-sm text-primary">₹{(stock.price * 1.25).toFixed(2)}</p>
+            </div>
+            <div className="space-y-1">
+              <span className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">52W Low</span>
+              <p className="font-bold text-sm text-destructive">₹{(stock.price * 0.75).toFixed(2)}</p>
+            </div>
+            <div className="col-span-full pt-4">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">About {stock.name}</h4>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {stock.name} ({stock.symbol}) is a leading player in the {stock.category} sector. The company has shown consistent growth with a market focus on innovation and sustainable expansion. Recent quarterly reports indicate a strong balance sheet with healthy cash flows.
+              </p>
+            </div>
+          </div>
+        )
+      case "Technicals":
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in duration-500">
+            <Card className="bg-muted/20 border-border/40 p-6 space-y-4">
+              <h4 className="text-sm font-black uppercase flex items-center gap-2">
+                <Activity className="size-4 text-primary" /> Moving Averages
+              </h4>
+              <div className="space-y-3">
+                {[
+                  { label: "MA (20)", value: stock.price * 0.98, signal: "BUY" },
+                  { label: "MA (50)", value: stock.price * 0.95, signal: "STRONG BUY" },
+                  { label: "MA (200)", value: stock.price * 0.88, signal: "BUY" },
+                ].map(ma => (
+                  <div key={ma.label} className="flex justify-between items-center text-xs">
+                    <span className="text-muted-foreground">{ma.label}</span>
+                    <div className="flex gap-4">
+                      <span className="font-bold">₹{ma.value.toFixed(2)}</span>
+                      <Badge variant="outline" className="text-[9px] border-primary/20 text-primary">{ma.signal}</Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+            <Card className="bg-muted/20 border-border/40 p-6 space-y-4">
+              <h4 className="text-sm font-black uppercase flex items-center gap-2">
+                <Target className="size-4 text-primary" /> Oscillators
+              </h4>
+              <div className="space-y-3">
+                {[
+                  { label: "RSI (14)", value: "62.45", signal: "NEUTRAL" },
+                  { label: "MACD (12, 26)", value: "Bullish", signal: "BUY" },
+                  { label: "Stochastic %K", value: "78.10", signal: "OVERBOUGHT" },
+                ].map(osc => (
+                  <div key={osc.label} className="flex justify-between items-center text-xs">
+                    <span className="text-muted-foreground">{osc.label}</span>
+                    <div className="flex gap-4">
+                      <span className="font-bold">{osc.value}</span>
+                      <Badge variant="outline" className={cn("text-[9px]", osc.signal === "NEUTRAL" ? "text-muted-foreground" : "text-primary")}>{osc.signal}</Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+        )
+      case "News":
+        return (
+          <div className="space-y-4 animate-in fade-in duration-500">
+            {MOCK_NEWS.map((n) => (
+              <div key={n.id} className="group cursor-pointer p-4 hover:bg-muted/20 rounded-xl transition-colors border border-transparent hover:border-border/40">
+                <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase mb-1">
+                  <Newspaper className="size-3" /> {n.source} • {n.time}
+                </div>
+                <h4 className="text-sm font-bold group-hover:text-primary transition-colors">{n.title}</h4>
+              </div>
+            ))}
+          </div>
+        )
+      case "Events":
+        return (
+          <div className="space-y-6 animate-in fade-in duration-500">
+            <div className="flex items-center gap-6 p-4 bg-muted/20 rounded-2xl">
+              <div className="size-12 rounded-xl bg-background flex flex-col items-center justify-center border border-border/40">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase">Mar</span>
+                <span className="text-lg font-black">28</span>
+              </div>
+              <div>
+                <h4 className="text-sm font-bold">Earnings Report Q4</h4>
+                <p className="text-xs text-muted-foreground">Estimate: ₹12.45 per share</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-6 p-4 bg-muted/20 rounded-2xl">
+              <div className="size-12 rounded-xl bg-background flex flex-col items-center justify-center border border-border/40">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase">Apr</span>
+                <span className="text-lg font-black">12</span>
+              </div>
+              <div>
+                <h4 className="text-sm font-bold">Dividend Payment</h4>
+                <p className="text-xs text-muted-foreground">₹2.50 per share declared</p>
+              </div>
+            </div>
+          </div>
+        )
+      case "F&O":
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in duration-500">
+             <Card className="p-6 bg-muted/10 border-border/40 text-center">
+              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Open Interest</span>
+              <div className="text-xl font-black mt-1">4.2M</div>
+              <Badge className="mt-2 bg-green-500/10 text-green-500 border-none">+12.4%</Badge>
+            </Card>
+            <Card className="p-6 bg-muted/10 border-border/40 text-center">
+              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">PCR Ratio</span>
+              <div className="text-xl font-black mt-1">0.98</div>
+              <p className="text-[10px] text-muted-foreground mt-2 uppercase font-bold">Bullish Bias</p>
+            </Card>
+            <Card className="p-6 bg-muted/10 border-border/40 text-center">
+              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Rollover</span>
+              <div className="text-xl font-black mt-1">78.5%</div>
+              <p className="text-[10px] text-muted-foreground mt-2 uppercase font-bold">Previous 74.2%</p>
+            </Card>
+          </div>
+        )
+      default:
+        return null
+    }
+  }
+
   const ChartComponent = () => {
     if (!isMounted) return <div className="h-full w-full flex items-center justify-center"><Loader2 className="animate-spin text-primary" /></div>;
 
@@ -276,11 +410,8 @@ export default function StockDetailPage() {
                 <stop offset="95%" stopColor={trendColor} stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
-            <XAxis 
-              dataKey="label" 
-              hide={true}
-            />
+            <CartesianGrid strokeDasharray="1 4" vertical={false} stroke="hsl(var(--border))" opacity={0.3} />
+            <XAxis dataKey="label" hide={true} />
             <YAxis 
               orientation="right" 
               domain={['auto', 'auto']} 
@@ -305,11 +436,8 @@ export default function StockDetailPage() {
           </AreaChart>
         ) : (
           <ComposedChart data={chartData} margin={{ top: 10, right: 70, left: 10, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
-            <XAxis 
-              dataKey="label" 
-              hide={true}
-            />
+            <CartesianGrid strokeDasharray="1 4" vertical={false} stroke="hsl(var(--border))" opacity={0.3} />
+            <XAxis dataKey="label" hide={true} />
             <YAxis 
               orientation="right" 
               domain={['auto', 'auto']} 
@@ -343,7 +471,7 @@ export default function StockDetailPage() {
         {/* Top Header Section */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div className="flex gap-4">
-            <div className="size-14 rounded-2xl bg-orange-500 flex items-center justify-center shrink-0 shadow-lg text-white font-black text-2xl">
+            <div className="size-14 rounded-2xl bg-primary flex items-center justify-center shrink-0 shadow-lg text-white font-black text-2xl">
               {symbol[0]}
             </div>
             <div className="space-y-1">
@@ -354,7 +482,6 @@ export default function StockDetailPage() {
                   <span className="text-sm font-bold">
                     {isUp ? '+' : ''}{stock.change.toFixed(2)} ({stock.change.toFixed(2)}%)
                   </span>
-                  <span className="text-xs text-muted-foreground ml-1">1D</span>
                 </div>
               </div>
             </div>
@@ -392,7 +519,7 @@ export default function StockDetailPage() {
               <div className="border-t border-border/40 px-6 py-4 flex items-center justify-between bg-muted/5">
                 <div className="flex items-center gap-1">
                   <Badge variant="outline" className="text-[10px] font-bold bg-muted/40 border-none mr-4">NSE</Badge>
-                  {["1D", "1W", "1M", "3M", "6M", "1Y", "3Y", "5Y", "All"].map(t => (
+                  {["1D", "1W", "1M", "3M", "6M", "1Y", "5Y", "All"].map(t => (
                     <button 
                       key={t} 
                       onClick={() => setTimeframe(t as Timeframe)} 
@@ -411,15 +538,33 @@ export default function StockDetailPage() {
                     {chartType === 'area' ? <BarChart2 className="size-4" /> : <LineChartIcon className="size-4" />}
                   </button>
                 </div>
-                
-                <Button variant="ghost" size="sm" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground gap-2">
-                  Terminal <Code className="size-3" />
-                </Button>
+              </div>
+            </div>
+
+            {/* Sub-Tabs Section */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-8 border-b border-border/40 pb-2 overflow-x-auto no-scrollbar">
+                {["Overview", "Technicals", "News", "Events", "F&O"].map((tab) => (
+                  <button 
+                    key={tab} 
+                    onClick={() => setActiveInfoTab(tab)}
+                    className={cn(
+                      "text-sm font-bold whitespace-nowrap pb-2 transition-all relative",
+                      activeInfoTab === tab ? "text-primary after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:w-full after:h-[2px] after:bg-primary" : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
+
+              <div className="min-h-[200px] pt-2">
+                {renderActiveTabContent()}
               </div>
             </div>
 
             {/* Create SIP Card */}
-            <Card className="glass-card border-border/40 bg-background/30 rounded-[1.2rem] p-6 group cursor-pointer hover:bg-muted/5 transition-colors">
+            <Card className="glass-card border-border/40 bg-background/30 rounded-[1.2rem] p-6 group cursor-pointer hover:bg-muted/5 transition-colors mt-8">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="size-10 rounded-xl bg-muted flex items-center justify-center">
@@ -427,27 +572,12 @@ export default function StockDetailPage() {
                   </div>
                   <div>
                     <h3 className="font-bold text-sm">Create Stock SIP</h3>
-                    <p className="text-xs text-muted-foreground">Automate your investments in this Stock</p>
+                    <p className="text-xs text-muted-foreground">Automate your investments in {stock.symbol}</p>
                   </div>
                 </div>
                 <ChevronRight className="size-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
               </div>
             </Card>
-
-            {/* Bottom Section Tabs */}
-            <div className="flex items-center gap-8 border-b border-border/40 pb-2 overflow-x-auto no-scrollbar">
-              {["Overview", "Technicals", "News", "Events", "F&O"].map((tab, i) => (
-                <button 
-                  key={tab} 
-                  className={cn(
-                    "text-sm font-bold whitespace-nowrap pb-2 transition-all relative",
-                    i === 0 ? "text-primary after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:w-full after:h-[2px] after:bg-primary" : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
           </div>
 
           {/* Trade Terminal Section */}
@@ -458,10 +588,9 @@ export default function StockDetailPage() {
                   <CardTitle className="text-lg font-bold">{stock.name}</CardTitle>
                 </div>
                 <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                  <span>NSE ₹{stock.price.toFixed(2)} (+{stock.change.toFixed(2)}%)</span>
+                  <span>NSE ₹{stock.price.toFixed(2)}</span>
                   <span>•</span>
                   <span>BSE ₹{(stock.price + 0.05).toFixed(2)}</span>
-                  <span className="text-primary hover:underline cursor-pointer">Depth</span>
                 </div>
               </CardHeader>
               
@@ -490,7 +619,7 @@ export default function StockDetailPage() {
 
                 {/* Trade Type Options */}
                 <div className="flex gap-2 p-1 bg-muted/40 rounded-full border border-border/30">
-                  {["Delivery", "Intraday", "MTF 4.11x"].map(mode => (
+                  {["Delivery", "Intraday", "MTF"].map(mode => (
                     <button 
                       key={mode}
                       onClick={() => setTradeMode(mode)}
@@ -507,9 +636,7 @@ export default function StockDetailPage() {
                 {/* Input Fields */}
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-muted-foreground flex items-center gap-1 cursor-pointer">
-                      Qty <span className="text-[10px] font-black uppercase text-foreground">NSE</span> <ChevronRight className="size-3 rotate-90" />
-                    </label>
+                    <label className="text-xs font-bold text-muted-foreground">Qty</label>
                     <Input 
                       type="number" 
                       value={qty} 
@@ -518,9 +645,7 @@ export default function StockDetailPage() {
                     />
                   </div>
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-muted-foreground flex items-center gap-1 cursor-pointer">
-                      Price <span className="text-[10px] font-black uppercase text-foreground">Limit</span> <ChevronRight className="size-3 rotate-90" />
-                    </label>
+                    <label className="text-xs font-bold text-muted-foreground">Price</label>
                     <Input 
                       type="number" 
                       value={price} 
@@ -533,7 +658,7 @@ export default function StockDetailPage() {
                 <div className="pt-8 border-t border-border/40 space-y-4">
                   <div className="flex justify-between items-center text-[10px] font-bold px-1">
                     <span className="text-muted-foreground">Balance : ₹{userBalance.toLocaleString()}</span>
-                    <span className="text-muted-foreground">Approx req. : <span className="text-foreground border-b border-dotted border-muted-foreground">₹{(parseFloat(qty || '0') * parseFloat(price || '0')).toLocaleString()}</span></span>
+                    <span className="text-muted-foreground">Total : <span className="text-foreground">₹{(parseFloat(qty || '0') * parseFloat(price || '0')).toLocaleString()}</span></span>
                   </div>
                   <Button 
                     className={cn(
