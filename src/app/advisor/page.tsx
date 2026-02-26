@@ -23,7 +23,8 @@ import {
   ArrowUpRight, 
   ArrowDownRight,
   TrendingDown,
-  Globe
+  Globe,
+  Search
 } from "lucide-react"
 import { 
   AreaChart, 
@@ -89,7 +90,7 @@ export default function AdvisorPage() {
       setMessages(history.map(m => ({ role: m.role, content: m.content, timestamp: m.timestamp })))
     } else if (history && history.length === 0 && !isHistoryLoading) {
       setMessages([
-        { role: 'assistant', content: "Welcome to **QuantumF AI**. I am directly connected to the **Ollama (Llama 3)** model to provide expert answers for all stock market and financial questions. How can I help you optimize your wealth today?" }
+        { role: 'assistant', content: "Welcome to **QuantumF AI**. My reasoning engine is configured to research your questions and collect all relevant information before responding. How can I help you optimize your wealth today?" }
       ])
     }
   }, [history, isHistoryLoading])
@@ -125,7 +126,7 @@ export default function AdvisorPage() {
     } catch (error) {
       addDocumentNonBlocking(userMsgRef, {
         role: 'assistant',
-        content: "I'm having difficulty connecting to my Ollama intelligence layer right now. Please ensure your configuration is active or try again in a few moments.",
+        content: "I encountered a communication error with my research intelligence layer. Please verify your connection or try again shortly.",
         timestamp: serverTimestamp()
       })
     } finally {
@@ -155,21 +156,21 @@ export default function AdvisorPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-4">
           <div className="space-y-1">
             <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-headline font-black uppercase tracking-tighter">Intelligence Terminal</h1>
+              <h1 className="text-3xl font-headline font-black uppercase tracking-tighter text-foreground">Intelligence Terminal</h1>
               <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full">
-                <Zap className="size-3 fill-primary mr-1 inline animate-pulse" /> Ollama Active
+                <Search className="size-3 mr-1 inline animate-pulse" /> Research Mode
               </Badge>
             </div>
             <p className="text-muted-foreground text-xs font-medium">
-              QuantumF AI is directly connected to the Ollama (Llama 3) engine for professional financial reasoning.
+              QuantumF AI researches your questions and collects all information before outputting a professional strategy.
             </p>
           </div>
           <div className="flex items-center gap-4 bg-muted/30 border border-border/50 px-6 py-2.5 rounded-2xl">
             <div className="flex items-center gap-2 pr-4 border-r border-border/50">
               <span className="size-2 bg-green-500 rounded-full animate-pulse"></span>
-              <span className="text-[10px] font-black text-foreground uppercase tracking-widest">Market Pulse</span>
+              <span className="text-[10px] font-black text-foreground uppercase tracking-widest">Research Sync</span>
             </div>
-            <div className="text-[10px] font-black text-primary uppercase tracking-widest">Sync: 100%</div>
+            <div className="text-[10px] font-black text-primary uppercase tracking-widest">Status: Ready</div>
           </div>
         </div>
 
@@ -233,7 +234,7 @@ export default function AdvisorPage() {
                         <span className="size-2 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]"></span>
                         <span className="size-2 bg-primary rounded-full animate-bounce"></span>
                       </div>
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Ollama Processing...</span>
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">QuantumF Researching...</span>
                     </div>
                   </div>
                 )}
@@ -262,7 +263,7 @@ export default function AdvisorPage() {
                 <Input 
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="Ask about stock markets or finance (Powered by Ollama)..." 
+                  placeholder="Ask a question for QuantumF to research..." 
                   className="pr-16 h-16 bg-background border-border/50 rounded-2xl focus-visible:ring-primary/40 text-lg shadow-xl"
                 />
                 <Button 
@@ -278,7 +279,7 @@ export default function AdvisorPage() {
                 <div className="flex items-center gap-2">
                   <Info className="size-3 text-muted-foreground" />
                   <p className="text-[9px] text-muted-foreground uppercase font-black tracking-widest">
-                    Direct Ollama (Llama 3) connection
+                    AI researches and collects information before outputting
                   </p>
                 </div>
               </div>

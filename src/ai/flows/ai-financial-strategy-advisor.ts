@@ -1,8 +1,9 @@
 
 'use server';
 /**
- * @fileOverview QuantumF AI Financial Advisor flow powered by Ollama (Llama 3) intelligence.
- * This flow provides professional, data-driven financial advice using the SiliconFlow Llama 3 endpoint.
+ * @fileOverview QuantumF AI Financial Advisor flow powered by high-performance reasoning models.
+ * This flow implements a "Research & Collect" strategy where the AI aggregates 
+ * information before providing a synthesized financial output.
  *
  * - aiFinancialStrategyAdvisor - Entry point for the AI advisor process.
  * - AiFinancialAdvisorInput - Input schema for queries and context.
@@ -20,7 +21,7 @@ async function getMarketContext() {
     const res = await fetch(`https://finnhub.io/api/v1/news?category=general&token=${FINNHUB_API_KEY}`);
     if (!res.ok) return "N/A";
     const data = await res.json();
-    return Array.isArray(data) ? data.slice(0, 5).map((n: any) => n.headline).join(' | ') : "N/A";
+    return Array.isArray(data) ? data.slice(0, 8).map((n: any) => `[${n.source}] ${n.headline}`).join(' | ') : "N/A";
   } catch (e) {
     return "N/A";
   }
@@ -52,22 +53,29 @@ const aiFinancialStrategyAdvisorFlow = ai.defineFlow(
     try {
       const marketNews = await getMarketContext();
 
-      const systemPrompt = `You are QuantumF AI, a high-performance Financial Strategy Advisor powered by Ollama (Llama 3).
-Your mission is to provide professional, data-driven financial advice for QuantumF platform users.
+      const systemPrompt = `You are QuantumF AI, a high-performance Financial Reasoning Engine. 
+Your mission is to perform a "Research & Synthesize" process for every query.
 
-REAL-TIME CONTEXT:
-Latest Headlines: ${marketNews}
-User Portfolio: ${input.portfolioData || 'No active holdings'}
-Learning Status: ${input.learningProgress || 'Just starting'}
+STEP 1: RESEARCH
+Analyze the user's input: "${input.userQuery}"
+Cross-reference with provided REAL-TIME CONTEXT:
+- Latest Market Intel: ${marketNews}
+- User Portfolio Snapshot: ${input.portfolioData || 'Empty Portfolio'}
+- User Learning Level: ${input.learningProgress || 'Novice'}
+
+STEP 2: COLLECT & AGGREGATE
+Identify all relevant financial factors, stock symbols, and economic indicators. Gather and weigh the information provided in the context against the user's specific question.
+
+STEP 3: OUTPUT
+Provide a professional, data-driven response that demonstrates you have "collected all information" before answering.
 
 GUIDELINES:
-1. QUANTUMF BRAND: Always identify as QuantumF AI.
-2. PROFESSIONAL: Use clear, analytical, and supportive language.
-3. CONTEXTUAL: Reference the user's portfolio if provided.
-4. DISCLAIMER: Always state that this is for educational purposes and not official financial advice.
-5. FORMATTING: Use Markdown. Bold stock tickers (e.g., **AAPL**, **NVDA**).`;
+1. Identify as QuantumF AI Reasoning Layer.
+2. Use Markdown formatting. **Bold** all stock tickers (e.g., **AAPL**).
+3. Be analytical but supportive.
+4. Always include a disclaimer that this is educational information, not financial advice.`;
 
-      // Use SiliconFlow OpenAI-compatible endpoint for Llama 3 (Ollama grade)
+      // Using deepseek-ai/DeepSeek-V3 for its high-performance reasoning/thinking capabilities
       const response = await fetch('https://api.siliconflow.cn/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -75,12 +83,14 @@ GUIDELINES:
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: 'deepseek-ai/DeepSeek-V3', // High-performance reasoning model
+          model: 'deepseek-ai/DeepSeek-V3',
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: input.userQuery }
           ],
-          stream: false
+          stream: false,
+          max_tokens: 2000,
+          temperature: 0.3 // Lower temperature for more consistent analytical reasoning
         })
       });
 
@@ -92,13 +102,13 @@ GUIDELINES:
       const text = data.choices?.[0]?.message?.content;
 
       if (!text) {
-        throw new Error("AI failed to generate a response text.");
+        throw new Error("Reasoning Engine failed to produce output.");
       }
 
       return { response: text };
     } catch (error: any) {
       console.error("Advisor Flow Error:", error);
-      return { response: "I encountered a communication error with my Ollama intelligence layer. Please verify your connection or try again shortly." };
+      return { response: "I encountered a communication error with my research intelligence layer. Please verify your connection or try again shortly." };
     }
   }
 );
