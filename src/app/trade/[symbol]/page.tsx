@@ -27,11 +27,18 @@ import {
   Activity,
   Newspaper,
   History,
-  Target
+  Target,
+  Layout,
+  MousePointer2,
+  Maximize2,
+  Settings2,
+  ChevronDown,
+  Crosshair,
+  BarChart3,
+  Flame,
+  Link2
 } from "lucide-react"
 import { 
-  AreaChart, 
-  Area, 
   XAxis, 
   YAxis, 
   CartesianGrid, 
@@ -39,7 +46,8 @@ import {
   ResponsiveContainer,
   Bar,
   ComposedChart,
-  Cell
+  Cell,
+  BarChart
 } from "recharts"
 import { MOCK_STOCKS, MOCK_NEWS } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
@@ -51,51 +59,31 @@ import { FirestorePermissionError } from "@/firebase/errors"
 
 const FINNHUB_API_KEY = "d6g3c49r01qqnmbqk10gd6g3c49r01qqnmbqk110";
 
-type Timeframe = "1D" | "1W" | "1M" | "3M" | "6M" | "1Y" | "5Y" | "All";
+type Timeframe = "1D" | "5D" | "1M" | "3M" | "6M" | "1Y";
 
 const generateChartData = (basePrice: number, isBullish: boolean, timeframe: Timeframe) => {
   let points = 60;
-  let intervalMinutes = 5;
-  
   switch(timeframe) {
-    case "1D": points = 78; intervalMinutes = 5; break;
-    case "1W": points = 40; intervalMinutes = 180; break;
-    case "1M": points = 30; intervalMinutes = 1440; break;
-    case "3M": points = 90; intervalMinutes = 1440; break;
-    case "6M": points = 120; intervalMinutes = 1440; break;
-    case "1Y": points = 100; intervalMinutes = 4320; break;
-    case "5Y": points = 120; intervalMinutes = 21600; break;
-    case "All": points = 150; intervalMinutes = 43200; break;
+    case "1D": points = 78; break;
+    case "5D": points = 40; break;
     default: points = 60;
   }
 
-  let currentPrice = basePrice * (isBullish ? 0.96 : 1.04);
-  const startTime = new Date();
+  let currentPrice = basePrice * (isBullish ? 0.98 : 1.02);
   
   return Array.from({ length: points }, (_, i) => {
-    const volatility = basePrice * 0.02; 
-    const trend = isBullish ? (basePrice * 0.08) / points : -(basePrice * 0.08) / points;
-    
+    const volatility = basePrice * 0.015; 
     const open = currentPrice;
-    const change = (Math.random() - 0.45) * volatility + trend;
+    const change = (Math.random() - 0.48) * volatility;
     const close = open + change;
-    
-    // Hammer style wicks logic: very thin long wicks, smaller bodies
-    const wickHigh = Math.random() * (volatility * 2);
-    const wickLow = Math.random() * (volatility * 2.5); 
-    
-    const high = Math.max(open, close) + wickHigh;
-    const low = Math.min(open, close) - wickLow;
+    const high = Math.max(open, close) + Math.random() * (volatility * 0.5);
+    const low = Math.min(open, close) - Math.random() * (volatility * 0.5);
     
     currentPrice = close;
-    const candleUp = close >= open;
-    const timeLabel = new Date(startTime.getTime() - (points - i) * intervalMinutes * 60000);
+    const isUp = close >= open;
     
     return {
       time: i,
-      label: timeframe === "1D" 
-        ? timeLabel.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
-        : timeLabel.toLocaleDateString([], { month: 'short', day: 'numeric' }),
       open,
       high,
       low,
@@ -103,13 +91,18 @@ const generateChartData = (basePrice: number, isBullish: boolean, timeframe: Tim
       body: [open, close],
       wick: [low, high],
       price: close,
-      isUp: candleUp,
-      color: candleUp ? "hsl(var(--primary))" : "hsl(var(--destructive))",
+      color: isUp ? "#26a69a" : "#ef5350",
     };
   })
 }
 
-export default function StockDetailPage() {
+const MOCK_OI_DATA = Array.from({ length: 15 }, (_, i) => ({
+  strike: 25300 + (i * 50),
+  callOI: Math.random() * 100,
+  putOI: Math.random() * 100,
+}));
+
+export default function StockTerminalPage() {
   const params = useParams()
   const router = useRouter()
   const { toast } = useToast()
@@ -119,32 +112,24 @@ export default function StockDetailPage() {
   
   const initialStock = MOCK_STOCKS.find(s => s.symbol === symbol) || MOCK_STOCKS[0]
   const [stock, setStock] = React.useState(initialStock)
-  const [isLoading, setIsLoading] = React.useState(true)
   const [isMounted, setIsMounted] = React.useState(false)
   const [activeOrderTab, setActiveOrderTab] = React.useState("BUY")
-  const [activeInfoTab, setActiveInfoTab] = React.useState("Overview")
   const [qty, setQty] = React.useState("1")
   const [price, setPrice] = React.useState(initialStock.price.toString())
-  const [chartType, setChartType] = React.useState<'area' | 'candle'>('candle')
   const [timeframe, setTimeframe] = React.useState<Timeframe>("1D")
   const [userBalance, setUserBalance] = React.useState<number>(0)
-  const [tradeMode, setTradeMode] = React.useState("Delivery")
   
   const isUp = stock.change >= 0;
-  const trendColor = isUp ? "hsl(var(--primary))" : "hsl(var(--destructive))";
   
   const chartData = React.useMemo(() => {
     if (!isMounted) return [];
     return generateChartData(stock.price, isUp, timeframe);
   }, [stock.price, isUp, timeframe, isMounted])
 
-  const watchlistDocRef = React.useMemo(() => {
-    if (!db || !user) return null
-    return doc(db, 'users', user.uid, 'watchlist', symbol)
-  }, [db, user, symbol])
-  
-  const { data: watchlistItem } = useDoc(watchlistDocRef)
-  const isWatched = !!watchlistItem
+  const chartDataSecondary = React.useMemo(() => {
+    if (!isMounted) return [];
+    return generateChartData(stock.price * 0.8, !isUp, timeframe);
+  }, [stock.price, isUp, timeframe, isMounted])
 
   React.useEffect(() => {
     setIsMounted(true);
@@ -156,9 +141,7 @@ export default function StockDetailPage() {
         if (userSnap.exists()) {
           setUserBalance(userSnap.data().balance || 0)
         }
-      } catch (err) {
-        // Silent error for user data
-      }
+      } catch (err) {}
     }
     fetchUserData()
   }, [db, user])
@@ -178,15 +161,7 @@ export default function StockDetailPage() {
           setPrice(data.c.toString())
         }
       }
-    } catch (error) {
-      const drift = (Math.random() - 0.5) * 0.1;
-      setStock(prev => ({
-        ...prev,
-        price: +(prev.price + drift).toFixed(2)
-      }))
-    } finally {
-      setIsLoading(false)
-    }
+    } catch (error) {}
   }, [symbol])
 
   React.useEffect(() => {
@@ -211,467 +186,252 @@ export default function StockDetailPage() {
 
     try {
       if (activeOrderTab === "BUY") {
-        const holdingSnap = await getDoc(holdingRef)
-        if (holdingSnap.exists()) {
-          const currentData = holdingSnap.data()
-          const newQty = (currentData.quantity || 0) + orderQty
-          const newAvgPrice = ((currentData.averagePrice * currentData.quantity) + totalCost) / newQty
-          updateDoc(holdingRef, { quantity: newQty, averagePrice: newAvgPrice, lastUpdated: serverTimestamp() })
-        } else {
+        updateDoc(holdingRef, { 
+          symbol, 
+          quantity: increment(orderQty), 
+          averagePrice: orderPrice, 
+          lastUpdated: serverTimestamp() 
+        }).catch(() => {
           setDoc(holdingRef, { symbol, quantity: orderQty, averagePrice: orderPrice, lastUpdated: serverTimestamp() })
-        }
+        })
         updateDoc(userRef, { balance: increment(-totalCost) })
         setUserBalance(prev => prev - totalCost)
       } else {
-        const holdingSnap = await getDoc(holdingRef)
-        if (!holdingSnap.exists() || (holdingSnap.data().quantity || 0) < orderQty) {
-          toast({ title: "Insufficient Quantity", variant: "destructive" })
-          return
-        }
-        const newQty = holdingSnap.data().quantity - orderQty
-        if (newQty === 0) {
-          deleteDoc(holdingRef)
-        } else {
-          updateDoc(holdingRef, { quantity: newQty, lastUpdated: serverTimestamp() })
-        }
+        updateDoc(holdingRef, { quantity: increment(-orderQty), lastUpdated: serverTimestamp() })
         updateDoc(userRef, { balance: increment(totalCost) })
         setUserBalance(prev => prev + totalCost)
       }
 
-      toast({
-        title: `${activeOrderTab} Order Successful`,
-        description: `${orderQty} units of ${symbol} processed.`,
-      })
+      toast({ title: `${activeOrderTab} Order Successful`, description: `${orderQty} units processed.` })
     } catch (e) {
       errorEmitter.emit('permission-error', new FirestorePermissionError({ path: holdingRef.path, operation: 'write' }))
     }
   }
 
-  const toggleWatchlist = async () => {
-    if (!user || !watchlistDocRef) return
-    try {
-      if (isWatched) {
-        deleteDoc(watchlistDocRef)
-      } else {
-        setDoc(watchlistDocRef, { symbol, addedAt: serverTimestamp() })
-      }
-    } catch (e) {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({ path: watchlistDocRef.path, operation: 'write' }))
-    }
-  }
-
-  const renderActiveTabContent = () => {
-    switch (activeInfoTab) {
-      case "Overview":
-        return (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 animate-in fade-in duration-500">
-            <div className="space-y-1">
-              <span className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">Market Cap</span>
-              <p className="font-bold text-sm">₹{((stock.price * 100000) / 100).toFixed(2)} Cr</p>
-            </div>
-            <div className="space-y-1">
-              <span className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">P/E Ratio</span>
-              <p className="font-bold text-sm">24.52</p>
-            </div>
-            <div className="space-y-1">
-              <span className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">52W High</span>
-              <p className="font-bold text-sm text-primary">₹{(stock.price * 1.25).toFixed(2)}</p>
-            </div>
-            <div className="space-y-1">
-              <span className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">52W Low</span>
-              <p className="font-bold text-sm text-destructive">₹{(stock.price * 0.75).toFixed(2)}</p>
-            </div>
-            <div className="col-span-full pt-4">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">About {stock.name}</h4>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {stock.name} ({stock.symbol}) is a leading player in the {stock.category} sector. The company has shown consistent growth with a market focus on innovation and sustainable expansion. Recent quarterly reports indicate a strong balance sheet with healthy cash flows.
-              </p>
-            </div>
-          </div>
-        )
-      case "Technicals":
-        return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in duration-500">
-            <Card className="bg-muted/20 border-border/40 p-6 space-y-4">
-              <h4 className="text-sm font-black uppercase flex items-center gap-2">
-                <Activity className="size-4 text-primary" /> Moving Averages
-              </h4>
-              <div className="space-y-3">
-                {[
-                  { label: "MA (20)", value: stock.price * 0.98, signal: "BUY" },
-                  { label: "MA (50)", value: stock.price * 0.95, signal: "STRONG BUY" },
-                  { label: "MA (200)", value: stock.price * 0.88, signal: "BUY" },
-                ].map(ma => (
-                  <div key={ma.label} className="flex justify-between items-center text-xs">
-                    <span className="text-muted-foreground">{ma.label}</span>
-                    <div className="flex gap-4">
-                      <span className="font-bold">₹{ma.value.toFixed(2)}</span>
-                      <Badge variant="outline" className="text-[9px] border-primary/20 text-primary">{ma.signal}</Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-            <Card className="bg-muted/20 border-border/40 p-6 space-y-4">
-              <h4 className="text-sm font-black uppercase flex items-center gap-2">
-                <Target className="size-4 text-primary" /> Oscillators
-              </h4>
-              <div className="space-y-3">
-                {[
-                  { label: "RSI (14)", value: "62.45", signal: "NEUTRAL" },
-                  { label: "MACD (12, 26)", value: "Bullish", signal: "BUY" },
-                  { label: "Stochastic %K", value: "78.10", signal: "OVERBOUGHT" },
-                ].map(osc => (
-                  <div key={osc.label} className="flex justify-between items-center text-xs">
-                    <span className="text-muted-foreground">{osc.label}</span>
-                    <div className="flex gap-4">
-                      <span className="font-bold">{osc.value}</span>
-                      <Badge variant="outline" className={cn("text-[9px]", osc.signal === "NEUTRAL" ? "text-muted-foreground" : "text-primary")}>{osc.signal}</Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          </div>
-        )
-      case "News":
-        return (
-          <div className="space-y-4 animate-in fade-in duration-500">
-            {MOCK_NEWS.map((n) => (
-              <div key={n.id} className="group cursor-pointer p-4 hover:bg-muted/20 rounded-xl transition-colors border border-transparent hover:border-border/40">
-                <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase mb-1">
-                  <Newspaper className="size-3" /> {n.source} • {n.time}
-                </div>
-                <h4 className="text-sm font-bold group-hover:text-primary transition-colors">{n.title}</h4>
-              </div>
+  const TerminalChart = ({ data, height = 300, title }: { data: any, height?: number, title?: string }) => (
+    <div className="bg-[#0d1117] border border-[#21262d] rounded-sm relative flex flex-col group overflow-hidden">
+      <div className="flex items-center justify-between px-3 py-2 bg-[#161b22] border-b border-[#21262d]">
+        <div className="flex items-center gap-3">
+          <span className="text-[10px] font-bold text-gray-300 uppercase tracking-tight">{title || symbol}</span>
+          <div className="flex items-center gap-1">
+            {["1D", "5D", "1M"].map(t => (
+              <button 
+                key={t} 
+                onClick={() => setTimeframe(t as Timeframe)}
+                className={cn("text-[9px] px-1.5 py-0.5 rounded-sm font-bold", timeframe === t ? "bg-primary/20 text-primary" : "text-gray-500 hover:text-gray-300")}
+              >
+                {t}
+              </button>
             ))}
           </div>
-        )
-      case "Events":
-        return (
-          <div className="space-y-6 animate-in fade-in duration-500">
-            <div className="flex items-center gap-6 p-4 bg-muted/20 rounded-2xl">
-              <div className="size-12 rounded-xl bg-background flex flex-col items-center justify-center border border-border/40">
-                <span className="text-[10px] font-bold text-muted-foreground uppercase">Mar</span>
-                <span className="text-lg font-black">28</span>
-              </div>
-              <div>
-                <h4 className="text-sm font-bold">Earnings Report Q4</h4>
-                <p className="text-xs text-muted-foreground">Estimate: ₹12.45 per share</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-6 p-4 bg-muted/20 rounded-2xl">
-              <div className="size-12 rounded-xl bg-background flex flex-col items-center justify-center border border-border/40">
-                <span className="text-[10px] font-bold text-muted-foreground uppercase">Apr</span>
-                <span className="text-lg font-black">12</span>
-              </div>
-              <div>
-                <h4 className="text-sm font-bold">Dividend Payment</h4>
-                <p className="text-xs text-muted-foreground">₹2.50 per share declared</p>
-              </div>
-            </div>
-          </div>
-        )
-      case "F&O":
-        return (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in duration-500">
-             <Card className="p-6 bg-muted/10 border-border/40 text-center">
-              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Open Interest</span>
-              <div className="text-xl font-black mt-1">4.2M</div>
-              <Badge className="mt-2 bg-green-500/10 text-green-500 border-none">+12.4%</Badge>
-            </Card>
-            <Card className="p-6 bg-muted/10 border-border/40 text-center">
-              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">PCR Ratio</span>
-              <div className="text-xl font-black mt-1">0.98</div>
-              <p className="text-[10px] text-muted-foreground mt-2 uppercase font-bold">Bullish Bias</p>
-            </Card>
-            <Card className="p-6 bg-muted/10 border-border/40 text-center">
-              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Rollover</span>
-              <div className="text-xl font-black mt-1">78.5%</div>
-              <p className="text-[10px] text-muted-foreground mt-2 uppercase font-bold">Previous 74.2%</p>
-            </Card>
-          </div>
-        )
-      default:
-        return null
-    }
-  }
-
-  const ChartComponent = () => {
-    if (!isMounted) return <div className="h-full w-full flex items-center justify-center"><Loader2 className="animate-spin text-primary" /></div>;
-
-    return (
-      <ResponsiveContainer width="100%" height="100%">
-        {chartType === 'area' ? (
-          <AreaChart data={chartData} margin={{ top: 10, right: 70, left: 10, bottom: 0 }}>
-            <defs>
-              <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={trendColor} stopOpacity={0.2}/>
-                <stop offset="95%" stopColor={trendColor} stopOpacity={0}/>
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="1 4" vertical={false} stroke="hsl(var(--border))" opacity={0.3} />
-            <XAxis dataKey="label" hide={true} />
+        </div>
+        <div className="flex items-center gap-2">
+          <button className="text-gray-500 hover:text-primary"><Settings2 className="size-3" /></button>
+          <button className="text-gray-500 hover:text-primary"><Maximize2 className="size-3" /></button>
+        </div>
+      </div>
+      <div className={`h-[${height}px] w-full pt-4`}>
+        <ResponsiveContainer width="100%" height={height}>
+          <ComposedChart data={data} margin={{ top: 0, right: 40, left: 0, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#21262d" />
+            <XAxis dataKey="time" hide />
             <YAxis 
               orientation="right" 
               domain={['auto', 'auto']} 
               axisLine={false} 
               tickLine={false} 
-              tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-              tickFormatter={(val) => val.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              tick={{ fontSize: 9, fill: '#8b949e' }}
             />
             <Tooltip 
-              contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
-              formatter={(value: any) => [`₹${parseFloat(value).toFixed(2)}`, "Price"]}
-            />
-            <Area 
-              type="monotone" 
-              dataKey="price" 
-              stroke={trendColor} 
-              strokeWidth={2} 
-              fillOpacity={1} 
-              fill="url(#colorPrice)" 
-              animationDuration={800}
-            />
-          </AreaChart>
-        ) : (
-          <ComposedChart data={chartData} margin={{ top: 10, right: 70, left: 10, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="1 4" vertical={false} stroke="hsl(var(--border))" opacity={0.3} />
-            <XAxis dataKey="label" hide={true} />
-            <YAxis 
-              orientation="right" 
-              domain={['auto', 'auto']} 
-              axisLine={false} 
-              tickLine={false} 
-              tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-            />
-            <Tooltip 
-              contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
+              contentStyle={{ backgroundColor: '#161b22', border: '1px solid #30363d', borderRadius: '4px', fontSize: '10px' }}
+              itemStyle={{ padding: 0 }}
             />
             <Bar dataKey="wick" barSize={1}>
-              {chartData.map((entry: any, index: number) => (
-                <Cell key={`wick-${index}`} fill={entry.color} />
-              ))}
+              {data.map((entry: any, index: number) => <Cell key={`wick-${index}`} fill={entry.color} />)}
             </Bar>
-            <Bar dataKey="body" barSize={8}>
-              {chartData.map((entry: any, index: number) => (
-                <Cell key={`body-${index}`} fill={entry.color} />
-              ))}
+            <Bar dataKey="body" barSize={6}>
+              {data.map((entry: any, index: number) => <Cell key={`body-${index}`} fill={entry.color} />)}
             </Bar>
           </ComposedChart>
-        )}
-      </ResponsiveContainer>
-    );
-  }
+        </ResponsiveContainer>
+      </div>
+    </div>
+  )
+
+  if (!isMounted) return null;
 
   return (
     <DashboardShell>
-      <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="h-[calc(100vh-8rem)] flex flex-col bg-[#010409] -m-8 overflow-hidden text-gray-300">
         
-        {/* Top Header Section */}
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-          <div className="flex gap-4">
-            <div className="size-14 rounded-2xl bg-primary flex items-center justify-center shrink-0 shadow-lg text-white font-black text-2xl">
-              {symbol[0]}
+        {/* Terminal Top Bar */}
+        <div className="h-12 bg-[#161b22] border-b border-[#30363d] flex items-center justify-between px-4 shrink-0">
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2">
+              <div className="size-6 bg-primary rounded-sm flex items-center justify-center font-black text-white text-[10px]">FI</div>
+              <span className="font-bold text-xs uppercase tracking-tighter">Terminal</span>
             </div>
-            <div className="space-y-1">
-              <h1 className="text-3xl font-headline font-bold text-foreground">{stock.name}</h1>
-              <div className="flex items-center gap-4">
-                <div className={cn("text-2xl font-bold flex items-center gap-2", isUp ? "text-primary" : "text-destructive")}>
-                  ₹{stock.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                  <span className="text-sm font-bold">
-                    {isUp ? '+' : ''}{stock.change.toFixed(2)} ({stock.change.toFixed(2)}%)
-                  </span>
-                </div>
+            <div className="h-6 w-px bg-[#30363d]" />
+            <div className="flex items-center gap-4">
+              <button className="flex items-center gap-1.5 text-[10px] font-bold hover:text-white uppercase"><Layout className="size-3 text-primary" /> Layout <ChevronDown className="size-2" /></button>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-black text-white uppercase">{symbol}</span>
+                <span className={cn("text-xs font-bold", isUp ? "text-green-500" : "text-red-500")}>
+                  {stock.price.toFixed(2)} {isUp ? '▲' : '▼'} {stock.change.toFixed(2)}%
+                </span>
               </div>
             </div>
           </div>
           
-          <div className="flex items-center gap-3">
-             <Button variant="outline" size="sm" className="rounded-full gap-2 border-border/50 h-9">
-              <Bell className="size-4" /> Create Alert
-            </Button>
-            <Button 
-              variant={isWatched ? "secondary" : "outline"} 
-              size="sm"
-              onClick={toggleWatchlist} 
-              className="rounded-full gap-2 border-border/50 h-9"
-            >
-              {isWatched ? <BookmarkCheck className="size-4 fill-primary text-primary" /> : <Bookmark className="size-4" />}
-              Watchlist
-            </Button>
-            <div className="text-primary text-sm font-bold flex items-center gap-1 cursor-pointer hover:underline">
-              <Code className="size-4 rotate-45" /> Option Chain
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 bg-[#0d1117] rounded-full px-3 py-1 border border-[#30363d]">
+              <Flame className="size-3 text-orange-500" />
+              <span className="text-[10px] font-bold uppercase">1-Click OFF</span>
+              <div className="size-2 bg-gray-600 rounded-full" />
+            </div>
+            <div className="flex items-center gap-3">
+              {["Holdings", "Orders", "Positions"].map(t => (
+                <button key={t} className="text-[10px] font-bold uppercase hover:text-white flex items-center gap-1">{t} <ChevronDown className="size-2" /></button>
+              ))}
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+        <div className="flex flex-1 min-h-0 overflow-hidden">
           
-          {/* Main Chart Section */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="glass-card rounded-[1.5rem] bg-background/50 border-border/40 h-[450px] relative flex flex-col pt-4 overflow-hidden shadow-sm">
-              <div className="flex-1 min-h-0">
-                <ChartComponent />
-              </div>
-              
-              {/* Chart Controls Bar */}
-              <div className="border-t border-border/40 px-6 py-4 flex items-center justify-between bg-muted/5">
-                <div className="flex items-center gap-1">
-                  <Badge variant="outline" className="text-[10px] font-bold bg-muted/40 border-none mr-4">NSE</Badge>
-                  {["1D", "1W", "1M", "3M", "6M", "1Y", "5Y", "All"].map(t => (
-                    <button 
-                      key={t} 
-                      onClick={() => setTimeframe(t as Timeframe)} 
-                      className={cn(
-                        "size-8 flex items-center justify-center rounded-full text-[10px] font-black transition-all", 
-                        timeframe === t ? "bg-primary/10 text-primary border border-primary/20" : "text-muted-foreground hover:text-foreground"
-                      )}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                  <button 
-                    onClick={() => setChartType(chartType === 'area' ? 'candle' : 'area')}
-                    className="size-8 flex items-center justify-center rounded-full text-muted-foreground hover:text-primary transition-colors ml-2"
-                  >
-                    {chartType === 'area' ? <BarChart2 className="size-4" /> : <LineChartIcon className="size-4" />}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Create SIP Card - Moved after graph */}
-            <Card className="glass-card border-border/40 bg-background/30 rounded-[1.2rem] p-6 group cursor-pointer hover:bg-muted/5 transition-colors">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="size-10 rounded-xl bg-muted flex items-center justify-center">
-                    <Calendar className="size-5 text-muted-foreground" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-sm">Create Stock SIP</h3>
-                    <p className="text-xs text-muted-foreground">Automate your investments in {stock.symbol}</p>
-                  </div>
-                </div>
-                <ChevronRight className="size-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
-              </div>
-            </Card>
-
-            {/* Sub-Tabs Section */}
-            <div className="space-y-6">
-              <div className="flex items-center gap-8 border-b border-border/40 pb-2 overflow-x-auto no-scrollbar">
-                {["Overview", "Technicals", "News", "Events", "F&O"].map((tab) => (
-                  <button 
-                    key={tab} 
-                    onClick={() => setActiveInfoTab(tab)}
-                    className={cn(
-                      "text-sm font-bold whitespace-nowrap pb-2 transition-all relative",
-                      activeInfoTab === tab ? "text-primary after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:w-full after:h-[2px] after:bg-primary" : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    {tab}
-                  </button>
-                ))}
-              </div>
-
-              <div className="min-h-[200px] pt-2">
-                {renderActiveTabContent()}
-              </div>
+          {/* Left Vertical Toolbar */}
+          <div className="w-14 bg-[#0d1117] border-r border-[#30363d] flex flex-col items-center py-4 gap-6 shrink-0">
+            <button className="text-primary hover:bg-primary/10 p-2 rounded-lg transition-colors flex flex-col items-center gap-1">
+              <Zap className="size-5" />
+              <span className="text-[8px] font-bold uppercase">Scalper</span>
+            </button>
+            {[
+              { icon: Link2, label: "Options" },
+              { icon: TrendingUp, label: "Trade" },
+              { icon: BarChart3, label: "Market" },
+              { icon: History, label: "History" }
+            ].map((tool, i) => (
+              <button key={i} className="text-gray-500 hover:text-white hover:bg-white/5 p-2 rounded-lg transition-colors flex flex-col items-center gap-1">
+                <tool.icon className="size-5" />
+                <span className="text-[8px] font-bold uppercase">{tool.label}</span>
+              </button>
+            ))}
+            <div className="mt-auto flex flex-col gap-4 pb-4">
+              <button className="text-gray-500 hover:text-white"><Settings2 className="size-5" /></button>
+              <div className="size-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-black text-[10px]">S</div>
             </div>
           </div>
 
-          {/* Trade Terminal Section */}
-          <div className="lg:col-span-1">
-            <Card className="glass-card rounded-[1.5rem] border-border/40 bg-background shadow-xl sticky top-24 overflow-hidden">
-              <CardHeader className="p-6 border-b border-border/40 flex flex-col space-y-2">
-                <div className="flex justify-between items-center">
-                  <CardTitle className="text-lg font-bold">{stock.name}</CardTitle>
-                </div>
-                <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                  <span>NSE ₹{stock.price.toFixed(2)}</span>
-                  <span>•</span>
-                  <span>BSE ₹{(stock.price + 0.05).toFixed(2)}</span>
-                </div>
-              </CardHeader>
+          {/* Main Matrix Content */}
+          <div className="flex-1 flex overflow-hidden">
+            
+            {/* Charts Matrix Column */}
+            <div className="flex-1 flex flex-col gap-1 p-1 overflow-y-auto custom-scrollbar">
+              <TerminalChart data={chartData} height={350} title={`${symbol} Main`} />
+              <TerminalChart data={chartDataSecondary} height={250} title={`${symbol} (Put) 25600`} />
               
-              <CardContent className="p-6 space-y-8">
-                {/* Buy/Sell Tabs */}
-                <div className="flex items-center border-b border-border/40 mb-6">
-                  <button 
-                    onClick={() => setActiveOrderTab("BUY")}
-                    className={cn(
-                      "flex-1 pb-3 text-sm font-black transition-all relative",
-                      activeOrderTab === "BUY" ? "text-primary after:content-[''] after:absolute after:bottom-[-1px] after:left-1/4 after:w-1/2 after:h-[2px] after:bg-primary" : "text-muted-foreground"
-                    )}
-                  >
-                    BUY
-                  </button>
-                  <button 
-                    onClick={() => setActiveOrderTab("SELL")}
-                    className={cn(
-                      "flex-1 pb-3 text-sm font-black transition-all relative",
-                      activeOrderTab === "SELL" ? "text-destructive after:content-[''] after:absolute after:bottom-[-1px] after:left-1/4 after:w-1/2 after:h-[2px] after:bg-destructive" : "text-muted-foreground"
-                    )}
-                  >
-                    SELL
-                  </button>
-                </div>
-
-                {/* Trade Type Options */}
-                <div className="flex gap-2 p-1 bg-muted/40 rounded-full border border-border/30">
-                  {["Delivery", "Intraday", "MTF"].map(mode => (
-                    <button 
-                      key={mode}
-                      onClick={() => setTradeMode(mode)}
-                      className={cn(
-                        "flex-1 py-1.5 text-[10px] font-bold rounded-full transition-all",
-                        tradeMode === mode ? "bg-background shadow-sm text-foreground border border-border/40" : "text-muted-foreground hover:text-foreground"
-                      )}
-                    >
-                      {mode}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Input Fields */}
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-muted-foreground">Qty</label>
-                    <Input 
-                      type="number" 
-                      value={qty} 
-                      onChange={(e) => setQty(e.target.value)} 
-                      className="w-32 h-10 text-right font-bold bg-muted/20 border-border/40 rounded-lg" 
-                    />
+              {/* Terminal Quick Trade HUD */}
+              <div className="bg-[#161b22] border border-[#30363d] rounded-sm p-4 flex items-center justify-between">
+                <div className="flex items-center gap-8">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold uppercase text-gray-500">Qty</span>
+                    <Input value={qty} onChange={e => setQty(e.target.value)} className="w-20 h-8 bg-[#0d1117] border-[#30363d] text-[10px] font-bold text-center" />
                   </div>
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-muted-foreground">Price</label>
-                    <Input 
-                      type="number" 
-                      value={price} 
-                      onChange={(e) => setPrice(e.target.value)} 
-                      className="w-32 h-10 text-right font-bold bg-muted/20 border-border/40 rounded-lg" 
-                    />
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold uppercase text-gray-500">Price</span>
+                    <Input value={price} onChange={e => setPrice(e.target.value)} className="w-24 h-8 bg-[#0d1117] border-[#30363d] text-[10px] font-bold text-center" />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button onClick={() => { setActiveOrderTab("BUY"); handleOrder(); }} className="bg-[#26a69a] hover:bg-[#2bbbad] text-white font-black text-[10px] px-8 h-8 uppercase">Buy</Button>
+                  <Button onClick={() => { setActiveOrderTab("SELL"); handleOrder(); }} className="bg-[#ef5350] hover:bg-[#ff5252] text-white font-black text-[10px] px-8 h-8 uppercase">Sell</Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Analysis Panel */}
+            <div className="w-80 bg-[#0d1117] border-l border-[#30363d] flex flex-col shrink-0">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-[#30363d]">
+                <h3 className="text-[10px] font-bold uppercase text-white flex items-center gap-2"><BarChart2 className="size-3 text-primary" /> OI Analysis</h3>
+                <div className="flex gap-2">
+                  <Maximize2 className="size-3 text-gray-500 cursor-pointer" />
+                  <Crosshair className="size-3 text-gray-500 cursor-pointer" />
+                </div>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-4 space-y-8 custom-scrollbar">
+                
+                {/* OI Distribution Chart */}
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] font-bold uppercase text-gray-400">Open Interest (Tue, 01 Jul)</span>
+                    <span className="text-[9px] text-gray-500 uppercase">Expiry 03 Jul</span>
+                  </div>
+                  <div className="h-48 w-full bg-[#161b22] border border-[#21262d] rounded-sm p-2">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={MOCK_OI_DATA}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#21262d" />
+                        <XAxis dataKey="strike" hide />
+                        <Tooltip contentStyle={{ backgroundColor: '#0d1117', fontSize: '10px' }} />
+                        <Bar dataKey="callOI" fill="#ef5350" radius={[2, 2, 0, 0]} />
+                        <Bar dataKey="putOI" fill="#26a69a" radius={[2, 2, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="flex justify-between text-[9px] font-bold pt-1">
+                    <span className="text-red-400">Total Call OI: 6.00Cr</span>
+                    <span className="text-white">PCR: 1.36</span>
+                    <span className="text-green-400">Total Put OI: 4.42Cr</span>
                   </div>
                 </div>
 
-                <div className="pt-8 border-t border-border/40 space-y-4">
-                  <div className="flex justify-between items-center text-[10px] font-bold px-1">
-                    <span className="text-muted-foreground">Balance : ₹{userBalance.toLocaleString()}</span>
-                    <span className="text-muted-foreground">Total : <span className="text-foreground">₹{(parseFloat(qty || '0') * parseFloat(price || '0')).toLocaleString()}</span></span>
+                {/* OI Change Chart */}
+                <div className="space-y-2 pt-4 border-t border-[#21262d]">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] font-bold uppercase text-gray-400">OI Change (1D)</span>
                   </div>
-                  <Button 
-                    className={cn(
-                      "w-full h-12 rounded-xl text-sm font-black transition-all shadow-lg active:scale-[0.98] tracking-widest uppercase", 
-                      activeOrderTab === "BUY" ? "bg-primary text-primary-foreground shadow-primary/20" : "bg-destructive text-destructive-foreground shadow-destructive/20"
-                    )}
-                    onClick={handleOrder}
-                  >
-                    {activeOrderTab === "BUY" ? "Buy" : "Sell"}
-                  </Button>
+                  <div className="h-48 w-full bg-[#161b22] border border-[#21262d] rounded-sm p-2">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={MOCK_OI_DATA}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#21262d" />
+                        <XAxis dataKey="strike" hide />
+                        <Bar dataKey="callOI" fill="#ef5350" />
+                        <Bar dataKey="putOI" fill="#26a69a" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {["5 Min", "10 Min", "15 Min", "Full Day"].map(t => (
+                      <button key={t} className="bg-[#21262d] text-[9px] py-1 font-bold rounded-sm border border-[#30363d] hover:bg-[#30363d]">{t}</button>
+                    ))}
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
+
+                <div className="space-y-3 pt-4 border-t border-[#21262d]">
+                  <h4 className="text-[10px] font-bold uppercase text-primary">Market Alerts</h4>
+                  <div className="bg-primary/5 border border-primary/20 p-3 rounded-sm">
+                    <p className="text-[10px] leading-tight italic">Heavy Call unwinding noticed at 25500 strike. Bullish momentum expected.</p>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* Far Right Sidebar Tabs */}
+            <div className="w-12 bg-[#0d1117] border-l border-[#30363d] flex flex-col py-4 gap-8 shrink-0">
+              {[
+                { icon: Bookmark, label: "WL" },
+                { icon: Search, label: "SC" },
+                { icon: BarChart3, label: "OI" },
+                { icon: Code, label: "OC" }
+              ].map((tab, i) => (
+                <button key={i} className="text-gray-500 hover:text-primary transition-colors flex flex-col items-center gap-1">
+                  <tab.icon className="size-4" />
+                  <span className="text-[7px] font-black uppercase">{tab.label}</span>
+                </button>
+              ))}
+            </div>
+
           </div>
         </div>
       </div>
