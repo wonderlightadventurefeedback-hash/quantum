@@ -18,7 +18,8 @@ import {
   ChevronDown,
   Info,
   Zap,
-  Layout
+  Layout,
+  Loader2
 } from "lucide-react"
 import { 
   AreaChart, 
@@ -33,6 +34,8 @@ import { MOCK_STOCKS, MOCK_USER } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 
+const FINNHUB_API_KEY = "d6g3c49r01qqnmbqk10gd6g3c49r01qqnmbqk110";
+
 // Range Bar component for Today's and 52W Low/High
 const RangeBar = ({ low, high, current, labelLow, labelHigh }: { low: number, high: number, current: number, labelLow: string, labelHigh: string }) => {
   const percentage = ((current - low) / (high - low)) * 100;
@@ -41,11 +44,11 @@ const RangeBar = ({ low, high, current, labelLow, labelHigh }: { low: number, hi
       <div className="flex justify-between items-end">
         <div className="flex flex-col gap-1">
           <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{labelLow}</span>
-          <span className="text-sm font-bold">{low.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+          <span className="text-sm font-bold">₹{low.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
         </div>
         <div className="flex flex-col gap-1 items-end">
           <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{labelHigh}</span>
-          <span className="text-sm font-bold">{high.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+          <span className="text-sm font-bold">₹{high.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
         </div>
       </div>
       <div className="relative h-[2px] w-full bg-muted/50 rounded-full">
@@ -72,16 +75,46 @@ export default function StockDetailPage() {
   const { toast } = useToast()
   const symbol = params.symbol as string
   
-  const stock = MOCK_STOCKS.find(s => s.symbol === symbol) || MOCK_STOCKS[0]
+  const initialStock = MOCK_STOCKS.find(s => s.symbol === symbol) || MOCK_STOCKS[0]
+  const [stock, setStock] = React.useState(initialStock)
+  const [isLoading, setIsLoading] = React.useState(true)
   const [activeOrderTab, setActiveOrderTab] = React.useState("BUY")
   const [orderType, setOrderType] = React.useState("Delivery")
   const [qty, setQty] = React.useState("1")
-  const [price, setPrice] = React.useState(stock.price.toString())
+  const [price, setPrice] = React.useState(initialStock.price.toString())
   
   const chartData = React.useMemo(() => generateChartData(stock.price), [stock.price])
   const priceChange = (stock.price * (stock.change / 100)).toFixed(2)
 
-  // Dummy performance data
+  const fetchLiveQuote = async () => {
+    try {
+      const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`)
+      if (res.ok) {
+        const data = await res.json()
+        if (data.c && data.c !== 0) {
+          setStock(prev => ({
+            ...prev,
+            price: data.c,
+            change: data.dp || prev.change,
+            trend: (data.dp || 0) >= 0 ? "UP" : "DOWN"
+          }))
+          setPrice(data.c.toString())
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch live quote", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  React.useEffect(() => {
+    fetchLiveQuote()
+    const interval = setInterval(fetchLiveQuote, 30000)
+    return () => clearInterval(interval)
+  }, [symbol])
+
+  // Dummy performance data based on current price
   const performance = {
     todayLow: stock.price * 0.98,
     todayHigh: stock.price * 1.02,
@@ -98,20 +131,20 @@ export default function StockDetailPage() {
   const handleOrder = () => {
     toast({
       title: `${activeOrderTab} Order Placed`,
-      description: `Order for ${qty} shares of ${stock.symbol} at ${price} has been sent to the exchange.`,
+      description: `Order for ${qty} shares of ${stock.symbol} at ₹${price} has been sent to the exchange.`,
     })
   }
 
   return (
     <DashboardShell>
       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-        {/* Breadcrumbs / Top Actions */}
         <div className="flex items-center justify-between">
           <Button variant="ghost" className="gap-2 px-0 hover:bg-transparent" onClick={() => router.back()}>
             <ArrowLeft className="size-4" />
             <span className="text-sm font-medium">Back to Markets</span>
           </Button>
           <div className="flex items-center gap-3">
+            {isLoading && <Loader2 className="size-4 animate-spin text-primary" />}
             <Button variant="outline" size="sm" className="rounded-xl gap-2">
               <Bell className="size-4" /> Create Alert
             </Button>
@@ -122,7 +155,6 @@ export default function StockDetailPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-          {/* Main Chart Area */}
           <div className="lg:col-span-2 space-y-10">
             <div className="space-y-6">
               <div className="flex items-start justify-between">
@@ -133,9 +165,11 @@ export default function StockDetailPage() {
                   <div>
                     <h1 className="text-3xl font-headline font-bold">{stock.name}</h1>
                     <div className="flex items-center gap-2 text-muted-foreground text-sm font-medium">
-                      <span>NSE ₹{stock.price}</span>
-                      <span className="text-primary">({stock.change > 0 ? '+' : ''}{stock.change}%)</span>
-                      <span>• BSE ₹{stock.price}</span>
+                      <span>NSE ₹{stock.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                      <span className={stock.change >= 0 ? "text-primary" : "text-destructive"}>
+                        ({stock.change > 0 ? '+' : ''}{stock.change.toFixed(2)}%)
+                      </span>
+                      <span>• BSE ₹{stock.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                     </div>
                   </div>
                 </div>
@@ -146,18 +180,17 @@ export default function StockDetailPage() {
 
               <div className="space-y-2">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-headline font-bold">₹{stock.price}</span>
+                  <span className="text-4xl font-headline font-bold">₹{stock.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                   <span className={cn(
                     "text-lg font-bold",
                     stock.trend === "UP" ? "text-green-500" : "text-red-500"
                   )}>
-                    {stock.trend === "UP" ? "+" : ""}{priceChange} ({stock.change}%)
+                    {stock.trend === "UP" ? "+" : ""}{priceChange} ({stock.change.toFixed(2)}%)
                   </span>
                   <span className="text-muted-foreground text-sm font-medium uppercase tracking-widest">1D</span>
                 </div>
               </div>
 
-              {/* Main Chart */}
               <div className="h-[400px] w-full glass-card p-4 rounded-3xl relative">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={chartData}>
@@ -171,6 +204,7 @@ export default function StockDetailPage() {
                     <Tooltip 
                       contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: '12px' }}
                       itemStyle={{ color: 'hsl(var(--primary))' }}
+                      formatter={(value: any) => [`₹${parseFloat(value).toFixed(2)}`, "Price"]}
                     />
                     <Area 
                       type="monotone" 
@@ -183,20 +217,17 @@ export default function StockDetailPage() {
                   </AreaChart>
                 </ResponsiveContainer>
                 
-                {/* Chart Controls */}
                 <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 p-1 bg-muted/80 backdrop-blur-md rounded-2xl border border-border shadow-xl">
                   {["NSE", "1D", "1W", "1M", "3M", "6M", "1Y", "3Y", "5Y", "All"].map((t) => (
-                    <Button 
-                      key={t} 
-                      variant="ghost" 
-                      size="sm" 
+                    <button 
+                      key={t}
                       className={cn(
-                        "h-8 px-3 rounded-xl text-[10px] font-bold",
+                        "h-8 px-3 rounded-xl text-[10px] font-bold transition-all",
                         t === "1D" ? "bg-background text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"
                       )}
                     >
                       {t}
-                    </Button>
+                    </button>
                   ))}
                   <div className="w-px h-4 bg-border mx-1" />
                   <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-xl text-primary">
@@ -209,7 +240,6 @@ export default function StockDetailPage() {
               </div>
             </div>
 
-            {/* Performance Section */}
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
               <Tabs defaultValue="overview" className="w-full">
                 <TabsList className="bg-transparent border-b border-border w-full justify-start rounded-none h-auto p-0 gap-8">
@@ -280,7 +310,6 @@ export default function StockDetailPage() {
             </div>
           </div>
 
-          {/* Right Panel: Order Form */}
           <div className="space-y-6">
             <Card className="glass-card border-border overflow-hidden rounded-[2rem] shadow-2xl">
               <CardHeader className="pb-4">
@@ -288,7 +317,7 @@ export default function StockDetailPage() {
                   <div className="flex flex-col">
                     <span className="text-xl font-headline font-bold">{stock.name}</span>
                     <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
-                      NSE ₹{stock.price} (+{stock.change}%) • BSE ₹{stock.price}
+                      NSE ₹{stock.price.toLocaleString(undefined, { minimumFractionDigits: 2 })} ({stock.change > 0 ? '+' : ''}{stock.change.toFixed(2)}%)
                     </span>
                   </div>
                 </div>

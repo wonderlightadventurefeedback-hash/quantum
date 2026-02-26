@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -6,18 +7,56 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Badge } from "@/components/ui/badge"
-import { TrendingUp, TrendingDown, Info, BrainCircuit, History } from "lucide-react"
+import { TrendingUp, TrendingDown, Info, BrainCircuit, History, Loader2 } from "lucide-react"
 import { aiStockPredictionExplanation } from "@/ai/flows/ai-stock-prediction-explanation-flow"
-import { MOCK_STOCKS } from "@/lib/mock-data"
+import { MOCK_STOCKS, Stock } from "@/lib/mock-data"
 import { useToast } from "@/hooks/use-toast"
+
+const FINNHUB_API_KEY = "d6g3c49r01qqnmbqk10gd6g3c49r01qqnmbqk110";
 
 export default function PredictionPage() {
   const { toast } = useToast()
+  const [liveStocks, setLiveStocks] = React.useState<Stock[]>(MOCK_STOCKS)
   const [selectedStock, setSelectedStock] = React.useState(MOCK_STOCKS[0])
   const [prediction, setPrediction] = React.useState<'UP' | 'DOWN' | null>(null)
   const [confidence, setConfidence] = React.useState([50])
   const [isAnalyzing, setIsAnalyzing] = React.useState(false)
+  const [isFetching, setIsFetching] = React.useState(true)
   const [result, setResult] = React.useState<any>(null)
+
+  const fetchPrices = async () => {
+    try {
+      const updated = await Promise.all(
+        MOCK_STOCKS.slice(0, 8).map(async (stock) => {
+          const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${stock.symbol}&token=${FINNHUB_API_KEY}`)
+          if (res.ok) {
+            const data = await res.json()
+            if (data.c) {
+              return {
+                ...stock,
+                price: data.c,
+                change: data.dp || stock.change,
+                trend: (data.dp || 0) >= 0 ? "UP" : "DOWN" as "UP" | "DOWN"
+              }
+            }
+          }
+          return stock
+        })
+      )
+      setLiveStocks(updated)
+      // Update selected stock price if found in updated list
+      const matched = updated.find(s => s.symbol === selectedStock.symbol)
+      if (matched) setSelectedStock(matched)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setIsFetching(false)
+    }
+  }
+
+  React.useEffect(() => {
+    fetchPrices()
+  }, [])
 
   const handlePredict = async () => {
     if (!prediction) {
@@ -28,7 +67,6 @@ export default function PredictionPage() {
     setIsAnalyzing(true)
     
     try {
-      // Simulation: We define AI and Actual for the demo
       const aiPrediction = Math.random() > 0.4 ? 'UP' : 'DOWN'
       const actualResult = Math.random() > 0.5 ? 'UP' : 'DOWN'
 
@@ -55,33 +93,34 @@ export default function PredictionPage() {
   return (
     <DashboardShell>
       <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-        <div>
-          <h1 className="text-3xl font-headline font-bold text-foreground">Prediction Arena</h1>
-          <p className="text-muted-foreground">Test your market intuition against our AI algorithms.</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-headline font-bold text-foreground">Prediction Arena</h1>
+            <p className="text-muted-foreground">Test your market intuition against our AI algorithms.</p>
+          </div>
+          {isFetching && <Loader2 className="size-5 animate-spin text-primary" />}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Predictor */}
           <Card className="lg:col-span-2 glass-card border-primary/20 bg-background/50">
             <CardHeader>
               <CardTitle className="text-primary">Place Your Prediction</CardTitle>
               <CardDescription>Select a stock and tell us where you think it's headed.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-8">
-              {/* Stock Selector */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {MOCK_STOCKS.map((stock) => (
+                {liveStocks.slice(0, 8).map((stock) => (
                   <button
                     key={stock.symbol}
                     onClick={() => setSelectedStock(stock)}
-                    className={`p-4 rounded-xl border transition-all ${
+                    className={`p-4 rounded-xl border transition-all text-left group ${
                       selectedStock.symbol === stock.symbol 
                         ? 'bg-primary/10 border-primary ring-1 ring-primary' 
                         : 'bg-muted/50 border-border hover:border-primary/50'
                     }`}
                   >
-                    <div className="font-bold text-foreground">{stock.symbol}</div>
-                    <div className="text-xs text-muted-foreground">${stock.price}</div>
+                    <div className="font-bold text-foreground group-hover:text-primary transition-colors">{stock.symbol}</div>
+                    <div className="text-xs text-muted-foreground font-medium">₹{stock.price.toLocaleString()}</div>
                   </button>
                 ))}
               </div>
@@ -123,7 +162,7 @@ export default function PredictionPage() {
             </CardContent>
             <CardFooter>
               <Button 
-                className="w-full h-12 text-lg font-bold gap-2 shadow-lg shadow-primary/20" 
+                className="w-full h-12 text-lg font-bold gap-2 shadow-xl shadow-primary/20" 
                 onClick={handlePredict}
                 disabled={isAnalyzing}
               >
@@ -136,7 +175,6 @@ export default function PredictionPage() {
             </CardFooter>
           </Card>
 
-          {/* Results / Help */}
           <div className="space-y-6">
             <Card className="glass-card border-primary/10">
               <CardHeader>
@@ -167,7 +205,6 @@ export default function PredictionPage() {
           </div>
         </div>
 
-        {/* AI Result View */}
         {result && (
           <Card className="glass-card border-primary bg-primary/5 animate-in zoom-in-95 duration-500">
             <CardHeader className="flex flex-row items-center justify-between border-b border-primary/10 mb-6">
