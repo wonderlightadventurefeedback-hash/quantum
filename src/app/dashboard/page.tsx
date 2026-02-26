@@ -39,12 +39,16 @@ export default function DashboardOverview() {
 
   return (
     <DashboardShell>
-      <div className="space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+      <div className="space-y-12 pb-10">
         
         {/* Market Indices Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-in fade-in slide-in-from-top-4 duration-1000 delay-200">
-          {MOCK_INDICES.map((index) => (
-            <Card key={index.name} className="glass-card hover:bg-muted/10 cursor-pointer border-none shadow-sm transition-all hover:scale-[1.02]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-in fade-in slide-in-from-top-4 duration-1000 ease-out">
+          {MOCK_INDICES.map((index, i) => (
+            <Card 
+              key={index.name} 
+              className="glass-card hover:bg-muted/10 cursor-pointer border-none shadow-sm transition-all hover:scale-[1.02]"
+              style={{ animationDelay: `${i * 100}ms` }}
+            >
               <CardContent className="p-4 flex flex-col justify-between h-full">
                 <div className="flex justify-between items-start">
                   <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{index.name}</span>
@@ -70,7 +74,7 @@ export default function DashboardOverview() {
         </div>
 
         {/* Investment Categories */}
-        <div className="space-y-4 animate-in fade-in slide-in-from-left-4 duration-1000 delay-400">
+        <div className="space-y-6 animate-in fade-in slide-in-from-left-8 duration-1000 delay-300 ease-out">
           <h2 className="text-xl font-headline font-bold flex items-center gap-2">
             Invest in <ChevronRight className="size-5 text-primary" />
           </h2>
@@ -80,10 +84,11 @@ export default function DashboardOverview() {
               { label: "Mutual Funds", icon: PieChart, color: "text-green-500", bg: "bg-green-500/10" },
               { label: "US Stocks", icon: Globe, color: "text-indigo-500", bg: "bg-indigo-500/10" },
               { label: "Fixed Deposits", icon: CircleDollarSign, color: "text-orange-500", bg: "bg-orange-500/10" },
-            ].map((cat) => (
+            ].map((cat, i) => (
               <button 
                 key={cat.label}
-                className="group flex flex-col items-center gap-3 p-6 rounded-2xl glass-card transition-all hover:border-primary/50"
+                className="group flex flex-col items-center gap-3 p-6 rounded-2xl glass-card transition-all hover:border-primary/50 animate-in fade-in zoom-in-95"
+                style={{ animationDelay: `${400 + (i * 100)}ms` }}
                 onClick={() => navigateToExplore(cat.label)}
               >
                 <div className={cn("size-14 rounded-full flex items-center justify-center transition-transform group-hover:scale-110", cat.bg)}>
@@ -96,10 +101,10 @@ export default function DashboardOverview() {
         </div>
 
         {/* Stocks in Focus Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-600">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
           
           {/* Top Gainers / Losers */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-600">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-headline font-bold">Stocks in Focus</h2>
               <div className="flex gap-2">
@@ -110,10 +115,11 @@ export default function DashboardOverview() {
             
             <Card className="glass-card border-none shadow-none bg-transparent">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
-                {MOCK_STOCKS.filter(s => s.category === "Stocks").slice(0, 10).map((stock) => (
+                {MOCK_STOCKS.filter(s => s.category === "Stocks").slice(0, 10).map((stock, i) => (
                   <div 
                     key={stock.symbol} 
-                    className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/10 transition-colors cursor-pointer group"
+                    className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/10 transition-colors cursor-pointer group animate-in fade-in slide-in-from-right-4"
+                    style={{ animationDelay: `${700 + (i * 50)}ms` }}
                     onClick={() => handleAction(`Viewing ${stock.symbol}`, `Current price: ${stock.price} INR`)}
                   >
                     <div className="flex items-center gap-3">
@@ -150,7 +156,7 @@ export default function DashboardOverview() {
           </div>
 
           {/* User Portfolio Summary & News */}
-          <div className="space-y-8">
+          <div className="space-y-8 animate-in fade-in slide-in-from-right-8 duration-1000 delay-800">
             <Card className="glass-card bg-primary/5 border-primary/20 p-6 space-y-4 hover:shadow-primary/10 transition-shadow">
               <h2 className="font-headline font-bold text-lg">Your Portfolio</h2>
               <div>
@@ -168,8 +174,13 @@ export default function DashboardOverview() {
             <div className="space-y-4">
               <h2 className="text-lg font-headline font-bold">Top Market News</h2>
               <div className="space-y-4">
-                {MOCK_NEWS.slice(0, 3).map((item) => (
-                  <div key={item.id} className="group cursor-pointer border-b border-border/50 pb-4 last:border-0" onClick={() => router.push('/news')}>
+                {MOCK_NEWS.slice(0, 3).map((item, i) => (
+                  <div 
+                    key={item.id} 
+                    className="group cursor-pointer border-b border-border/50 pb-4 last:border-0 animate-in fade-in slide-in-from-bottom-2" 
+                    style={{ animationDelay: `${1000 + (i * 100)}ms` }}
+                    onClick={() => router.push('/news')}
+                  >
                     <div className="flex justify-between items-start gap-3">
                       <h4 className="text-xs font-bold leading-tight group-hover:text-primary transition-colors">{item.title}</h4>
                       <Badge variant="outline" className="text-[9px] h-4 py-0 shrink-0">{item.sentiment}</Badge>
@@ -188,7 +199,7 @@ export default function DashboardOverview() {
         </div>
 
         {/* Global Market Explorer Call to Action */}
-        <Card className="glass-card bg-gradient-to-r from-primary/10 via-background to-background border-primary/20 overflow-hidden relative group">
+        <Card className="glass-card bg-gradient-to-r from-primary/10 via-background to-background border-primary/20 overflow-hidden relative group animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-1000">
           <div className="absolute right-[-5%] top-[-20%] opacity-10 transition-transform group-hover:scale-110 duration-700">
             <Globe size={300} className="text-primary" />
           </div>

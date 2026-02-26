@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -32,10 +33,10 @@ export default function LearnPage() {
 
   return (
     <DashboardShell>
-      <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
         
         {/* Hero Banner for Learning */}
-        <div className="relative overflow-hidden rounded-[2.5rem] bg-primary/10 border border-primary/20 p-8 lg:p-12">
+        <div className="relative overflow-hidden rounded-[2.5rem] bg-primary/10 border border-primary/20 p-8 lg:p-12 animate-in fade-in slide-in-from-top-8 duration-1000">
           <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-primary/10 to-transparent pointer-events-none" />
           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="space-y-4 max-w-xl text-center md:text-left">
@@ -64,7 +65,7 @@ export default function LearnPage() {
               </div>
             </div>
             
-            <Card className="glass-card w-full md:w-72 bg-background/50 border-primary/20 p-6 space-y-4">
+            <Card className="glass-card w-full md:w-72 bg-background/50 border-primary/20 p-6 space-y-4 animate-in fade-in zoom-in-95 delay-300">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Overall Progress</span>
                 <span className="text-primary font-bold">65%</span>
@@ -81,7 +82,7 @@ export default function LearnPage() {
         </div>
 
         {/* Categories Tab */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6 animate-in fade-in slide-in-from-left-4 delay-500">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full md:w-auto">
             <TabsList className="bg-muted/50 p-1 h-12 rounded-2xl">
               {categories.map((cat) => (
@@ -104,13 +105,17 @@ export default function LearnPage() {
 
         {/* Modules Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredModules.map((module) => {
+          {filteredModules.map((module, i) => {
             const progress = (module.completed / module.lessons) * 100
             const isCompleted = progress === 100
             const isStarted = progress > 0
 
             return (
-              <Card key={module.id} className="overflow-hidden glass-card group flex flex-col border-none shadow-xl hover:shadow-primary/5">
+              <Card 
+                key={module.id} 
+                className="overflow-hidden glass-card group flex flex-col border-none shadow-xl hover:shadow-primary/5 animate-in fade-in slide-in-from-bottom-8 duration-700"
+                style={{ animationDelay: `${700 + (i * 100)}ms` }}
+              >
                 <div className="relative h-56 w-full overflow-hidden shrink-0">
                   <Image 
                     src={module.image} 
@@ -180,7 +185,7 @@ export default function LearnPage() {
         </div>
 
         {/* Weekly Quiz Card */}
-        <Card className="glass-card bg-gradient-to-br from-primary to-emerald-600 text-white border-none overflow-hidden relative p-1">
+        <Card className="glass-card bg-gradient-to-br from-primary to-emerald-600 text-white border-none overflow-hidden relative p-1 animate-in fade-in slide-in-from-bottom-12 delay-1000">
           <div className="absolute top-[-10%] right-[-5%] p-8 opacity-10 rotate-12">
             <GraduationCap size={280} />
           </div>

@@ -155,9 +155,6 @@ export default function LandingPage() {
                 placeholder="Search stocks, indices..." 
                 className="w-full pl-10 h-11 bg-muted/50 border-none rounded-xl focus-visible:ring-2 focus-visible:ring-primary/20"
               />
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground font-bold border border-border px-1.5 py-0.5 rounded-md">
-                Ctrl+K
-              </div>
             </div>
           </div>
 
@@ -260,7 +257,7 @@ export default function LandingPage() {
         <div className="container mx-auto px-4 max-w-6xl">
           <div className="rounded-[3rem] border border-border shadow-2xl overflow-hidden bg-card/40 backdrop-blur-xl animate-in fade-in slide-in-from-bottom-12 duration-1000">
             <div className="grid grid-cols-1 md:grid-cols-2">
-              <div className="bg-primary p-12 lg:p-16 text-primary-foreground flex flex-col justify-between">
+              <div className="bg-primary p-12 lg:p-16 text-primary-foreground flex flex-col justify-between animate-in fade-in slide-in-from-left-12 duration-1000 delay-200">
                 <div className="space-y-6">
                   <h2 className="text-4xl font-headline font-bold leading-tight">Connect with our<br/>market experts.</h2>
                   <p className="text-lg opacity-80 leading-relaxed max-w-sm">
@@ -288,7 +285,7 @@ export default function LandingPage() {
                   </div>
                 </div>
               </div>
-              <div className="p-12 lg:p-16 space-y-8">
+              <div className="p-12 lg:p-16 space-y-8 animate-in fade-in slide-in-from-right-12 duration-1000 delay-400">
                 <div className="space-y-2">
                   <h3 className="text-2xl font-headline font-bold text-foreground">Send a Message</h3>
                   <p className="text-sm text-muted-foreground">We'll get back to you within 24 hours.</p>
@@ -349,7 +346,7 @@ export default function LandingPage() {
       <footer className="py-20 bg-muted/30 border-t border-border relative z-10">
         <div className="container mx-auto px-4 max-w-6xl">
           <div className="flex flex-col md:flex-row items-center justify-between gap-12">
-            <div className="flex flex-col items-center md:items-start gap-4">
+            <div className="flex flex-col items-center md:items-start gap-4 animate-in fade-in slide-in-from-left-4 duration-1000">
               <Link href="/" className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
                   <span className="font-headline font-bold text-white text-[11px]">FI</span>
@@ -360,13 +357,13 @@ export default function LandingPage() {
                 Built with precision for the next generation of professional traders and long-term investors.
               </p>
             </div>
-            <div className="flex flex-wrap justify-center gap-x-12 gap-y-6 text-sm text-muted-foreground font-medium">
+            <div className="flex flex-wrap justify-center gap-x-12 gap-y-6 text-sm text-muted-foreground font-medium animate-in fade-in zoom-in-95 duration-1000 delay-200">
               <Link href="#" className="hover:text-primary transition-colors">Privacy Policy</Link>
               <Link href="#" className="hover:text-primary transition-colors">Terms of Service</Link>
               <Link href="#" className="hover:text-primary transition-colors">Risk Disclosure</Link>
               <Link href="#" className="hover:text-primary transition-colors">Careers</Link>
             </div>
-            <div className="text-center md:text-right space-y-2">
+            <div className="text-center md:text-right space-y-2 animate-in fade-in slide-in-from-right-4 duration-1000 delay-400">
               <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest">
                 © 2024 FinIntel AI Platform
               </p>
