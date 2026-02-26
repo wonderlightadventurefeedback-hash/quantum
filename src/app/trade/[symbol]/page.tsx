@@ -49,6 +49,8 @@ import { FirestorePermissionError } from "@/firebase/errors"
 
 const FINNHUB_API_KEY = "d6g3c49r01qqnmbqk10gd6g3c49r01qqnmbqk110";
 
+type Timeframe = "1D" | "1W" | "1M" | "3M" | "6M" | "1Y" | "3Y" | "5Y" | "All";
+
 const RangeBar = ({ low, high, current, labelLow, labelHigh }: { low: number, high: number, current: number, labelLow: string, labelHigh: string }) => {
   const percentage = ((current - low) / (high - low)) * 100;
   return (
@@ -73,18 +75,32 @@ const RangeBar = ({ low, high, current, labelLow, labelHigh }: { low: number, hi
   )
 }
 
-const generateChartData = (basePrice: number, isBullish: boolean) => {
-  // Create a trend based on whether the stock is generally up or down
-  let currentPrice = basePrice * (isBullish ? 0.95 : 1.05);
-  return Array.from({ length: 60 }, (_, i) => {
-    const volatility = basePrice * 0.01;
-    const trend = isBullish ? (basePrice * 0.1) / 60 : -(basePrice * 0.1) / 60;
+const generateChartData = (basePrice: number, isBullish: boolean, timeframe: Timeframe) => {
+  let points = 60;
+  let multiplier = 0.95;
+  
+  switch(timeframe) {
+    case "1D": points = 60; multiplier = 0.98; break;
+    case "1W": points = 70; multiplier = 0.95; break;
+    case "1M": points = 90; multiplier = 0.90; break;
+    case "3M": points = 100; multiplier = 0.85; break;
+    case "6M": points = 120; multiplier = 0.80; break;
+    case "1Y": points = 150; multiplier = 0.70; break;
+    case "5Y": points = 200; multiplier = 0.50; break;
+    default: points = 60;
+  }
+
+  let currentPrice = basePrice * (isBullish ? multiplier : (2 - multiplier));
+  
+  return Array.from({ length: points }, (_, i) => {
+    const volatility = basePrice * 0.015;
+    const trend = isBullish ? (basePrice * (1 - multiplier)) / points : -(basePrice * (1 - multiplier)) / points;
     
     const open = currentPrice;
     const change = (Math.random() - 0.45) * volatility + trend;
     const close = open + change;
-    const high = Math.max(open, close) + Math.random() * (volatility * 0.2);
-    const low = Math.min(open, close) - Math.random() * (volatility * 0.2);
+    const high = Math.max(open, close) + Math.random() * (volatility * 0.3);
+    const low = Math.min(open, close) - Math.random() * (volatility * 0.3);
     
     currentPrice = close;
 
@@ -116,14 +132,14 @@ export default function StockDetailPage() {
   const [qty, setQty] = React.useState("1")
   const [price, setPrice] = React.useState(initialStock.price.toString())
   const [chartType, setChartType] = React.useState<'area' | 'candle'>('area')
+  const [timeframe, setTimeframe] = React.useState<Timeframe>("1D")
   
   const isUp = stock.change >= 0;
   const trendColor = isUp ? "hsl(var(--primary))" : "hsl(var(--destructive))";
   
-  const chartData = React.useMemo(() => generateChartData(stock.price, isUp), [stock.price, isUp])
+  const chartData = React.useMemo(() => generateChartData(stock.price, isUp, timeframe), [stock.price, isUp, timeframe])
   const priceChange = (stock.price * (Math.abs(stock.change) / 100)).toFixed(2)
 
-  // Watchlist status using Firestore
   const watchlistDocRef = React.useMemo(() => {
     if (!db || !user) return null
     return doc(db, 'users', user.uid, 'watchlist', symbol)
@@ -276,7 +292,7 @@ export default function StockDetailPage() {
                   )}>
                     {isUp ? "+" : "-"}{priceChange} ({stock.change.toFixed(2)}%)
                   </div>
-                  <span className="text-muted-foreground text-xs font-bold uppercase tracking-widest bg-muted/50 px-2 py-1 rounded ml-2">1D</span>
+                  <span className="text-muted-foreground text-xs font-bold uppercase tracking-widest bg-muted/50 px-2 py-1 rounded ml-2">{timeframe}</span>
                 </div>
               </div>
 
@@ -354,12 +370,13 @@ export default function StockDetailPage() {
                 </ResponsiveContainer>
                 
                 <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 p-1.5 bg-background/80 backdrop-blur-xl rounded-[2rem] border border-border shadow-2xl">
-                  {["NSE", "1D", "1W", "1M", "3M", "6M", "1Y", "3Y", "5Y", "All"].map((t) => (
+                  {(["NSE", "1D", "1W", "1M", "3M", "6M", "1Y", "5Y", "All"] as (Timeframe | "NSE")[]).map((t) => (
                     <button 
                       key={t}
+                      onClick={() => t !== "NSE" && setTimeframe(t as Timeframe)}
                       className={cn(
                         "h-9 px-4 rounded-[1.25rem] text-[11px] font-bold transition-all",
-                        t === "1D" ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                        t === timeframe ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "text-muted-foreground hover:text-foreground hover:bg-muted"
                       )}
                     >
                       {t}
