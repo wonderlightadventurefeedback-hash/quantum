@@ -66,7 +66,6 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
   const iconRef = useRef<HTMLSpanElement>(null);
 
   const textInnerRef = useRef<HTMLSpanElement>(null);
-  const textWrapRef = useRef<HTMLSpanElement>(null);
   const [textLines, setTextLines] = useState<string[]>(['Menu', 'Close']);
 
   const openTlRef = useRef<gsap.core.Timeline | null>(null);
@@ -333,7 +332,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
         <header className={`staggered-menu-header fixed top-0 left-0 w-full flex items-center justify-between p-8 bg-transparent pointer-events-none z-[110] ${position === 'left' ? 'flex-row' : 'flex-row-reverse'}`} aria-label="Main navigation header">
           <button ref={toggleBtnRef} className={`sm-toggle relative inline-flex items-center gap-2 px-5 py-2.5 rounded-full border shadow-xl shadow-primary/20 cursor-pointer font-bold leading-none overflow-visible pointer-events-auto transition-all duration-300 ${open ? 'text-black bg-white border-white' : 'text-white bg-primary border-primary hover:scale-105 active:scale-95'}`}
                   aria-label={open ? 'Close menu' : 'Open menu'} aria-expanded={open} aria-controls="staggered-menu-panel" onClick={toggleMenu} type="button">
-            <span ref={textWrapRef} className="sm-toggle-textWrap relative inline-block h-[1em] overflow-hidden whitespace-nowrap min-w-[3rem]" aria-hidden="true">
+            <span className="sm-toggle-textWrap relative inline-block h-[1em] overflow-hidden whitespace-nowrap min-w-[3rem]" aria-hidden="true">
               <span ref={textInnerRef} className="sm-toggle-textInner flex flex-col leading-none">
                 {(textLines || []).map((l, i) => (
                   <span className="sm-toggle-line block h-[1em] leading-none" key={i}>{l}</span>
@@ -374,7 +373,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
               <div className="sm-socials mt-auto pt-12 border-t border-black/5 flex flex-col gap-4" aria-label="Social links">
                 <h3 className="sm-socials-title m-0 text-sm font-bold text-primary uppercase tracking-widest">Connect</h3>
                 <ul className="sm-socials-list list-none m-0 p-0 flex flex-row items-center gap-6 flex-wrap" role="list">
-                  {socialItems.map((s, i) => (
+                  {(socialItems || []).map((s, i) => (
                     <li key={s.label + i} className="sm-socials-item">
                       <a href={s.link} target="_blank" rel="noopener noreferrer" className="sm-socials-link text-lg font-bold text-black/60 hover:text-primary transition-colors no-underline uppercase">{s.label}</a>
                     </li>

@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -102,11 +101,61 @@ const MOCK_OI_DATA = Array.from({ length: 15 }, (_, i) => ({
   putOI: Math.random() * 100,
 }));
 
+const TerminalChart = ({ data, height = 300, title, symbol, timeframe, setTimeframe }: { data: any[], height?: number, title?: string, symbol: string, timeframe: Timeframe, setTimeframe: (t: Timeframe) => void }) => (
+  <div className="bg-[#0d1117] border border-[#21262d] rounded-sm relative flex flex-col group overflow-hidden">
+    <div className="flex items-center justify-between px-3 py-2 bg-[#161b22] border-b border-[#21262d]">
+      <div className="flex items-center gap-3">
+        <span className="text-[10px] font-bold text-gray-300 uppercase tracking-tight">{title || symbol}</span>
+        <div className="flex items-center gap-1">
+          {["1D", "5D", "1M"].map(t => (
+            <button 
+              key={t} 
+              onClick={() => setTimeframe(t as Timeframe)}
+              className={cn("text-[9px] px-1.5 py-0.5 rounded-sm font-bold", timeframe === t ? "bg-primary/20 text-primary" : "text-gray-500 hover:text-gray-300")}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <button className="text-gray-500 hover:text-primary"><Settings2 className="size-3" /></button>
+        <button className="text-gray-500 hover:text-primary"><Maximize2 className="size-3" /></button>
+      </div>
+    </div>
+    <div className="w-full pt-4" style={{ height: `${height}px` }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <ComposedChart data={data} margin={{ top: 0, right: 40, left: 0, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#21262d" />
+          <XAxis dataKey="time" hide />
+          <YAxis 
+            orientation="right" 
+            domain={['auto', 'auto']} 
+            axisLine={false} 
+            tickLine={false} 
+            tick={{ fontSize: 9, fill: '#8b949e' }}
+          />
+          <Tooltip 
+            contentStyle={{ backgroundColor: '#161b22', border: '1px solid #30363d', borderRadius: '4px', fontSize: '10px' }}
+            itemStyle={{ padding: 0 }}
+          />
+          <Bar dataKey="wick" barSize={1}>
+            {data.map((entry: any, index: number) => <Cell key={`wick-${index}`} fill={entry.color} />)}
+          </Bar>
+          <Bar dataKey="body" barSize={6}>
+            {data.map((entry: any, index: number) => <Cell key={`body-${index}`} fill={entry.color} />)}
+          </Bar>
+        </ComposedChart>
+      </ResponsiveContainer>
+    </div>
+  </div>
+)
+
 export default function StockTerminalPage() {
   const params = useParams()
   const router = useRouter()
   const { toast } = useToast()
-  const symbol = params.symbol as string
+  const symbol = (params?.symbol as string) || "AAPL"
   const { user } = useUser()
   const db = useFirestore()
   
@@ -208,56 +257,6 @@ export default function StockTerminalPage() {
     }
   }
 
-  const TerminalChart = ({ data, height = 300, title }: { data: any, height?: number, title?: string }) => (
-    <div className="bg-[#0d1117] border border-[#21262d] rounded-sm relative flex flex-col group overflow-hidden">
-      <div className="flex items-center justify-between px-3 py-2 bg-[#161b22] border-b border-[#21262d]">
-        <div className="flex items-center gap-3">
-          <span className="text-[10px] font-bold text-gray-300 uppercase tracking-tight">{title || symbol}</span>
-          <div className="flex items-center gap-1">
-            {["1D", "5D", "1M"].map(t => (
-              <button 
-                key={t} 
-                onClick={() => setTimeframe(t as Timeframe)}
-                className={cn("text-[9px] px-1.5 py-0.5 rounded-sm font-bold", timeframe === t ? "bg-primary/20 text-primary" : "text-gray-500 hover:text-gray-300")}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <button className="text-gray-500 hover:text-primary"><Settings2 className="size-3" /></button>
-          <button className="text-gray-500 hover:text-primary"><Maximize2 className="size-3" /></button>
-        </div>
-      </div>
-      <div className={`h-[${height}px] w-full pt-4`}>
-        <ResponsiveContainer width="100%" height={height}>
-          <ComposedChart data={data} margin={{ top: 0, right: 40, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#21262d" />
-            <XAxis dataKey="time" hide />
-            <YAxis 
-              orientation="right" 
-              domain={['auto', 'auto']} 
-              axisLine={false} 
-              tickLine={false} 
-              tick={{ fontSize: 9, fill: '#8b949e' }}
-            />
-            <Tooltip 
-              contentStyle={{ backgroundColor: '#161b22', border: '1px solid #30363d', borderRadius: '4px', fontSize: '10px' }}
-              itemStyle={{ padding: 0 }}
-            />
-            <Bar dataKey="wick" barSize={1}>
-              {data.map((entry: any, index: number) => <Cell key={`wick-${index}`} fill={entry.color} />)}
-            </Bar>
-            <Bar dataKey="body" barSize={6}>
-              {data.map((entry: any, index: number) => <Cell key={`body-${index}`} fill={entry.color} />)}
-            </Bar>
-          </ComposedChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
-  )
-
   if (!isMounted) return null;
 
   return (
@@ -327,8 +326,22 @@ export default function StockTerminalPage() {
             
             {/* Charts Matrix Column */}
             <div className="flex-1 flex flex-col gap-1 p-1 overflow-y-auto custom-scrollbar">
-              <TerminalChart data={chartData} height={350} title={`${symbol} Main`} />
-              <TerminalChart data={chartDataSecondary} height={250} title={`${symbol} (Put) 25600`} />
+              <TerminalChart 
+                data={chartData} 
+                height={350} 
+                title={`${symbol} Main`} 
+                symbol={symbol} 
+                timeframe={timeframe} 
+                setTimeframe={setTimeframe} 
+              />
+              <TerminalChart 
+                data={chartDataSecondary} 
+                height={250} 
+                title={`${symbol} (Put) 25600`} 
+                symbol={symbol} 
+                timeframe={timeframe} 
+                setTimeframe={setTimeframe} 
+              />
               
               {/* Terminal Quick Trade HUD */}
               <div className="bg-[#161b22] border border-[#30363d] rounded-sm p-4 flex items-center justify-between">
