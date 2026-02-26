@@ -253,6 +253,30 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Immersive Gallery Section */}
+      <section className="h-[700px] w-full bg-background relative z-10 py-32 border-b border-border/50 overflow-hidden">
+        <div className="container mx-auto px-4 text-center mb-12 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+          <h2 className="text-4xl md:text-5xl font-headline font-bold">Market <span className="text-primary italic">Visualized</span></h2>
+          <p className="text-muted-foreground max-w-lg mx-auto mt-4">
+            Explore our global ecosystem of financial intelligence through an immersive digital experience.
+          </p>
+        </div>
+        <div className="h-[500px] w-full">
+          <CircularGallery 
+            items={[
+              { image: 'https://picsum.photos/seed/market-1/800/600?grayscale', text: 'Global Stocks' },
+              { image: 'https://picsum.photos/seed/market-2/800/600?grayscale', text: 'AI Insights' },
+              { image: 'https://picsum.photos/seed/market-3/800/600?grayscale', text: 'Crypto Tech' },
+              { image: 'https://picsum.photos/seed/market-4/800/600?grayscale', text: 'Mutual Funds' },
+              { image: 'https://picsum.photos/seed/market-5/800/600?grayscale', text: 'Risk Analysis' },
+              { image: 'https://picsum.photos/seed/market-6/800/600?grayscale', text: 'Trading Arena' },
+              { image: 'https://picsum.photos/seed/market-7/800/600?grayscale', text: 'Wealth IQ' },
+              { image: 'https://picsum.photos/seed/market-8/800/600?grayscale', text: 'Future Trends' },
+            ]}
+          />
+        </div>
+      </section>
+
       {/* Contact Section */}
       <section id="contact" className="py-32 bg-background relative z-10">
         <div className="container mx-auto px-4 max-w-6xl">
@@ -340,30 +364,6 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Gallery Section */}
-      <section className="h-[700px] w-full bg-background relative z-10 py-32 border-b border-border/50">
-        <div className="container mx-auto px-4 text-center mb-12 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-          <h2 className="text-4xl md:text-5xl font-headline font-bold">Market <span className="text-primary italic">Visualized</span></h2>
-          <p className="text-muted-foreground max-w-lg mx-auto mt-4">
-            Explore our global ecosystem of financial intelligence through an immersive digital experience.
-          </p>
-        </div>
-        <div className="h-[500px] w-full">
-          <CircularGallery 
-            items={[
-              { image: 'https://picsum.photos/seed/market-1/800/600?grayscale', text: 'Global Stocks' },
-              { image: 'https://picsum.photos/seed/market-2/800/600?grayscale', text: 'AI Insights' },
-              { image: 'https://picsum.photos/seed/market-3/800/600?grayscale', text: 'Crypto Tech' },
-              { image: 'https://picsum.photos/seed/market-4/800/600?grayscale', text: 'Mutual Funds' },
-              { image: 'https://picsum.photos/seed/market-5/800/600?grayscale', text: 'Risk Analysis' },
-              { image: 'https://picsum.photos/seed/market-6/800/600?grayscale', text: 'Trading Arena' },
-              { image: 'https://picsum.photos/seed/market-7/800/600?grayscale', text: 'Wealth IQ' },
-              { image: 'https://picsum.photos/seed/market-8/800/600?grayscale', text: 'Future Trends' },
-            ]}
-          />
         </div>
       </section>
 
