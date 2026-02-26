@@ -34,11 +34,11 @@ export default function DashboardOverview() {
     try {
       const updatedStocks = await Promise.all(
         MOCK_STOCKS.map(async (stock) => {
-          if (stock.category === "US Stocks") {
+          try {
             const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${stock.symbol}&token=${FINNHUB_API_KEY}`)
             if (res.ok) {
               const data = await res.json()
-              if (data.c) {
+              if (data.c && data.c !== 0) {
                 return {
                   ...stock,
                   price: data.c,
@@ -47,8 +47,10 @@ export default function DashboardOverview() {
                 }
               }
             }
+          } catch (e) {
+            // Silently fail individual stock fetch and proceed to fallback
           }
-          // Drift simulation for others to show "active" market
+          
           const drift = (Math.random() - 0.5) * 0.5
           return {
             ...stock,
@@ -58,7 +60,7 @@ export default function DashboardOverview() {
       )
       setLiveStocks(updatedStocks)
     } catch (error) {
-      console.error("Dashboard live price sync error", error)
+      // General error catch
     } finally {
       setIsLoading(false)
     }

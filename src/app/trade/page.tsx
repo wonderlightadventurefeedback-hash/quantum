@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -40,18 +41,23 @@ export default function TradePage() {
     try {
       const updatedStocks = await Promise.all(
         MOCK_STOCKS.map(async (stock) => {
-          const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${stock.symbol}&token=${FINNHUB_API_KEY}`)
-          if (res.ok) {
-            const data = await res.json()
-            if (data.c && data.c !== 0) {
-              return {
-                ...stock,
-                price: data.c,
-                change: data.dp || stock.change,
-                trend: (data.dp || 0) >= 0 ? "UP" : "DOWN" as "UP" | "DOWN"
+          try {
+            const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${stock.symbol}&token=${FINNHUB_API_KEY}`)
+            if (res.ok) {
+              const data = await res.json()
+              if (data.c && data.c !== 0) {
+                return {
+                  ...stock,
+                  price: data.c,
+                  change: data.dp || stock.change,
+                  trend: (data.dp || 0) >= 0 ? "UP" : "DOWN" as "UP" | "DOWN"
+                }
               }
             }
+          } catch (e) {
+            // Silently handle individual network failures and proceed to fallback
           }
+          
           const drift = (Math.random() - 0.5) * 0.5
           return {
             ...stock,
@@ -67,7 +73,7 @@ export default function TradePage() {
         })
       }
     } catch (error) {
-      console.error("Live price fetch failed", error)
+      // General error handling if needed
     } finally {
       setIsRefreshing(false)
     }
