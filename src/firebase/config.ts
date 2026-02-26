@@ -1,10 +1,10 @@
 'use client';
 
 export const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "fallback-key",
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  apiKey: "AIzaSyCuqGrKi2AqzwWB4mY-18LrUV4Rq35Rgng",
+  authDomain: "studio-3596395085-3fba1.firebaseapp.com",
+  projectId: "studio-3596395085-3fba1",
+  storageBucket: "studio-3596395085-3fba1.firebasestorage.app",
+  messagingSenderId: "948427391234",
+  appId: "1:948427391234:web:5315a9767aede4ce50421b",
 };

@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -38,7 +37,14 @@ export default function LoginPage() {
   }, [user, loading, router])
 
   const handleGoogleSignIn = async () => {
-    if (!auth) return
+    if (!auth) {
+      toast({
+        variant: "destructive",
+        title: "Authentication Error",
+        description: "Firebase Auth is not initialized. Please check your configuration.",
+      })
+      return
+    }
     setIsLoggingIn(true)
     try {
       const provider = new GoogleAuthProvider()
@@ -47,7 +53,7 @@ export default function LoginPage() {
         title: "Welcome to FinIntel AI",
         description: "Successfully signed in with Google.",
       })
-      router.push('/dashboard')
+      // Redirect handled by useEffect
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -61,7 +67,15 @@ export default function LoginPage() {
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!auth) return
+    if (!auth) {
+      toast({
+        variant: "destructive",
+        title: "Authentication Error",
+        description: "Firebase Auth is not initialized. Please check your configuration.",
+      })
+      return
+    }
+    
     if (!email || !password) {
       toast({
         variant: "destructive",
@@ -89,7 +103,7 @@ export default function LoginPage() {
           description: "Successfully signed in.",
         })
       }
-      router.push('/dashboard')
+      // Redirect handled by useEffect
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -111,11 +125,9 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-[#0d1117] relative overflow-hidden py-12 px-4">
-      {/* Background Gradient Effect */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#0d1117] via-[#0f1715] to-[#0d1117]" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#00d09c]/5 rounded-full blur-[120px]" />
 
-      {/* Top Left Branding */}
       <div className="absolute top-8 left-8 flex items-center gap-3 z-10">
         <div className="w-10 h-10 rounded-xl bg-[#00d09c] flex items-center justify-center">
           <span className="font-headline font-bold text-white text-xl">FI</span>
@@ -209,6 +221,7 @@ export default function LoginPage() {
 
           <Button 
             variant="outline" 
+            type="button"
             className="w-full h-12 gap-3 border-[#30363d] bg-transparent text-white hover:bg-[#ffffff05] hover:border-[#484f58] transition-all rounded-xl" 
             onClick={handleGoogleSignIn}
             disabled={isLoggingIn}
