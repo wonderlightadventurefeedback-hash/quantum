@@ -328,7 +328,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
           ))}
         </div>
 
-        <header className={`staggered-menu-header fixed top-0 left-0 w-full flex items-center justify-between p-8 bg-transparent pointer-events-none z-[110] ${position === 'left' ? 'flex-row' : 'flex-row-reverse'}`} aria-label="Main navigation header">
+        <header className={`staggered-menu-header fixed top-0 left-0 w-full flex items-center justify-between p-8 bg-transparent pointer-events-none z-[110] ${position === 'left' ? 'flex-row-reverse' : 'flex-row'}`} aria-label="Main navigation header">
           <div className="sm-logo flex items-center select-none pointer-events-auto" aria-label="Logo">
             {logoUrl && (
               <img src={logoUrl} alt="Logo" className="sm-logo-img block h-10 w-auto object-contain" draggable={false} />
