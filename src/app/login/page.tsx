@@ -45,8 +45,8 @@ export default function LoginPage() {
     const userRef = doc(db, 'users', user.uid)
     const snap = await getDoc(userRef)
     
-    // Robust initialization: Set balance to 50,000 if it's a new user or the field is missing/incorrect
     const data = snap.data()
+    // Robust Balance Guardian: Set or Reset balance to 50,000 if new, missing, or negative
     if (!snap.exists() || data?.balance === undefined || (typeof data.balance === 'number' && data.balance < 0)) {
       const existingData = snap.exists() ? snap.data() : {}
       await setDoc(userRef, {
@@ -70,7 +70,7 @@ export default function LoginPage() {
       const result = await signInWithPopup(auth, provider)
       await initializeDemoUser(result.user, result.user.displayName || '')
       toast({
-        title: "Welcome to FinIntel AI Demo",
+        title: "Welcome to FinIntel AI",
         description: "Successfully signed in. ₹50,000 demo capital ready.",
       })
     } catch (error: any) {

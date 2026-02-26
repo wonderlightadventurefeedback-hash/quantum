@@ -68,7 +68,10 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   }, [db, user])
 
   const { data: userProfile } = useDoc(userProfileRef)
-  const balance = userProfile?.balance ?? 50000
+  
+  // Guarantee balance logic: If fetched value is negative or undefined, default to 50,000 for display safety
+  const rawBalance = userProfile?.balance
+  const balance = typeof rawBalance === 'number' && rawBalance >= 0 ? rawBalance : 50000
 
   React.useEffect(() => {
     if (!loading && !user) {
