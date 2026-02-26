@@ -110,6 +110,8 @@ const generateChartData = (basePrice: number, isBullish: boolean, timeframe: Tim
       high,
       low,
       close,
+      body: [open, close], // Used for professional range bars
+      wick: [low, high],   // Used for professional range bars
       price: close,
       isUp: close >= open,
     };
@@ -329,6 +331,13 @@ export default function StockDetailPage() {
                           <stop offset="0%" stopColor={trendColor} stopOpacity={0.6}/>
                           <stop offset="100%" stopColor={trendColor} stopOpacity={0}/>
                         </linearGradient>
+                        <filter id="glow">
+                          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                          <feMerge>
+                            <feMergeNode in="coloredBlur"/>
+                            <feMergeNode in="SourceGraphic"/>
+                          </feMerge>
+                        </filter>
                       </defs>
                       <CartesianGrid strokeDasharray="1 4" vertical={false} stroke="hsl(var(--muted-foreground))" opacity={0.2} />
                       <XAxis dataKey="time" hide />
@@ -355,24 +364,34 @@ export default function StockDetailPage() {
                         animationDuration={1500}
                         connectNulls
                         className="recharts-area-area"
+                        filter="url(#glow)"
                       />
                     </AreaChart>
                   ) : (
                     <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                      <defs>
+                        <filter id="glow">
+                          <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                          <feMerge>
+                            <feMergeNode in="coloredBlur"/>
+                            <feMergeNode in="SourceGraphic"/>
+                          </feMerge>
+                        </filter>
+                      </defs>
                       <CartesianGrid strokeDasharray="1 4" vertical={false} stroke="hsl(var(--muted-foreground))" opacity={0.2} />
                       <XAxis dataKey="time" hide />
                       <YAxis domain={['auto', 'auto']} hide />
                       <Tooltip 
                         contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: '16px' }}
-                        formatter={(value: any, name: string) => [`₹${parseFloat(value).toFixed(2)}`, name]}
+                        formatter={(value: any, name: string) => [`₹${parseFloat(value[0] || value).toFixed(2)}`, name]}
                         labelStyle={{ display: 'none' }}
                       />
-                      <Bar dataKey="high" barSize={1}>
+                      <Bar dataKey="wick" barSize={1} filter="url(#glow)">
                         {chartData.map((entry, index) => (
                           <Cell key={`cell-wick-${index}`} fill={entry.isUp ? 'hsl(var(--primary))' : 'hsl(var(--destructive))'} />
                         ))}
                       </Bar>
-                      <Bar dataKey="close" barSize={8}>
+                      <Bar dataKey="body" barSize={10} filter="url(#glow)">
                         {chartData.map((entry, index) => (
                           <Cell key={`cell-body-${index}`} fill={entry.isUp ? 'hsl(var(--primary))' : 'hsl(var(--destructive))'} />
                         ))}
