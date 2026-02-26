@@ -252,7 +252,7 @@ const PillNav: React.FC<PillNavProps> = ({
             className="list-none flex items-stretch m-0 p-[4px] h-full"
             style={{ gap: 'var(--pill-gap)' }}
           >
-            {items.map((item, i) => {
+            {(items || []).map((item, i) => {
               const isActive = activeHref === item.href;
 
               const pillStyle: React.CSSProperties = {
@@ -356,7 +356,7 @@ const PillNav: React.FC<PillNavProps> = ({
         }}
       >
         <ul className="list-none m-0 p-[4px] flex flex-col gap-[4px]">
-          {items.map(item => {
+          {(items || []).map(item => {
             const linkClasses =
               'block py-4 px-6 text-[15px] font-bold uppercase tracking-wider rounded-[20px] transition-all duration-200 text-center';
 
