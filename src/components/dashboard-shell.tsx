@@ -93,11 +93,12 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     if (!db || !user || !userProfile) return
 
     const checkNews = async () => {
+      if (!FINNHUB_API_KEY) return;
       try {
         const res = await fetch(`https://finnhub.io/api/v1/news?category=general&token=${FINNHUB_API_KEY}`)
         if (!res.ok) return
         const news = await res.json()
-        if (news && news.length > 0) {
+        if (news && Array.isArray(news) && news.length > 0) {
           const latestItem = news[0]
           const lastNotifiedId = userProfile.lastNewsId || 0
 
@@ -122,7 +123,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           }
         }
       } catch (e) {
-        console.error("Watcher Error:", e);
+        // Silently fail watcher to avoid console noise on network issues
+        console.warn("News Watcher: Market feed unreachable.");
       }
     }
 
