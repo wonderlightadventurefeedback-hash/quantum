@@ -328,7 +328,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
           ))}
         </div>
 
-        <header className={`staggered-menu-header fixed top-0 left-0 w-full flex items-center justify-between p-8 bg-transparent pointer-events-none z-[110] ${position === 'left' ? 'flex-row-reverse' : 'flex-row'}`} aria-label="Main navigation header">
+        <header className={`staggered-menu-header fixed top-0 left-0 w-full flex items-center justify-between p-8 bg-transparent pointer-events-none z-[110] ${position === 'left' ? 'flex-row' : 'flex-row-reverse'}`} aria-label="Main navigation header">
           <div className="sm-logo flex items-center select-none pointer-events-auto" aria-label="Logo">
             {logoUrl && (
               <img src={logoUrl} alt="Logo" className="sm-logo-img block h-10 w-auto object-contain" draggable={false} />
@@ -356,7 +356,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
             <ul className="sm-panel-list list-none m-0 p-0 flex flex-col gap-4" role="list" data-numbering={displayItemNumbering || undefined}>
               {(items || []).map((it, idx) => (
                 <li className="sm-panel-itemWrap relative overflow-hidden leading-none" key={it.label + idx}>
-                  <Link className="sm-panel-item relative text-black font-bold text-5xl md:text-7xl cursor-pointer leading-none tracking-tighter uppercase transition-colors inline-block no-underline pr-8" href={it.link} aria-label={it.ariaLabel} data-index={idx + 1} onClick={closeMenu}>
+                  <Link className="sm-panel-item relative text-black font-bold text-3xl md:text-5xl cursor-pointer leading-none tracking-tighter uppercase transition-colors inline-block no-underline pr-12" href={it.link} aria-label={it.ariaLabel} data-index={idx + 1} onClick={closeMenu}>
                     <span className="sm-panel-itemLabel inline-block transform-gpu">{it.label}</span>
                   </Link>
                 </li>
@@ -394,10 +394,13 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
           position: absolute;
           top: 0.1em;
           right: 0;
-          font-size: 1.25rem;
+          font-size: 1rem;
           font-weight: 800;
           color: var(--sm-accent);
           opacity: var(--sm-num-opacity, 0);
+        }
+        .sm-scope .sm-panel-item {
+          font-size: 2.2rem;
         }
         @media (max-width: 1024px) {
           .sm-scope .staggered-menu-panel {
@@ -405,7 +408,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
             padding: 8rem 2rem 2rem 2rem;
           }
           .sm-scope .sm-panel-item {
-            font-size: 3rem;
+            font-size: 2.5rem;
           }
         }
       `}</style>
