@@ -1,7 +1,6 @@
 "use client"
 
 import * as React from "react"
-import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { 
   Search,
@@ -34,7 +33,7 @@ const navItems = [
   { name: "News Intel", href: "/news" },
   { name: "Portfolio Analyzer", href: "/portfolio" },
   { name: "AI Advisor", href: "/advisor" },
-  { name: "Community", href: "/community" },
+  { name: "Account", href: "/settings" },
 ]
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
@@ -51,7 +50,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const scrollContainerRef = React.useRef<HTMLDivElement>(null)
   const lastScrollY = React.useRef(0)
 
-  // Authentication Guard
   React.useEffect(() => {
     if (!loading && !user) {
       router.push('/login')
@@ -63,21 +61,17 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     setTheme(isDark ? "dark" : "light")
   }, [])
 
-  // Smart Header Scroll Logic
   React.useEffect(() => {
     const container = scrollContainerRef.current
     if (!container) return
 
     const handleScroll = () => {
       const currentScrollY = container.scrollTop
-      
       if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
         setIsHeaderVisible(false)
-      } 
-      else if (currentScrollY < lastScrollY.current) {
+      } else if (currentScrollY < lastScrollY.current) {
         setIsHeaderVisible(true)
       }
-      
       lastScrollY.current = currentScrollY
     }
 
@@ -95,38 +89,15 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       document.documentElement.classList.remove("dark")
       localStorage.theme = "light"
     }
-    toast({
-      title: `${newTheme.charAt(0).toUpperCase() + newTheme.slice(1)} Mode Enabled`,
-      description: `Interface updated to ${newTheme} aesthetic.`,
-    })
   }
 
   const handleLogout = async () => {
     if (!auth) return
     try {
       await signOut(auth)
-      toast({
-        title: "Signed Out",
-        description: "You have been successfully logged out.",
-      })
       router.push('/login')
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Logout failed",
-        description: error.message,
-      })
-    }
-  }
-
-  const handleHeaderAction = (action: string) => {
-    if (action === "Profile Settings" || action === "Settings") {
-      router.push("/settings")
-    } else if (action === "Notifications") {
-      toast({
-        title: "Notifications",
-        description: "Checking for latest market alerts...",
-      })
+      toast({ variant: "destructive", title: "Logout failed", description: error.message })
     }
   }
 
@@ -157,25 +128,27 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     link: item.href
   }))
 
+  const socialItems = [
+    { label: "Twitter", link: "https://twitter.com" },
+    { label: "LinkedIn", link: "https://linkedin.com" },
+    { label: "Support", link: "/contact" }
+  ]
+
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
-      {/* Staggered Menu Component */}
       <StaggeredMenu 
         position="left"
         items={staggeredItems}
-        colors={['hsl(var(--card))', 'hsl(var(--primary))']}
+        socialItems={socialItems}
+        colors={['hsl(var(--background))', 'hsl(var(--primary))']}
         accentColor="hsl(var(--primary))"
-        menuButtonColor="hsl(var(--foreground))"
-        openMenuButtonColor="black"
-        isFixed={false}
-        logoUrl="/favicon.ico" // Placeholder for logo
+        menuButtonColor="#ffffff"
+        openMenuButtonColor="#000000"
+        isFixed={true}
       />
 
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-        <div 
-          ref={scrollContainerRef} 
-          className="flex-1 overflow-y-auto custom-scrollbar bg-background text-foreground"
-        >
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto custom-scrollbar bg-background text-foreground">
           <div className={cn(
             "sticky top-0 z-40 transition-all duration-500 ease-in-out transform",
             isHeaderVisible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0 pointer-events-none"
@@ -193,38 +166,29 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 </form>
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" suppressHydrationWarning onClick={toggleTheme} className="text-muted-foreground hover:text-primary">
+                <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-muted-foreground hover:text-primary">
                   {theme === "light" ? <Moon className="size-5" /> : <Sun className="size-5" />}
                 </Button>
-                <Button variant="ghost" size="icon" suppressHydrationWarning className="relative text-muted-foreground" onClick={() => handleHeaderAction("Notifications")}>
+                <Button variant="ghost" size="icon" className="relative text-muted-foreground">
                   <Bell className="size-5" />
                   <span className="absolute top-2.5 right-2.5 size-2 bg-primary rounded-full ring-2 ring-background"></span>
-                </Button>
-                <Button variant="ghost" size="icon" suppressHydrationWarning className="text-muted-foreground" onClick={() => handleHeaderAction("Settings")}>
-                  <Settings className="size-5" />
                 </Button>
                 <div className="h-8 w-px bg-border mx-2" />
                 <Button
                   variant="ghost"
-                  suppressHydrationWarning
                   className="flex items-center gap-3 p-2 h-auto hover:bg-muted rounded-xl"
-                  onClick={() => handleHeaderAction("Profile Settings")}
+                  onClick={() => router.push("/settings")}
                 >
-                  <Avatar className="size-8">
+                  <Avatar className="size-8 border border-primary/20">
                     <AvatarImage src={user.photoURL || MOCK_USER.avatar} />
                     <AvatarFallback>{user.displayName?.charAt(0) || user.email?.charAt(0)}</AvatarFallback>
                   </Avatar>
                   <div className="hidden lg:flex flex-col items-start text-sm text-left">
-                    <span className="font-medium truncate max-w-[100px]">{user.displayName || 'User'}</span>
-                    <span className="text-[10px] text-muted-foreground">Pro Member</span>
+                    <span className="font-bold truncate max-w-[100px]">{user.displayName || 'User'}</span>
+                    <span className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">Pro Member</span>
                   </div>
                 </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="text-muted-foreground hover:text-destructive" 
-                  onClick={handleLogout}
-                >
+                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={handleLogout}>
                   <LogOut className="size-4" />
                 </Button>
               </div>
@@ -235,22 +199,12 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 <Zap className="size-3 fill-primary animate-pulse" /> Market Pulse
               </div>
               <div className="flex animate-marquee hover:[animation-play-state:paused] whitespace-nowrap">
-                {[...MOCK_NEWS, ...MOCK_NEWS, ...MOCK_NEWS].map((news, i) => (
-                  <div key={i} className="flex items-center gap-6 px-4 group cursor-pointer" onClick={() => toast({ title: news.title, description: `Source: ${news.source}` })}>
+                {[...MOCK_NEWS, ...MOCK_NEWS].map((news, i) => (
+                  <div key={i} className="flex items-center gap-6 px-4 group cursor-pointer">
                     <div className="flex items-center gap-2 text-[11px] font-medium">
-                      <span className="text-muted-foreground">{news.time}</span>
-                      <span className="group-hover:text-primary transition-colors">{news.title}</span>
-                      {news.sentiment === "POSITIVE" ? (
-                        <TrendingUp className="size-3 text-green-500" />
-                      ) : (
-                        <TrendingDown className="size-3 text-red-500" />
-                      )}
-                      <span className={cn(
-                        "font-bold",
-                        news.sentiment === "POSITIVE" ? "text-green-500" : "text-red-500"
-                      )}>
-                        {news.score}%
-                      </span>
+                      <span className="text-muted-foreground uppercase">{news.time}</span>
+                      <span className="group-hover:text-primary transition-colors font-bold">{news.title}</span>
+                      {news.sentiment === "POSITIVE" ? <TrendingUp className="size-3 text-green-500" /> : <TrendingDown className="size-3 text-red-500" />}
                     </div>
                     <span className="text-border">|</span>
                   </div>
