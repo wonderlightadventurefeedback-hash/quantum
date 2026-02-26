@@ -4,23 +4,15 @@ import * as React from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { 
-  LayoutDashboard, 
-  BookOpen, 
-  TrendingUp, 
-  TrendingDown,
-  Newspaper, 
-  PieChart, 
-  MessageSquare, 
-  Users, 
   Search,
   Bell,
   Settings,
-  Menu,
   Zap,
   Moon,
   Sun,
   LogOut,
-  ArrowLeftRight,
+  TrendingUp,
+  TrendingDown,
   Loader2
 } from "lucide-react"
 
@@ -32,16 +24,17 @@ import { MOCK_USER, MOCK_NEWS } from "@/lib/mock-data"
 import { useToast } from "@/hooks/use-toast"
 import { useUser, useAuth } from "@/firebase"
 import { signOut } from "firebase/auth"
+import { StaggeredMenu } from "./staggered-menu"
 
 const navItems = [
-  { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Trade", href: "/trade", icon: ArrowLeftRight },
-  { name: "Learn", href: "/learn", icon: BookOpen },
-  { name: "Prediction Arena", href: "/predict", icon: TrendingUp },
-  { name: "News Intel", href: "/news", icon: Newspaper },
-  { name: "Portfolio Analyzer", href: "/portfolio", icon: PieChart },
-  { name: "AI Advisor", href: "/advisor", icon: MessageSquare },
-  { name: "Community", href: "/community", icon: Users },
+  { name: "Overview", href: "/dashboard" },
+  { name: "Trade", href: "/trade" },
+  { name: "Learn", href: "/learn" },
+  { name: "Prediction Arena", href: "/predict" },
+  { name: "News Intel", href: "/news" },
+  { name: "Portfolio Analyzer", href: "/portfolio" },
+  { name: "AI Advisor", href: "/advisor" },
+  { name: "Community", href: "/community" },
 ]
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
@@ -51,7 +44,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const { user, loading } = useUser()
   const { toast } = useToast()
   
-  const [isSidebarOpen, setIsSidebarOpen] = React.useState(true)
   const [theme, setTheme] = React.useState<"light" | "dark">("dark")
   const [isHeaderVisible, setIsHeaderVisible] = React.useState(true)
   const [globalSearch, setGlobalSearch] = React.useState("")
@@ -159,84 +151,25 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   if (!user) return null
 
+  const staggeredItems = navItems.map(item => ({
+    label: item.name,
+    ariaLabel: item.name,
+    link: item.href
+  }))
+
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
-      <aside className={cn(
-        "bg-card border-r border-border transition-all duration-300 z-50",
-        isSidebarOpen ? "w-64" : "w-20"
-      )}>
-        <div className="flex flex-col h-full">
-          <Link href="/" className="flex items-center gap-3 px-6 h-20">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0">
-              <span className="font-headline font-bold text-white">FI</span>
-            </div>
-            {isSidebarOpen && (
-              <span className="font-headline font-bold text-xl tracking-tight text-primary">
-                FinIntel AI
-              </span>
-            )}
-          </Link>
-
-          <nav className="flex-1 px-3 space-y-1">
-            {navItems.map((item) => {
-              const isActive = pathname === item.href
-              return (
-                <Link key={item.name} href={item.href}>
-                  <Button
-                    variant="ghost"
-                    suppressHydrationWarning
-                    className={cn(
-                      "w-full justify-start gap-4 h-12",
-                      isActive ? "bg-primary/10 text-primary hover:bg-primary/20" : "text-muted-foreground hover:text-foreground",
-                      !isSidebarOpen && "justify-center px-0"
-                    )}
-                  >
-                    <item.icon className={cn("shrink-0 size-5", isActive && "text-primary")} />
-                    {isSidebarOpen && <span>{item.name}</span>}
-                  </Button>
-                </Link>
-              )
-            })}
-          </nav>
-
-          <div className="p-4 border-t border-border">
-            <div className="flex flex-col gap-2">
-              <Button
-                variant="ghost"
-                suppressHydrationWarning
-                className={cn(
-                  "w-full justify-start gap-4 p-2 h-auto hover:bg-muted",
-                  !isSidebarOpen && "justify-center"
-                )}
-                onClick={() => handleHeaderAction("Profile Settings")}
-              >
-                <Avatar className="size-8">
-                  <AvatarImage src={user.photoURL || MOCK_USER.avatar} />
-                  <AvatarFallback>{user.displayName?.charAt(0) || user.email?.charAt(0)}</AvatarFallback>
-                </Avatar>
-                {isSidebarOpen && (
-                  <div className="flex flex-col items-start text-sm overflow-hidden text-left">
-                    <span className="font-medium truncate w-full">{user.displayName || 'User'}</span>
-                    <span className="text-xs text-muted-foreground truncate w-full">Pro Member</span>
-                  </div>
-                )}
-              </Button>
-              {isSidebarOpen && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  suppressHydrationWarning
-                  className="w-full justify-start gap-4 text-muted-foreground hover:text-destructive" 
-                  onClick={handleLogout}
-                >
-                  <LogOut className="size-4" />
-                  <span>Logout</span>
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-      </aside>
+      {/* Staggered Menu Component */}
+      <StaggeredMenu 
+        position="left"
+        items={staggeredItems}
+        colors={['hsl(var(--card))', 'hsl(var(--primary))']}
+        accentColor="hsl(var(--primary))"
+        menuButtonColor="hsl(var(--foreground))"
+        openMenuButtonColor="black"
+        isFixed={false}
+        logoUrl="/favicon.ico" // Placeholder for logo
+      />
 
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         <div 
@@ -247,11 +180,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             "sticky top-0 z-40 transition-all duration-500 ease-in-out transform",
             isHeaderVisible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0 pointer-events-none"
           )}>
-            <header className="h-20 border-b border-border bg-background/95 backdrop-blur-md flex items-center justify-between px-8">
+            <header className="h-20 border-b border-border bg-background/95 backdrop-blur-md flex items-center justify-between px-8 pl-24">
               <div className="flex items-center gap-6">
-                <Button variant="ghost" size="icon" suppressHydrationWarning onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
-                  <Menu className="size-5" />
-                </Button>
                 <form onSubmit={handleSearchSubmit} className="relative w-64 md:w-96 hidden md:block">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                   <Input 
@@ -272,6 +202,30 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 </Button>
                 <Button variant="ghost" size="icon" suppressHydrationWarning className="text-muted-foreground" onClick={() => handleHeaderAction("Settings")}>
                   <Settings className="size-5" />
+                </Button>
+                <div className="h-8 w-px bg-border mx-2" />
+                <Button
+                  variant="ghost"
+                  suppressHydrationWarning
+                  className="flex items-center gap-3 p-2 h-auto hover:bg-muted rounded-xl"
+                  onClick={() => handleHeaderAction("Profile Settings")}
+                >
+                  <Avatar className="size-8">
+                    <AvatarImage src={user.photoURL || MOCK_USER.avatar} />
+                    <AvatarFallback>{user.displayName?.charAt(0) || user.email?.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <div className="hidden lg:flex flex-col items-start text-sm text-left">
+                    <span className="font-medium truncate max-w-[100px]">{user.displayName || 'User'}</span>
+                    <span className="text-[10px] text-muted-foreground">Pro Member</span>
+                  </div>
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="text-muted-foreground hover:text-destructive" 
+                  onClick={handleLogout}
+                >
+                  <LogOut className="size-4" />
                 </Button>
               </div>
             </header>
