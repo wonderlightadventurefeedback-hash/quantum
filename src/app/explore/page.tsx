@@ -8,12 +8,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { Search, TrendingUp, TrendingDown, Filter, ArrowLeft } from "lucide-react"
+import { Search, TrendingUp, Filter, ArrowLeft, Loader2 } from "lucide-react"
 import { MOCK_STOCKS, MOCK_MUTUAL_FUNDS, MOCK_FIXED_DEPOSITS } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 
-export default function ExplorePage() {
+function ExploreContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const initialCategory = searchParams.get("category") || "Stocks"
@@ -181,5 +181,19 @@ export default function ExplorePage() {
         </Card>
       </div>
     </DashboardShell>
+  )
+}
+
+export default function ExplorePage() {
+  return (
+    <React.Suspense fallback={
+      <DashboardShell>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="size-8 animate-spin text-primary" />
+        </div>
+      </DashboardShell>
+    }>
+      <ExploreContent />
+    </React.Suspense>
   )
 }

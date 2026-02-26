@@ -29,7 +29,7 @@ import { doc } from "firebase/firestore"
 
 const FINNHUB_API_KEY = process.env.NEXT_PUBLIC_FINNHUB_API_KEY;
 
-export default function TradePage() {
+function TradeContent() {
   const { toast } = useToast()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -302,5 +302,19 @@ export default function TradePage() {
         </div>
       </div>
     </DashboardShell>
+  )
+}
+
+export default function TradePage() {
+  return (
+    <React.Suspense fallback={
+      <DashboardShell>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="size-8 animate-spin text-primary" />
+        </div>
+      </DashboardShell>
+    }>
+      <TradeContent />
+    </React.Suspense>
   )
 }
