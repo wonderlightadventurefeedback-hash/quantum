@@ -14,6 +14,16 @@
         "predictionAccuracy": { "type": "integer", "min": 0, "max": 100 }
       },
       "required": ["email"]
+    },
+    "WatchlistItem": {
+      "title": "Watchlist Item",
+      "description": "A stock symbol added to a user's watchlist.",
+      "type": "object",
+      "properties": {
+        "symbol": { "type": "string" },
+        "addedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["symbol", "addedAt"]
     }
   },
   "auth": {
@@ -23,6 +33,10 @@
     "/users/{userId}": {
       "schema": "#/entities/UserProfile",
       "description": "Public and private user profile data."
+    },
+    "/users/{userId}/watchlist/{symbol}": {
+      "schema": "#/entities/WatchlistItem",
+      "description": "Collection of stocks watched by the user."
     }
   }
 }
