@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { 
   ArrowLeft, 
   Bookmark,
+  Search,
   Loader2,
   BookmarkCheck,
   TrendingUp,
