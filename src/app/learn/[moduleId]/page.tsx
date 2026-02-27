@@ -3,6 +3,7 @@
 
 import * as React from "react"
 import { useParams, useRouter } from "next/navigation"
+import Image from "next/image"
 import { DashboardShell } from "@/components/dashboard-shell"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
