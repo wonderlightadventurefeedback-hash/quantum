@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -6,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { ScrollArea } => "@/components/ui/scroll-area"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { 
   Send, 
@@ -90,7 +91,7 @@ export default function AdvisorPage() {
       setMessages(history.map(m => ({ role: m.role, content: m.content, timestamp: m.timestamp })))
     } else if (history && history.length === 0 && !isHistoryLoading) {
       setMessages([
-        { role: 'assistant', content: "I have updated the **QuantumF AI Advisor** to follow your specific **Research & Collect** protocol using Gemini intelligence. My reasoning engine analyzes your query, researches the context against live market data, and collects all necessary information from Gemini before synthesizing your final strategic output. How can I help you today?" }
+        { role: 'assistant', content: "I have updated the **QuantumF AI Advisor** to follow your specific **Research & Collect** protocol using **Gemini Intelligence**. My reasoning engine analyzes your query, researches the context against live market data, and collects all necessary information from Gemini before synthesizing your final strategic output. How can I help you today?" }
       ])
     }
   }, [history, isHistoryLoading])
