@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -37,6 +38,7 @@ import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, useCollection,
 import { signOut } from "firebase/auth"
 import { doc, collection, query, orderBy, limit, serverTimestamp, where } from "firebase/firestore"
 import { StaggeredMenu } from "./staggered-menu"
+import { OnboardingQuiz } from "./onboarding-quiz"
 import { formatDistanceToNow } from "date-fns"
 
 const navItems = [
@@ -64,11 +66,11 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = React.useState<"light" | "dark">("dark")
   const [isHeaderVisible, setIsHeaderVisible] = React.useState(true)
   const [globalSearch, setGlobalSearch] = React.useState("")
+  const [showOnboarding, setShowOnboarding] = React.useState(false)
   
   const scrollContainerRef = React.useRef<HTMLDivElement>(null)
   const lastScrollY = React.useRef(0)
 
-  // Real-time Balance fetch for header
   const userProfileRef = useMemoFirebase(() => {
     if (!db || !user) return null
     return doc(db, 'users', user.uid)
@@ -76,67 +78,21 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   const { data: userProfile } = useDoc(userProfileRef)
   
-  const rawBalance = userProfile?.balance
-  const balance = typeof rawBalance === 'number' && rawBalance >= 0 ? rawBalance : 50000
+  React.useEffect(() => {
+    if (userProfile && !userProfile.onboardingCompleted) {
+      setShowOnboarding(true)
+    }
+  }, [userProfile])
 
-  // Real-time Notifications fetch
+  const balance = typeof userProfile?.balance === 'number' && userProfile.balance >= 0 ? userProfile.balance : 50000
+
+  // Real-time Notifications
   const notificationsQuery = useMemoFirebase(() => {
     if (!db || !user) return null
     return query(collection(db, 'users', user.uid, 'notifications'), orderBy('timestamp', 'desc'), limit(10))
   }, [db, user])
   const { data: notifications } = useCollection(notificationsQuery)
   const unreadCount = notifications?.filter(n => !n.read).length || 0
-
-  // Automatic News Watcher logic
-  React.useEffect(() => {
-    if (!db || !user || !userProfile) return
-
-    const checkNews = async () => {
-      if (!FINNHUB_API_KEY) return;
-      try {
-        const res = await fetch(`https://finnhub.io/api/v1/news?category=general&token=${FINNHUB_API_KEY}`)
-        if (!res.ok) return
-        const news = await res.json()
-        if (news && Array.isArray(news) && news.length > 0) {
-          const latestItem = news[0]
-          const lastNotifiedId = userProfile.lastNewsId || 0
-
-          if (latestItem.id > lastNotifiedId) {
-            // New news found! Create a notification
-            const notifRef = collection(db, 'users', user.uid, 'notifications')
-            addDocumentNonBlocking(notifRef, {
-              title: "Market Alert: New Intelligence",
-              message: latestItem.headline,
-              type: "MARKET_NEWS",
-              sentiment: ["POSITIVE", "NEGATIVE", "NEUTRAL"][latestItem.id % 3],
-              read: false,
-              link: latestItem.url,
-              timestamp: serverTimestamp()
-            })
-
-            // Update user's last notified ID
-            updateDocumentNonBlocking(userProfileRef!, {
-              lastNewsId: latestItem.id,
-              updatedAt: serverTimestamp()
-            })
-          }
-        }
-      } catch (e) {
-        // Silently fail watcher to avoid console noise on network issues
-        console.warn("News Watcher: Market feed unreachable.");
-      }
-    }
-
-    const interval = setInterval(checkNews, 300000) // Check every 5 minutes
-    checkNews() // Check immediately on mount
-    return () => clearInterval(interval)
-  }, [db, user, userProfile, userProfileRef])
-
-  const markAsRead = (id: string) => {
-    if (!db || !user) return
-    const ref = doc(db, 'users', user.uid, 'notifications', id)
-    updateDocumentNonBlocking(ref, { read: true })
-  }
 
   React.useEffect(() => {
     if (!loading && !user) {
@@ -148,36 +104,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     const isDark = document.documentElement.classList.contains("dark")
     setTheme(isDark ? "dark" : "light")
   }, [])
-
-  React.useEffect(() => {
-    const container = scrollContainerRef.current
-    if (!container) return
-
-    const handleScroll = () => {
-      const currentScrollY = container.scrollTop
-      if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
-        setIsHeaderVisible(false)
-      } else if (currentScrollY < lastScrollY.current) {
-        setIsHeaderVisible(true)
-      }
-      lastScrollY.current = currentScrollY
-    }
-
-    container.addEventListener('scroll', handleScroll, { passive: true })
-    return () => container.removeEventListener('scroll', handleScroll)
-  }, [])
-
-  const toggleTheme = () => {
-    const newTheme = theme === "light" ? "dark" : "light"
-    setTheme(newTheme)
-    if (newTheme === "dark") {
-      document.documentElement.classList.add("dark")
-      localStorage.theme = "dark"
-    } else {
-      document.documentElement.classList.remove("dark")
-      localStorage.theme = "light"
-    }
-  }
 
   const handleLogout = async () => {
     if (!auth) return
@@ -217,18 +143,17 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     icon: item.icon
   }))
 
-  const socialItems = [
-    { label: "Twitter", link: "https://twitter.com" },
-    { label: "LinkedIn", link: "https://linkedin.com" },
-    { label: "Support", link: "/contact" }
-  ]
-
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
+      <OnboardingQuiz open={showOnboarding} onComplete={() => setShowOnboarding(false)} />
+      
       <StaggeredMenu 
         position="left"
         items={staggeredItems}
-        socialItems={socialItems}
+        socialItems={[
+          { label: "Twitter", link: "https://twitter.com" },
+          { label: "LinkedIn", link: "https://linkedin.com" }
+        ]}
         colors={['hsl(var(--background))', 'hsl(var(--primary))']}
         accentColor="hsl(var(--primary))"
         menuButtonColor="#ffffff"
@@ -238,128 +163,75 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         <div ref={scrollContainerRef} className="flex-1 overflow-y-auto custom-scrollbar bg-background text-foreground">
-          <div className={cn(
-            "sticky top-0 z-40 transition-all duration-500 ease-in-out transform",
-            isHeaderVisible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0 pointer-events-none"
-          )}>
-            <header className="h-20 border-b border-border bg-background/95 backdrop-blur-md flex items-center justify-between px-8 pl-44">
-              <div className="flex items-center gap-6">
-                <form onSubmit={handleSearchSubmit} className="relative w-64 md:w-96 hidden md:block">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                  <Input 
-                    value={globalSearch}
-                    onChange={(e) => setGlobalSearch(e.target.value)}
-                    placeholder="Search stocks (e.g. NVDA, AAPL)..." 
-                    className="pl-10 bg-muted/50 border-none focus-visible:ring-primary/50 rounded-xl" 
-                  />
-                </form>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="hidden sm:flex items-center bg-primary/10 border border-primary/20 px-4 py-1.5 rounded-full mr-4 gap-3 shadow-sm">
-                  <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em] border-r border-primary/20 pr-3">Demo Account</span>
-                  <span className="text-sm font-black text-primary tracking-tight">₹{balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                </div>
-                <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-muted-foreground hover:text-primary">
-                  {theme === "light" ? <Moon className="size-5" /> : <Sun className="size-5" />}
-                </Button>
-                
-                {/* Real-time Notifications Dropdown */}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="ghost" size="icon" className="relative text-muted-foreground">
-                      <Bell className="size-5" />
-                      {unreadCount > 0 && (
-                        <span className="absolute top-2.5 right-2.5 size-2 bg-primary rounded-full ring-2 ring-background animate-pulse"></span>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-80 p-0 rounded-2xl overflow-hidden border-border/50 shadow-2xl" align="end">
-                    <div className="bg-muted/30 p-4 border-b border-border/50 flex items-center justify-between">
-                      <h3 className="text-xs font-black uppercase tracking-widest text-foreground">Market Signals</h3>
-                      <Badge variant="secondary" className="text-[9px] font-bold h-4 px-1.5">{unreadCount} New</Badge>
-                    </div>
-                    <ScrollArea className="h-[350px]">
-                      {!notifications || notifications.length === 0 ? (
-                        <div className="p-8 text-center space-y-2">
-                          <Zap className="size-8 text-muted-foreground/30 mx-auto" />
-                          <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">No active signals found</p>
-                        </div>
-                      ) : notifications.map((n) => (
-                        <div key={n.id} className={cn(
-                          "p-4 border-b border-border/30 hover:bg-muted/5 transition-colors group relative",
-                          !n.read && "bg-primary/5"
-                        )}>
-                          <div className="flex justify-between items-start gap-3 mb-1">
-                            <h4 className="text-[11px] font-black leading-tight pr-4">{n.title}</h4>
-                            <Badge variant={n.sentiment === 'POSITIVE' ? 'default' : n.sentiment === 'NEGATIVE' ? 'destructive' : 'outline'} className="text-[8px] h-3.5 px-1 uppercase shrink-0">
-                              {n.sentiment}
-                            </Badge>
-                          </div>
-                          <p className="text-[10px] text-muted-foreground leading-relaxed line-clamp-2">{n.message}</p>
-                          <div className="flex items-center justify-between mt-3">
-                            <span className="text-[8px] font-bold text-muted-foreground uppercase">
-                              {n.timestamp ? formatDistanceToNow(n.timestamp.toDate(), { addSuffix: true }) : 'Just now'}
-                            </span>
-                            <div className="flex items-center gap-2">
-                              {!n.read && (
-                                <button onClick={() => markAsRead(n.id)} className="text-[8px] font-black uppercase text-primary hover:underline">Mark as read</button>
-                              )}
-                              <a href={n.link} target="_blank" rel="noreferrer" className="text-[8px] font-black uppercase text-muted-foreground hover:text-foreground flex items-center gap-1">
-                                View Intelligence <ExternalLink className="size-2" />
-                              </a>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </ScrollArea>
-                    <div className="p-2 bg-muted/10 border-t border-border/50 text-center">
-                      <Button variant="link" className="text-[9px] font-black uppercase tracking-widest h-auto p-1" onClick={() => router.push('/news')}>View All Intelligence</Button>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-
-                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary" onClick={() => router.push('/watchlist')}>
-                  <Bookmark className="size-5" />
-                </Button>
-                <div className="h-8 w-px bg-border mx-2" />
-                <Button
-                  variant="ghost"
-                  className="flex items-center gap-3 p-2 h-auto hover:bg-muted rounded-xl"
-                  onClick={() => router.push("/settings")}
-                >
-                  <Avatar className="size-8 border border-primary/20">
-                    <AvatarImage src={user.photoURL || MOCK_USER.avatar} />
-                    <AvatarFallback>{user.displayName?.charAt(0) || user.email?.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div className="hidden lg:flex flex-col items-start text-sm text-left">
-                    <span className="font-bold truncate max-w-[100px]">{user.displayName || 'Demo User'}</span>
-                    <span className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">Demo Status</span>
-                  </div>
-                </Button>
-                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={handleLogout}>
-                  <LogOut className="size-4" />
-                </Button>
-              </div>
-            </header>
-
-            <div className="bg-primary/5 border-b border-border h-10 flex items-center overflow-hidden shrink-0">
-              <div className="flex items-center gap-2 px-4 bg-background border-r border-border h-full z-10 font-bold text-[10px] text-primary uppercase tracking-widest shrink-0">
-                <span className="size-3 flex items-center justify-center bg-primary rounded-full"><Zap className="size-2 text-white fill-white animate-pulse" /></span> Market Pulse
-              </div>
-              <div className="flex animate-marquee hover:[animation-play-state:paused] whitespace-nowrap">
-                {[...MOCK_NEWS, ...MOCK_NEWS].map((news, i) => (
-                  <div key={i} className="flex items-center gap-6 px-4 group cursor-pointer">
-                    <div className="flex items-center gap-2 text-[11px] font-medium">
-                      <span className="text-muted-foreground uppercase">{news.time}</span>
-                      <span className="group-hover:text-primary transition-colors font-bold">{news.title}</span>
-                      {news.sentiment === "POSITIVE" ? <TrendingUp className="size-3 text-green-500" /> : <TrendingDown className="size-3 text-red-500" />}
-                    </div>
-                    <span className="text-border">|</span>
-                  </div>
-                ))}
-              </div>
+          <header className="h-20 border-b border-border bg-background/95 backdrop-blur-md flex items-center justify-between px-8 pl-44">
+            <div className="flex items-center gap-6">
+              <form onSubmit={handleSearchSubmit} className="relative w-64 md:w-96 hidden md:block">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                <Input 
+                  value={globalSearch}
+                  onChange={(e) => setGlobalSearch(e.target.value)}
+                  placeholder="Search stocks (e.g. NVDA, AAPL)..." 
+                  className="pl-10 bg-muted/50 border-none focus-visible:ring-primary/50 rounded-xl" 
+                />
+              </form>
             </div>
-          </div>
+            <div className="flex items-center gap-2">
+              <div className="hidden sm:flex items-center bg-primary/10 border border-primary/20 px-4 py-1.5 rounded-full mr-4 gap-3 shadow-sm">
+                <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em] border-r border-primary/20 pr-3">Demo Account</span>
+                <span className="text-sm font-black text-primary tracking-tight">₹{balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+              </div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="icon" className="relative text-muted-foreground">
+                    <Bell className="size-5" />
+                    {unreadCount > 0 && (
+                      <span className="absolute top-2.5 right-2.5 size-2 bg-primary rounded-full ring-2 ring-background animate-pulse"></span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-0 rounded-2xl overflow-hidden border-border/50 shadow-2xl" align="end">
+                  <div className="bg-muted/30 p-4 border-b border-border/50 flex items-center justify-between">
+                    <h3 className="text-xs font-black uppercase tracking-widest text-foreground">Market Signals</h3>
+                    <Badge variant="secondary" className="text-[9px] font-bold h-4 px-1.5">{unreadCount} New</Badge>
+                  </div>
+                  <ScrollArea className="h-[350px]">
+                    {!notifications || notifications.length === 0 ? (
+                      <div className="p-8 text-center space-y-2">
+                        <Zap className="size-8 text-muted-foreground/30 mx-auto" />
+                        <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">No active signals found</p>
+                      </div>
+                    ) : notifications.map((n) => (
+                      <div key={n.id} className={cn("p-4 border-b border-border/30 hover:bg-muted/5 transition-colors group relative", !n.read && "bg-primary/5")}>
+                        <div className="flex justify-between items-start gap-3 mb-1">
+                          <h4 className="text-[11px] font-black leading-tight pr-4">{n.title}</h4>
+                          <Badge variant={n.sentiment === 'POSITIVE' ? 'default' : n.sentiment === 'NEGATIVE' ? 'destructive' : 'outline'} className="text-[8px] h-3.5 px-1 uppercase shrink-0">{n.sentiment}</Badge>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground leading-relaxed line-clamp-2">{n.message}</p>
+                      </div>
+                    ))}
+                  </ScrollArea>
+                </PopoverContent>
+              </Popover>
+
+              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary" onClick={() => router.push('/watchlist')}>
+                <Bookmark className="size-5" />
+              </Button>
+              <div className="h-8 w-px bg-border mx-2" />
+              <Button variant="ghost" className="flex items-center gap-3 p-2 h-auto hover:bg-muted rounded-xl" onClick={() => router.push("/settings")}>
+                <Avatar className="size-8 border border-primary/20">
+                  <AvatarImage src={user.photoURL || MOCK_USER.avatar} />
+                  <AvatarFallback>{user.displayName?.charAt(0) || user.email?.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div className="hidden lg:flex flex-col items-start text-sm text-left">
+                  <span className="font-bold truncate max-w-[100px]">{user.displayName || 'Demo User'}</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-primary">{userProfile?.experienceLevel || 'Calibrating...'}</span>
+                </div>
+              </Button>
+              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={handleLogout}>
+                <LogOut className="size-4" />
+              </Button>
+            </div>
+          </header>
 
           <div className="p-8">
             {children}

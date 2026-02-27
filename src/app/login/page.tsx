@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -44,8 +45,7 @@ export default function LoginPage() {
     const userRef = doc(db, 'users', firebaseUser.uid)
     const snap = await getDoc(userRef)
     
-    // Robust Initialization: Ensure balance is set to 50,000 for any new or corrupted profile
-    if (!snap.exists() || snap.data()?.balance === undefined || (snap.data()?.balance < 0)) {
+    if (!snap.exists()) {
       await setDoc(userRef, {
         id: firebaseUser.uid,
         email: firebaseUser.email || '',
@@ -53,6 +53,8 @@ export default function LoginPage() {
         balance: 50000,
         learningProgress: 0,
         predictionAccuracy: 0,
+        experienceLevel: 'UNSET',
+        onboardingCompleted: false,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       }, { merge: true })
@@ -68,7 +70,7 @@ export default function LoginPage() {
       await initializeDemoUser(result.user, result.user.displayName || '')
       toast({
         title: "Welcome to QuantumF",
-        description: "Successfully signed in. ₹50,000 demo capital ready.",
+        description: "Successfully signed in. Ready for assessment.",
       })
     } catch (error: any) {
       toast({
@@ -100,7 +102,7 @@ export default function LoginPage() {
         await initializeDemoUser(userCredential.user, displayName)
         toast({
           title: "Demo Account created",
-          description: "₹50,000 demo capital has been added to your portfolio.",
+          description: "Assessment pending to unlock full terminal.",
         })
       } else {
         const userCredential = await signInWithEmailAndPassword(auth, email, password)
