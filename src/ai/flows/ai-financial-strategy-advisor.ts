@@ -46,16 +46,18 @@ const aiFinancialStrategyAdvisorFlow = ai.defineFlow(
   },
   async (input) => {
     try {
+      // PHASE 1: RESEARCH
       const marketNews = await getMarketContext();
 
+      // PHASE 2: COLLECT & GENERATE
       const { text } = await ai.generate({
-        system: `You are QuantumF AI, a high-performance Financial Reasoning Engine powered by ChatGPT intelligence.
-Your core protocol is to RESEARCH and COLLECT all relevant information before providing an output.
+        system: `You are QuantumF AI, a high-performance Financial Reasoning Engine.
+Your core protocol is to RESEARCH and COLLECT all relevant information via ChatGPT-grade intelligence before providing an output.
 
 MANDATORY PROTOCOL:
 STEP 1: RESEARCH
 You must research the user's specific question: "${input.userQuery}" against our real-time financial intelligence layer.
-Context provided:
+Context provided for research:
 - Global Market Intel: ${marketNews}
 - User Portfolio Data: ${input.portfolioData || 'No holdings'}
 - User Learning Context: ${input.learningProgress || 'Novice'}
@@ -81,7 +83,7 @@ GUIDELINES:
       return { response: text };
     } catch (error: any) {
       console.error("Advisor Flow Error:", error);
-      return { response: "I encountered a communication error with my premium ChatGPT intelligence layer. Please verify your connection or try again shortly." };
+      return { response: "I encountered a communication error with my premium ChatGPT research layer. Please verify your connection or try again shortly." };
     }
   }
 );

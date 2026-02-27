@@ -19,7 +19,10 @@ import {
   Zap,
   Loader2,
   Trophy,
-  BrainCircuit
+  BrainCircuit,
+  Target,
+  BarChart3,
+  ShieldCheck
 } from "lucide-react"
 import { MOCK_LEARNING_MODULES } from "@/lib/mock-data"
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase, setDocumentNonBlocking } from "@/firebase"
@@ -46,11 +49,40 @@ export default function ModuleWorkspacePage({ params }: { params: Promise<{ modu
   const [activeLessonIndex, setActiveLessonIndex] = React.useState(0)
   const [isCompleting, setIsCompleting] = React.useState(false)
 
+  const lessonData = [
+    {
+      title: "Core Fundamentals",
+      content: "Welcome to the foundation of your financial journey. In this lesson, we break down the primary mechanisms that drive value in the global markets. You will learn about asset classes, basic terminology, and how the exchange ecosystem functions to facilitate trade. Mastery of these pillars is essential before attempting any live market speculation.",
+      icon: Target
+    },
+    {
+      title: "Analytical Frameworks",
+      content: "Data is the currency of the modern trader. Here, we introduce the frameworks used to analyze market trends. From fundamental valuation to technical price action, you will learn how to read the signals that the market sends. We focus on identifying patterns that recur across history to predict future movements with higher probability.",
+      icon: BarChart3
+    },
+    {
+      title: "Market Dynamics",
+      content: "Markets are living breathing entities driven by human psychology. In this section, we explore the dynamics of supply and demand, liquidity pools, and institutional order flow. Understanding who is moving the market and why will give you a significant edge over the retail crowd. We examine real-world scenarios where sentiment shifted entire sectors in hours.",
+      icon: Zap
+    },
+    {
+      title: "Execution Strategy",
+      content: "A strategy is only as good as its execution. This lesson teaches you how to enter and exit positions with precision. We cover order types, risk-to-reward ratios, and the importance of position sizing. You will learn how to manage your demo capital as if it were real, building the discipline required for professional-grade trading.",
+      icon: ShieldCheck
+    },
+    {
+      title: "Mastery Review",
+      content: "In the final stage of this module, we synthesize everything you've learned. We conduct a full review of the module's key concepts and prepare you for the Knowledge Arena. This is where theory meets practice. Ensure you have absorbed the insights from the previous four lessons before moving into live simulation.",
+      icon: BrainCircuit
+    }
+  ];
+
   const lessons = React.useMemo(() => {
     return Array.from({ length: module.lessons }, (_, i) => ({
       id: `lesson-${i + 1}`,
-      title: `Lesson ${i + 1}: ${i === 0 ? "Fundamentals" : i === 1 ? "Advanced Concepts" : "Market Mechanics"}`,
-      content: "Detailed educational content about financial markets and strategies. This section provides the core knowledge required to master this specific module. Research shows that consistent practice and active recall are key to long-term retention of financial concepts.",
+      title: `Lesson ${i + 1}: ${lessonData[i % lessonData.length].title}`,
+      content: lessonData[i % lessonData.length].content,
+      icon: lessonData[i % lessonData.length].icon,
       isLocked: false 
     }))
   }, [module.lessons])
@@ -74,15 +106,15 @@ export default function ModuleWorkspacePage({ params }: { params: Promise<{ modu
       }, { merge: true })
 
       toast({
-        title: "Lesson Complete!",
-        description: "Your progress has been synced to your professional profile.",
+        title: "Progress Synced",
+        description: `${currentLesson.title} marked as completed in your profile.`,
       })
 
       if (activeLessonIndex < lessons.length - 1) {
         setActiveLessonIndex(prev => prev + 1)
       }
     } catch (e) {
-      toast({ variant: "destructive", title: "Sync Failed" })
+      toast({ variant: "destructive", title: "Sync Error" })
     } finally {
       setIsCompleting(false)
     }
@@ -100,14 +132,14 @@ export default function ModuleWorkspacePage({ params }: { params: Promise<{ modu
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-3xl font-headline font-bold">{module.title}</h1>
-                <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20">{module.category}</Badge>
+                <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-black uppercase tracking-widest text-[10px]">{module.category}</Badge>
               </div>
               <p className="text-muted-foreground text-sm mt-1">{module.description}</p>
             </div>
           </div>
-          <div className="flex items-center gap-4 bg-muted/30 px-6 py-2.5 rounded-2xl border border-border/50">
+          <div className="flex items-center gap-4 bg-muted/30 px-6 py-2.5 rounded-2xl border border-border/50 shadow-sm">
             <div className="text-right mr-4 border-r border-border/50 pr-4">
-              <div className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Workspace Progress</div>
+              <div className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Module IQ Progress</div>
               <div className="text-xl font-bold text-primary">
                 {Math.round((progressList?.filter(p => p.moduleId === moduleId && p.status === 'completed').length || 0) / module.lessons * 100)}%
               </div>
@@ -121,7 +153,7 @@ export default function ModuleWorkspacePage({ params }: { params: Promise<{ modu
           <Card className="lg:col-span-1 glass-card border-none shadow-xl rounded-[2.5rem] overflow-hidden">
             <CardHeader className="bg-muted/10 border-b border-border/50 px-8 py-6">
               <CardTitle className="text-lg font-headline font-bold flex items-center gap-2">
-                <BookOpen className="size-5 text-primary" /> Learning Path
+                <BookOpen className="size-5 text-primary" /> Intelligence Path
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
@@ -139,15 +171,18 @@ export default function ModuleWorkspacePage({ params }: { params: Promise<{ modu
                     >
                       <div className="flex items-center gap-4">
                         <div className={cn(
-                          "size-10 rounded-xl flex items-center justify-center font-bold text-xs transition-colors",
-                          activeLessonIndex === idx ? "bg-primary text-white" : "bg-muted text-muted-foreground group-hover:bg-muted-foreground/20"
+                          "size-10 rounded-xl flex items-center justify-center font-bold text-xs transition-all",
+                          activeLessonIndex === idx ? "bg-primary text-white shadow-lg shadow-primary/20 scale-110" : "bg-muted text-muted-foreground group-hover:bg-muted-foreground/20"
                         )}>
                           {idx + 1}
                         </div>
                         <div>
                           <div className="text-sm font-bold truncate max-w-[180px]">{lesson.title}</div>
-                          <div className="text-[10px] font-black uppercase text-muted-foreground tracking-tighter">
-                            {lessonCompleted ? "Completed" : "Active"}
+                          <div className={cn(
+                            "text-[10px] font-black uppercase tracking-tighter",
+                            lessonCompleted ? "text-primary" : "text-muted-foreground"
+                          )}>
+                            {lessonCompleted ? "Completed" : activeLessonIndex === idx ? "Studying" : "Open for Learning"}
                           </div>
                         </div>
                       </div>
@@ -164,7 +199,7 @@ export default function ModuleWorkspacePage({ params }: { params: Promise<{ modu
           </Card>
 
           <div className="lg:col-span-2 space-y-6">
-            <Card className="glass-card border-none shadow-2xl rounded-[2.5rem] overflow-hidden min-h-[500px] flex flex-col">
+            <Card className="glass-card border-none shadow-2xl rounded-[2.5rem] overflow-hidden min-h-[500px] flex flex-col transition-all duration-500">
               <div className="relative h-48 w-full bg-primary overflow-hidden">
                 <NextImage 
                   src={module.image} 
@@ -174,29 +209,29 @@ export default function ModuleWorkspacePage({ params }: { params: Promise<{ modu
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
                 <div className="absolute bottom-8 left-10">
-                  <Badge className="bg-primary text-white border-none mb-2">Lesson {activeLessonIndex + 1}</Badge>
+                  <Badge className="bg-primary text-white border-none mb-2 font-black uppercase tracking-widest text-[10px]">Active Lesson: {activeLessonIndex + 1}</Badge>
                   <h2 className="text-3xl font-headline font-bold text-white">{currentLesson.title}</h2>
                 </div>
               </div>
               
-              <CardContent className="p-10 flex-1 space-y-8">
+              <CardContent className="p-10 flex-1 space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
                 <div className="space-y-6">
                   <div className="flex items-center gap-2 text-[10px] font-black uppercase text-primary tracking-[0.2em]">
-                    <Zap className="size-3 fill-primary" /> Core Learning Material
+                    <Zap className="size-3 fill-primary" /> Professional Learning Material
                   </div>
-                  <div className="prose prose-sm dark:prose-invert max-w-none text-muted-foreground leading-relaxed text-lg">
+                  <div className="prose prose-sm dark:prose-invert max-w-none text-muted-foreground leading-relaxed text-lg font-medium">
                     {currentLesson.content}
                     <br /><br />
-                    This section provides critical insights into the financial markets. Master the fundamentals before moving to complex trading execution. Understanding the underlying drivers of market movement is key to long-term success.
+                    This section provides critical insights into the financial markets. Mastering these concepts through focused study is the only way to achieve long-term profitability. Understanding the underlying drivers of market movement is key to professional success.
                   </div>
                 </div>
 
                 <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6 flex items-start gap-4">
-                  <BrainCircuit className="size-6 text-primary shrink-0 mt-1" />
+                  <currentLesson.icon className="size-6 text-primary shrink-0 mt-1" />
                   <div>
-                    <h4 className="font-bold text-sm">Pro Strategic Insight</h4>
+                    <h4 className="font-bold text-sm uppercase tracking-tight">Strategic Insight</h4>
                     <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                      Mastering the fundamentals of {module.title} is essential before moving to technical execution. Ensure you understand the underlying market drivers.
+                      Deep immersion in "{currentLesson.title}" provides the cognitive foundation for live market execution. Do not rush this phase.
                     </p>
                   </div>
                 </div>
@@ -204,12 +239,12 @@ export default function ModuleWorkspacePage({ params }: { params: Promise<{ modu
 
               <CardFooter className="p-10 pt-0">
                 {isCompleted ? (
-                  <div className="w-full h-14 rounded-2xl bg-muted flex items-center justify-center text-foreground font-bold text-lg gap-2">
-                    <CheckCircle2 className="size-5 text-primary" /> Lesson Completed
+                  <div className="w-full h-14 rounded-2xl bg-muted/50 border border-border flex items-center justify-center text-foreground font-black uppercase text-sm tracking-widest gap-3">
+                    <CheckCircle2 className="size-5 text-primary" /> Mastery Recorded
                   </div>
                 ) : (
                   <Button 
-                    className="w-full h-14 rounded-2xl font-bold text-lg gap-2 shadow-xl shadow-primary/20 hover:scale-[1.01]" 
+                    className="w-full h-14 rounded-2xl font-black uppercase text-sm tracking-widest gap-2 shadow-xl shadow-primary/20 hover:scale-[1.01] transition-transform" 
                     onClick={handleCompleteLesson}
                     disabled={isCompleting}
                   >
@@ -223,12 +258,12 @@ export default function ModuleWorkspacePage({ params }: { params: Promise<{ modu
               <Card className="glass-card border-none p-6 text-center group cursor-pointer hover:border-primary/30 transition-all" onClick={() => router.push('/predict')}>
                 <Zap className="size-8 text-primary mx-auto mb-3 group-hover:scale-110 transition-transform" />
                 <h4 className="font-bold text-sm">Practice in Arena</h4>
-                <p className="text-[10px] text-muted-foreground uppercase mt-1">Live Demo Trading</p>
+                <p className="text-[10px] text-muted-foreground uppercase mt-1 font-black">Live Speculation</p>
               </Card>
               <Card className="glass-card border-none p-6 text-center group cursor-pointer hover:border-primary/30 transition-all" onClick={() => router.push('/advisor')}>
                 <BrainCircuit className="size-8 text-primary mx-auto mb-3 group-hover:scale-110 transition-transform" />
                 <h4 className="font-bold text-sm">Ask AI Advisor</h4>
-                <p className="text-[10px] text-muted-foreground uppercase mt-1">Clarify Concepts</p>
+                <p className="text-[10px] text-muted-foreground uppercase mt-1 font-black">Consult ChatGPT</p>
               </Card>
             </div>
           </div>
