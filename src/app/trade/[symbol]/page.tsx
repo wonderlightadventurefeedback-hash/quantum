@@ -333,18 +333,20 @@ export default function StockDetailsPage({ params }: { params: Promise<{ symbol:
         toast({ variant: "destructive", title: "TRADE LOST", description: "Market moved against prediction." })
       }
 
-      addDocumentNonBlocking(collection(db, user!.uid, 'activity'), {
-        type: "ARENA_SPECULATE",
-        symbol,
-        name: stock.name,
-        prediction,
-        outcome: isWin ? "WIN" : "LOSS",
-        stake: amount,
-        total: profit,
-        price: entryPrice,
-        timestamp: serverTimestamp(),
-        status: "SETTLED"
-      })
+      if (db && user) {
+        addDocumentNonBlocking(collection(db, 'users', user.uid, 'activity'), {
+          type: "ARENA_SPECULATE",
+          symbol,
+          name: stock.name,
+          prediction,
+          outcome: isWin ? "WIN" : "LOSS",
+          stake: amount,
+          total: profit,
+          price: entryPrice,
+          timestamp: serverTimestamp(),
+          status: "SETTLED"
+        })
+      }
     }
   }, [isTradingLive, tradeTimer, prediction, currentSimulatedPrice, entryPrice, tradeAmount, db, user, stock.name, symbol])
 
