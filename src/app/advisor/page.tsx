@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -26,7 +25,8 @@ import {
   Globe,
   Search,
   Cpu,
-  Database
+  Database,
+  Sparkles
 } from "lucide-react"
 import { 
   AreaChart, 
@@ -90,7 +90,7 @@ export default function AdvisorPage() {
       setMessages(history.map(m => ({ role: m.role, content: m.content, timestamp: m.timestamp })))
     } else if (history && history.length === 0 && !isHistoryLoading) {
       setMessages([
-        { role: 'assistant', content: "Welcome to **QuantumF AI**. My reasoning engine researches your questions through ChatGPT and collects all relevant financial and stock market information before providing an output. How can I help you optimize your strategy today?" }
+        { role: 'assistant', content: "Welcome to **QuantumF AI**. My reasoning engine analyzes your question, researches market context, and collects all relevant data through Gemini before providing an output. How can I help you today?" }
       ])
     }
   }, [history, isHistoryLoading])
@@ -126,7 +126,7 @@ export default function AdvisorPage() {
     } catch (error) {
       addDocumentNonBlocking(userMsgRef, {
         role: 'assistant',
-        content: "I encountered a communication error with my premium ChatGPT research layer. Please verify your configuration or try again shortly.",
+        content: "I encountered a communication error with my premium Gemini research layer. Please verify your connection or try again shortly.",
         timestamp: serverTimestamp()
       })
     } finally {
@@ -141,10 +141,10 @@ export default function AdvisorPage() {
   }, [messages, isLoading])
 
   const suggestions = [
-    "Research NVIDIA technicals",
-    "Analyze my current holdings",
+    "Analyze NVIDIA technicals",
+    "Research my current holdings",
     "Collect latest market news",
-    "Stock trends through ChatGPT",
+    "Stock trends via Gemini",
     "Explain Ethereum value"
   ]
 
@@ -160,11 +160,11 @@ export default function AdvisorPage() {
                 <Search className="size-3 mr-1 inline animate-pulse" /> Research Mode
               </Badge>
               <Badge variant="outline" className="border-primary/30 text-primary text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">
-                <Database className="size-3 mr-1 inline" /> ChatGPT Data Collect
+                <Sparkles className="size-3 mr-1 inline" /> Gemini Data Collect
               </Badge>
             </div>
             <p className="text-muted-foreground text-xs font-medium">
-              QuantumF researches your question and collects all information through ChatGPT before giving the output.
+              QuantumF analyzes, researches, and collects data from Gemini before giving the output.
             </p>
           </div>
           <div className="flex items-center gap-4 bg-muted/30 border border-border/50 px-6 py-2.5 rounded-2xl">
@@ -235,7 +235,7 @@ export default function AdvisorPage() {
                         <span className="size-2 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]"></span>
                         <span className="size-2 bg-primary rounded-full animate-bounce"></span>
                       </div>
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">ChatGPT Researching & Collecting Information...</span>
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Gemini Analyzing, Researching & Collecting Data...</span>
                     </div>
                   </div>
                 )}
@@ -260,7 +260,7 @@ export default function AdvisorPage() {
                 <Input 
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="Research the finance and stock market through ChatGPT..." 
+                  placeholder="Ask a question for Gemini to analyze and research..." 
                   className="pr-16 h-16 bg-background border-border/50 rounded-2xl focus-visible:ring-primary/40 text-lg shadow-xl"
                 />
                 <Button 
@@ -276,7 +276,7 @@ export default function AdvisorPage() {
                 <div className="flex items-center gap-2">
                   <Info className="size-3 text-muted-foreground" />
                   <p className="text-[9px] text-muted-foreground uppercase font-black tracking-widest text-center">
-                    QuantumF researches through ChatGPT and collects all information about finance and stocks before giving the output
+                    QuantumF researches through Gemini and collects all information about finance and stocks before giving the output
                   </p>
                 </div>
               </div>
@@ -354,7 +354,7 @@ export default function AdvisorPage() {
                 <Globe size={120} />
               </div>
               <h4 className="text-[10px] font-black uppercase tracking-widest opacity-80 mb-2">Global Insight</h4>
-              <p className="text-sm font-bold leading-tight">QuantumF researching 50+ global markets through ChatGPT intelligence...</p>
+              <p className="text-sm font-bold leading-tight">QuantumF analyzing 50+ global markets through Gemini intelligence...</p>
               <Button size="sm" variant="secondary" className="mt-4 w-full rounded-xl font-black text-[10px] uppercase h-9 bg-white text-primary">
                 View Global Report
               </Button>

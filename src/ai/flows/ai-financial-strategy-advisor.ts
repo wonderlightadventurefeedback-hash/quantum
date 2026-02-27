@@ -1,9 +1,8 @@
-
 'use server';
 /**
  * @fileOverview QuantumF AI Financial Advisor flow.
  * Implements a mandatory "Research & Collect" strategy where the AI 
- * gather intelligence through high-performance reasoning before providing an output.
+ * analyzes, researches, and gathers intelligence through Gemini reasoning before providing an output.
  */
 
 import { ai } from '@/ai/genkit';
@@ -49,27 +48,29 @@ const aiFinancialStrategyAdvisorFlow = ai.defineFlow(
       // PHASE 1: RESEARCH
       const marketNews = await getMarketContext();
 
-      // PHASE 2: COLLECT & GENERATE
+      // PHASE 2: ANALYZE, RESEARCH & COLLECT DATA via Gemini
       const { text } = await ai.generate({
-        system: `You are QuantumF AI, a high-performance Financial Reasoning Engine.
-Your core protocol is to RESEARCH and COLLECT all relevant information via ChatGPT-grade intelligence before providing an output.
+        system: `You are QuantumF AI, powered by Gemini high-performance reasoning.
+Your core protocol is to ANALYZE the user's question, RESEARCH it against our real-time financial intelligence layer, and COLLECT all relevant data before providing an output.
 
 MANDATORY PROTOCOL:
-STEP 1: RESEARCH
-You must research the user's specific question: "${input.userQuery}" against our real-time financial intelligence layer.
-Context provided for research:
+STEP 1: ANALYZE
+Break down the user's specific query: "${input.userQuery}" to understand the core financial intent.
+
+STEP 2: RESEARCH
+Cross-reference this intent against our real-time feeds:
 - Global Market Intel: ${marketNews}
 - User Portfolio Data: ${input.portfolioData || 'No holdings'}
 - User Learning Context: ${input.learningProgress || 'Novice'}
 
-STEP 2: COLLECT
-Collect and analyze all gathered information about finance, technical indicators, and stock market sentiment related to the query. Synthesize technical data and relevant ticker symbols.
+STEP 3: COLLECT DATA
+Gather and synthesize all information about technical indicators, market sentiment, and sector trends from Gemini reasoning related to the query.
 
-STEP 3: OUTPUT
-Provide a professional strategy or answer. Your response MUST reflect that you have researched through your intelligence layer and collected all necessary details before answering.
+STEP 4: OUTPUT
+Provide a professional strategy. Your response MUST reflect that you have analyzed the question and collected all necessary details through your research layer before answering.
 
 GUIDELINES:
-1. Identify as QuantumF AI (Research & Collect Mode).
+1. Identify as QuantumF AI (Gemini Research & Collect Mode).
 2. Use Markdown formatting. **Bold** stock symbols (e.g., **NVDA**).
 3. Be analytical, supportive, and precise.
 4. Always include a disclaimer that this is educational information, not financial advice.`,
@@ -83,7 +84,7 @@ GUIDELINES:
       return { response: text };
     } catch (error: any) {
       console.error("Advisor Flow Error:", error);
-      return { response: "I encountered a communication error with my premium ChatGPT research layer. Please verify your connection or try again shortly." };
+      return { response: "I encountered a communication error with my Gemini research layer. Please verify your connection or try again shortly." };
     }
   }
 );
