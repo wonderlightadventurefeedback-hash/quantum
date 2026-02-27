@@ -115,7 +115,7 @@ export default function AdvisorPage() {
       const response = await aiFinancialStrategyAdvisor({
         userQuery: userMsg,
         portfolioData: JSON.stringify(holdings || []),
-        learningProgress: `${userProfile?.learningProgress || 0}% complete.`
+        learningProgress: `${userProfile?.experienceLevel || 'Beginner'} level assessment complete.`
       })
 
       addDocumentNonBlocking(userMsgRef, {
@@ -126,7 +126,7 @@ export default function AdvisorPage() {
     } catch (error) {
       addDocumentNonBlocking(userMsgRef, {
         role: 'assistant',
-        content: "I encountered a communication error with my premium Gemini research layer. Please verify your connection or try again shortly.",
+        content: "I encountered a communication error with my Gemini research layer. Please verify your connection or try again shortly.",
         timestamp: serverTimestamp()
       })
     } finally {
