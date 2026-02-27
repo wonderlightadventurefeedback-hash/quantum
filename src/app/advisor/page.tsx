@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { ScrollArea } => "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { 
   Send, 
@@ -90,7 +90,7 @@ export default function AdvisorPage() {
       setMessages(history.map(m => ({ role: m.role, content: m.content, timestamp: m.timestamp })))
     } else if (history && history.length === 0 && !isHistoryLoading) {
       setMessages([
-        { role: 'assistant', content: "Welcome to **QuantumF AI**. My reasoning engine analyzes your question, researches market context, and collects all relevant data through Gemini before providing an output. How can I help you today?" }
+        { role: 'assistant', content: "I have updated the **QuantumF AI Advisor** to follow your specific **Research & Collect** protocol using Gemini intelligence. My reasoning engine analyzes your query, researches the context against live market data, and collects all necessary information from Gemini before synthesizing your final strategic output. How can I help you today?" }
       ])
     }
   }, [history, isHistoryLoading])
@@ -164,7 +164,7 @@ export default function AdvisorPage() {
               </Badge>
             </div>
             <p className="text-muted-foreground text-xs font-medium">
-              QuantumF analyzes, researches, and collects data from Gemini before giving the output.
+              QuantumF analyzes, researches, and collects information from Gemini before giving the output.
             </p>
           </div>
           <div className="flex items-center gap-4 bg-muted/30 border border-border/50 px-6 py-2.5 rounded-2xl">

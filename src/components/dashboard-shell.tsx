@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -49,7 +48,7 @@ const navItems = [
   { name: "Prediction Arena", href: "/predict", icon: Zap },
   { name: "News Intel", href: "/news", icon: Newspaper },
   { name: "Portfolio Analyzer", href: "/portfolio", icon: PieChart },
-  { name: "AI Advisor", href: "/advisor", icon: Bot },
+  { name: "Gemini Intelligence", href: "/advisor", icon: Bot },
   { name: "Account", href: "/settings", icon: User },
 ]
 

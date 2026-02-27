@@ -1,8 +1,8 @@
 'use server';
 /**
  * @fileOverview QuantumF AI Financial Advisor flow.
- * Implements a mandatory "Research & Collect" strategy where the AI 
- * analyzes, researches, and gathers intelligence through Gemini reasoning before providing an output.
+ * Implements a mandatory "Research & Collect" strategy using Gemini Intelligence.
+ * The AI analyzes, researches, and gathers data before providing output.
  */
 
 import { ai } from '@/ai/genkit';
@@ -15,7 +15,7 @@ async function getMarketContext() {
     const res = await fetch(`https://finnhub.io/api/v1/news?category=general&token=${FINNHUB_API_KEY}`);
     if (!res.ok) return "N/A";
     const data = await res.json();
-    return Array.isArray(data) ? data.slice(0, 8).map((n: any) => `[${n.source}] ${n.headline}`).join(' | ') : "N/A";
+    return Array.isArray(data) ? data.slice(0, 10).map((n: any) => `[${n.source}] ${n.headline}`).join(' | ') : "N/A";
   } catch (e) {
     return "N/A";
   }
@@ -48,33 +48,32 @@ const aiFinancialStrategyAdvisorFlow = ai.defineFlow(
       // PHASE 1: RESEARCH MARKET CONTEXT
       const marketNews = await getMarketContext();
 
-      // PHASE 2: EXECUTE RESEARCH & COLLECT PROTOCOL VIA GEMINI
+      // PHASE 2: EXECUTE RESEARCH & COLLECT PROTOCOL VIA GEMINI 1.5 PRO
       const { text } = await ai.generate({
         model: 'googleai/gemini-1.5-pro',
-        system: `You are QuantumF AI, powered by high-performance Gemini reasoning.
+        system: `You are QuantumF Gemini, a high-performance financial reasoning engine.
 Your core protocol is to RESEARCH and COLLECT all relevant information before providing any financial output.
 
 MANDATORY EXECUTION PROTOCOL:
 STEP 1: ANALYZE
-Deconstruct the user's query: "${input.userQuery}". Identify the core financial intent and specific symbols involved.
+Deconstruct the user's query: "${input.userQuery}". Identify symbols, sectors, and intent.
 
 STEP 2: RESEARCH
-Cross-reference the query against our real-time feeds and context:
+Cross-reference the query against our real-time feeds:
 - Global Market Intelligence: ${marketNews}
 - User Portfolio Context: ${input.portfolioData || 'No active holdings'}
 - User Knowledge Level: ${input.learningProgress || 'Calibrating'}
 
 STEP 3: COLLECT DATA
-Gather all information about technical indicators, market sentiment, sector trends, and fundamental risks related to the query through your internal Gemini research layer.
+Gather technical indicators, sentiment shifts, and fundamental risks through your internal Gemini research layer.
 
 STEP 4: OUTPUT
-Provide a professional strategy. Your response MUST reflect that you have analyzed the question and collected all necessary details through your research layer before answering.
+Provide a professional strategy. Your response MUST confirm that you have analyzed and collected all details before answering.
 
 GUIDELINES:
-1. Identify as QuantumF AI (Research & Collect Mode Active).
-2. Use professional Markdown formatting. **Bold** stock symbols (e.g., **NVDA**).
-3. Be analytical, supportive, and precise.
-4. Always include a disclaimer: "This is educational research, not financial advice."`,
+1. Identify as QuantumF Gemini (Research & Collect Mode).
+2. Use professional Markdown. **Bold** stock symbols.
+3. Include a mandatory disclaimer: "This is educational research, not financial advice."`,
         prompt: input.userQuery,
       });
 
