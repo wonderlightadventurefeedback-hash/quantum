@@ -51,9 +51,9 @@ export default function ModuleWorkspacePage({ params }: { params: Promise<{ modu
       id: `lesson-${i + 1}`,
       title: `Lesson ${i + 1}: ${i === 0 ? "Fundamentals" : i === 1 ? "Advanced Concepts" : "Market Mechanics"}`,
       content: "Detailed educational content about financial markets and strategies. This section provides the core knowledge required to master this specific module. Research shows that consistent practice and active recall are key to long-term retention of financial concepts.",
-      isLocked: i > 0 && !(progressList?.find(p => p.lessonId === `lesson-${i}` && p.moduleId === moduleId)?.status === 'completed')
+      isLocked: false // All lessons are now active and unlocked as requested
     }))
-  }, [module.lessons, progressList, moduleId])
+  }, [module.lessons])
 
   const currentLesson = lessons[activeLessonIndex]
   const isCompleted = progressList?.some(p => p.lessonId === currentLesson.id && p.moduleId === moduleId && p.status === 'completed')
@@ -133,12 +133,10 @@ export default function ModuleWorkspacePage({ params }: { params: Promise<{ modu
                   return (
                     <button
                       key={lesson.id}
-                      disabled={lesson.isLocked && !lessonCompleted}
                       onClick={() => setActiveLessonIndex(idx)}
                       className={cn(
                         "w-full flex items-center justify-between p-6 px-8 text-left transition-all group",
-                        activeLessonIndex === idx ? "bg-primary/5 border-l-4 border-primary" : "hover:bg-muted/10",
-                        lesson.isLocked && !lessonCompleted && "opacity-50 grayscale cursor-not-allowed"
+                        activeLessonIndex === idx ? "bg-primary/5 border-l-4 border-primary" : "hover:bg-muted/10"
                       )}
                     >
                       <div className="flex items-center gap-4">
@@ -151,14 +149,12 @@ export default function ModuleWorkspacePage({ params }: { params: Promise<{ modu
                         <div>
                           <div className="text-sm font-bold truncate max-w-[180px]">{lesson.title}</div>
                           <div className="text-[10px] font-black uppercase text-muted-foreground tracking-tighter">
-                            {lessonCompleted ? "Completed" : lesson.isLocked ? "Locked" : "Next Up"}
+                            {lessonCompleted ? "Completed" : "Active"}
                           </div>
                         </div>
                       </div>
                       {lessonCompleted ? (
                         <CheckCircle2 className="size-5 text-primary" />
-                      ) : lesson.isLocked ? (
-                        <Lock className="size-4 text-muted-foreground" />
                       ) : (
                         <ChevronRight className="size-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
                       )}
@@ -194,7 +190,7 @@ export default function ModuleWorkspacePage({ params }: { params: Promise<{ modu
                   <div className="prose prose-sm dark:prose-invert max-w-none text-muted-foreground leading-relaxed text-lg">
                     {currentLesson.content}
                     <br /><br />
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+                    This section provides critical insights into the financial markets. Master the fundamentals before moving to complex trading execution. Understanding the underlying drivers of market movement is key to long-term success.
                   </div>
                 </div>
 

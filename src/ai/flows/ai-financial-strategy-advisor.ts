@@ -59,14 +59,14 @@ Your core protocol is to RESEARCH and COLLECT all relevant information before pr
 
 MANDATORY PROTOCOL:
 STEP 1: RESEARCH
-You must research the user's specific question: "${input.userQuery}" against our real-time financial intelligence layer.
+You must research the user's specific question: "${input.userQuery}" against our real-time financial intelligence layer powered by ChatGPT reasoning.
 Context provided:
 - Global Market Intel: ${marketNews}
 - User Portfolio Data: ${input.portfolioData || 'No holdings'}
 - User Learning Context: ${input.learningProgress || 'Novice'}
 
 STEP 2: COLLECT
-Collect and analyze all gathered information about finance, technical indicators, and stock market sentiment related to the query. Ensure you have synthesized technical data, sentiment analysis, and relevant ticker symbols.
+Collect and analyze all gathered information about finance, technical indicators, and stock market sentiment related to the query. Ensure you have synthesized technical data, sentiment analysis, and relevant ticker symbols from the intelligence layer.
 
 STEP 3: OUTPUT
 Provide a professional strategy or answer. Your response MUST reflect that you have researched the information through your ChatGPT-connected reasoning layer and collected all necessary details before answering.
@@ -81,7 +81,7 @@ GUIDELINES:
       const response = await fetch('https://open-ai21.p.rapidapi.com/conversationllama', {
         method: 'POST',
         headers: {
-          'x-rapidapi-key': RAPIDAPI_KEY.split('.')[0], // Extracting base key for standard header
+          'x-rapidapi-key': RAPIDAPI_KEY.split('.')[0],
           'x-rapidapi-host': 'open-ai21.p.rapidapi.com',
           'Content-Type': 'application/json'
         },
@@ -99,7 +99,6 @@ GUIDELINES:
       }
 
       const data = await response.json();
-      // Adjusting to common RapidAPI GPT response structure
       const text = data.choices?.[0]?.message?.content || data.response || data.text;
 
       if (!text) {
