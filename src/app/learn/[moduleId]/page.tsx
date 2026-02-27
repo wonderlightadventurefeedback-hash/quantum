@@ -3,7 +3,7 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import Image from "next/image"
+import NextImage from "next/image"
 import { DashboardShell } from "@/components/dashboard-shell"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -51,7 +51,7 @@ export default function ModuleWorkspacePage({ params }: { params: Promise<{ modu
       id: `lesson-${i + 1}`,
       title: `Lesson ${i + 1}: ${i === 0 ? "Fundamentals" : i === 1 ? "Advanced Concepts" : "Market Mechanics"}`,
       content: "Detailed educational content about financial markets and strategies. This section provides the core knowledge required to master this specific module. Research shows that consistent practice and active recall are key to long-term retention of financial concepts.",
-      isLocked: false // All lessons are now active and unlocked as requested
+      isLocked: false 
     }))
   }, [module.lessons])
 
@@ -92,7 +92,6 @@ export default function ModuleWorkspacePage({ params }: { params: Promise<{ modu
     <DashboardShell>
       <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
         
-        {/* Module Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" className="rounded-full" onClick={() => router.push('/learn')}>
@@ -119,7 +118,6 @@ export default function ModuleWorkspacePage({ params }: { params: Promise<{ modu
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
-          {/* Lessons Navigation */}
           <Card className="lg:col-span-1 glass-card border-none shadow-xl rounded-[2.5rem] overflow-hidden">
             <CardHeader className="bg-muted/10 border-b border-border/50 px-8 py-6">
               <CardTitle className="text-lg font-headline font-bold flex items-center gap-2">
@@ -165,11 +163,10 @@ export default function ModuleWorkspacePage({ params }: { params: Promise<{ modu
             </CardContent>
           </Card>
 
-          {/* Active Workspace */}
           <div className="lg:col-span-2 space-y-6">
             <Card className="glass-card border-none shadow-2xl rounded-[2.5rem] overflow-hidden min-h-[500px] flex flex-col">
               <div className="relative h-48 w-full bg-primary overflow-hidden">
-                <Image 
+                <NextImage 
                   src={module.image} 
                   alt="Lesson Header" 
                   fill 

@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -125,7 +126,7 @@ export default function AdvisorPage() {
     } catch (error) {
       addDocumentNonBlocking(userMsgRef, {
         role: 'assistant',
-        content: "I encountered a communication error with my research intelligence layer. Please verify your connection or try again shortly.",
+        content: "I encountered a communication error with my premium ChatGPT research layer. Please verify your configuration or try again shortly.",
         timestamp: serverTimestamp()
       })
     } finally {
@@ -142,9 +143,9 @@ export default function AdvisorPage() {
   const suggestions = [
     "Research NVIDIA technicals",
     "Analyze my current holdings",
-    "Collect latest bank news",
-    "Stock market trends today",
-    "Explain Bitcoin's value"
+    "Collect latest market news",
+    "Stock trends through ChatGPT",
+    "Explain Ethereum value"
   ]
 
   return (
@@ -244,15 +245,13 @@ export default function AdvisorPage() {
 
             <div className="px-6 py-4 border-t border-border/50 flex gap-3 overflow-x-auto no-scrollbar bg-muted/5 backdrop-blur-sm">
               {suggestions.map((q) => (
-                <Button 
+                <button 
                   key={q} 
-                  variant="outline" 
-                  size="sm" 
-                  className="shrink-0 rounded-full bg-background border-border/50 hover:border-primary/50 hover:bg-primary/5 text-[10px] font-black uppercase h-9 px-6 transition-all" 
+                  className="shrink-0 rounded-full bg-background border border-border/50 hover:border-primary/50 hover:bg-primary/5 text-[10px] font-black uppercase h-9 px-6 transition-all" 
                   onClick={() => setInput(q)}
                 >
                   {q}
-                </Button>
+                </button>
               ))}
             </div>
 
