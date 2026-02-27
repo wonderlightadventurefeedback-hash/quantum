@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -91,7 +90,7 @@ export default function AdvisorPage() {
       setMessages(history.map(m => ({ role: m.role, content: m.content, timestamp: m.timestamp })))
     } else if (history && history.length === 0 && !isHistoryLoading) {
       setMessages([
-        { role: 'assistant', content: "I have updated the **QuantumF AI Advisor** to follow your specific **Research & Collect** protocol using **Gemini Intelligence**. My reasoning engine analyzes your query, researches the context against live market data, and collects all necessary information from Gemini before synthesizing your final strategic output. How can I help you today?" }
+        { role: 'assistant', content: "Welcome to the **QuantumF Intelligence Terminal**. I follow a strict **Research & Collect** protocol powered by **Gemini**. I will analyze your query, research the current market context, and collect all necessary financial data before synthesizing your final strategic output. How can I help you today?" }
       ])
     }
   }, [history, isHistoryLoading])
