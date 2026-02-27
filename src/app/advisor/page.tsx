@@ -1,8 +1,9 @@
+
 "use client"
 
 import * as React from "react"
 import { DashboardShell } from "@/components/dashboard-shell"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -17,15 +18,10 @@ import {
   Clock, 
   Info, 
   TrendingUp, 
-  Activity, 
   BarChart3, 
-  ArrowUpRight, 
-  ArrowDownRight,
   TrendingDown,
   Globe,
   Search,
-  Cpu,
-  Database,
   Sparkles
 } from "lucide-react"
 import { 
@@ -90,7 +86,7 @@ export default function AdvisorPage() {
       setMessages(history.map(m => ({ role: m.role, content: m.content, timestamp: m.timestamp })))
     } else if (history && history.length === 0 && !isHistoryLoading) {
       setMessages([
-        { role: 'assistant', content: "Welcome to the **QuantumF Intelligence Terminal**. I follow a strict **Research & Collect** protocol powered by **Gemini**. I will analyze your query, research the current market context, and collect all necessary financial data before synthesizing your final strategic output. How can I help you today?" }
+        { role: 'assistant', content: "Welcome to the **QuantumF Intelligence Terminal**. I follow a strict **Research & Collect** protocol powered by **Gemini Intelligence**. I will deconstruct your query, research the current global market context, and collect all necessary financial data before synthesizing your final strategic output. How can I help you today?" }
       ])
     }
   }, [history, isHistoryLoading])

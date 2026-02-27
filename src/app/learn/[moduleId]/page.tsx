@@ -263,7 +263,7 @@ export default function ModuleWorkspacePage({ params }: { params: Promise<{ modu
               <Card className="glass-card border-none p-6 text-center group cursor-pointer hover:border-primary/30 transition-all" onClick={() => router.push('/advisor')}>
                 <BrainCircuit className="size-8 text-primary mx-auto mb-3 group-hover:scale-110 transition-transform" />
                 <h4 className="font-bold text-sm">Ask AI Advisor</h4>
-                <p className="text-[10px] text-muted-foreground uppercase mt-1 font-black">Consult ChatGPT</p>
+                <p className="text-[10px] text-muted-foreground uppercase mt-1 font-black">Consult Gemini</p>
               </Card>
             </div>
           </div>
