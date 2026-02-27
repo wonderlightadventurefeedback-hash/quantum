@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview QuantumF AI Financial Advisor flow powered by high-performance reasoning models.
@@ -14,7 +15,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
 const FINNHUB_API_KEY = process.env.NEXT_PUBLIC_FINNHUB_API_KEY || 'd6g3c49r01qqnmbqk10gd6g3c49r01qqnmbqk110';
-const SILICON_FLOW_KEY = 'ef844e3b8eac407990679dffbd62147c.I9mEPUXANRbOARAI150CNX2a';
+const RAPIDAPI_KEY = 'ef844e3b8eac407990679dffbd62147c.I9mEPUXANRbOARAI150CNX2a';
 
 async function getMarketContext() {
   try {
@@ -53,21 +54,22 @@ const aiFinancialStrategyAdvisorFlow = ai.defineFlow(
     try {
       const marketNews = await getMarketContext();
 
-      const systemPrompt = `You are QuantumF AI, a high-performance Financial Reasoning Engine. 
+      const systemPrompt = `You are QuantumF AI, a high-performance Financial Reasoning Engine directly connected to ChatGPT intelligence.
 Your core protocol is to RESEARCH and COLLECT all relevant information before providing an output.
 
+MANDATORY PROTOCOL:
 STEP 1: RESEARCH
-You must research the user's question: "${input.userQuery}" against our real-time financial intelligence layer (ChatGPT).
+You must research the user's specific question: "${input.userQuery}" against our real-time financial intelligence layer.
 Context provided:
 - Global Market Intel: ${marketNews}
 - User Portfolio Data: ${input.portfolioData || 'No holdings'}
 - User Learning Context: ${input.learningProgress || 'Novice'}
 
 STEP 2: COLLECT
-Collect all information about the finance and stock market related to the query. Ensure you have gathered technical data, sentiment analysis, and relevant symbols.
+Collect and analyze all gathered information about finance, technical indicators, and stock market sentiment related to the query. Ensure you have synthesized technical data, sentiment analysis, and relevant ticker symbols.
 
 STEP 3: OUTPUT
-Provide a professional strategy or answer. Your response must reflect that you have researched the information through your ChatGPT-connected reasoning layer and collected all necessary details before answering.
+Provide a professional strategy or answer. Your response MUST reflect that you have researched the information through your ChatGPT-connected reasoning layer and collected all necessary details before answering.
 
 GUIDELINES:
 1. Identify as QuantumF AI (Research & Collect Mode).
@@ -75,31 +77,30 @@ GUIDELINES:
 3. Be analytical, supportive, and precise.
 4. Always include a disclaimer that this is educational information, not financial advice.`;
 
-      // Using Llama-3.3-70B-Instruct for high-performance reasoning
-      const response = await fetch('https://api.siliconflow.cn/v1/chat/completions', {
+      // Using the direct RapidAPI Llama/GPT connection logic
+      const response = await fetch('https://open-ai21.p.rapidapi.com/conversationllama', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${SILICON_FLOW_KEY}`,
+          'x-rapidapi-key': RAPIDAPI_KEY.split('.')[0], // Extracting base key for standard header
+          'x-rapidapi-host': 'open-ai21.p.rapidapi.com',
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: 'meta-llama/Llama-3.3-70B-Instruct',
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: input.userQuery }
           ],
-          stream: false,
-          max_tokens: 2000,
-          temperature: 0.3
+          web_access: false
         })
       });
 
       if (!response.ok) {
-        throw new Error(`API Error: ${response.statusText}`);
+        throw new Error(`Intelligence Layer Error: ${response.statusText}`);
       }
 
       const data = await response.json();
-      const text = data.choices?.[0]?.message?.content;
+      // Adjusting to common RapidAPI GPT response structure
+      const text = data.choices?.[0]?.message?.content || data.response || data.text;
 
       if (!text) {
         throw new Error("Reasoning Engine failed to produce output.");
@@ -108,7 +109,7 @@ GUIDELINES:
       return { response: text };
     } catch (error: any) {
       console.error("Advisor Flow Error:", error);
-      return { response: "I encountered a communication error with my research intelligence layer. Please verify your connection or try again shortly." };
+      return { response: "I encountered a communication error with my premium ChatGPT intelligence layer. Please verify your connection or try again shortly." };
     }
   }
 );

@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { DashboardShell } from "@/components/dashboard-shell"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -116,11 +116,10 @@ const CustomTooltip = ({ active, payload, chartType }: any) => {
   return null;
 };
 
-export default function StockDetailsPage() {
-  const params = useParams()
+export default function StockDetailsPage({ params }: { params: Promise<{ symbol: string }> }) {
+  const { symbol } = React.use(params)
   const router = useRouter()
   const { toast } = useToast()
-  const symbol = (params?.symbol as string) || "AAPL"
   const { user } = useUser()
   const db = useFirestore()
   
@@ -334,7 +333,7 @@ export default function StockDetailsPage() {
         toast({ variant: "destructive", title: "TRADE LOST", description: "Market moved against prediction." })
       }
 
-      addDocumentNonBlocking(collection(db, 'users', user!.uid, 'activity'), {
+      addDocumentNonBlocking(collection(db, user!.uid, 'activity'), {
         type: "ARENA_SPECULATE",
         symbol,
         name: stock.name,
@@ -457,7 +456,7 @@ export default function StockDetailsPage() {
 
                 {isLiveMode && (
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none p-6">
-                    <Card className="glass-card w-full max-w-sm p-10 pointer-events-auto border-primary/30 bg-background/40 backdrop-blur-3xl rounded-[3rem] animate-in zoom-in-95 shadow-[0_0_100px_rgba(var(--primary),0.1)]">
+                    <Card className="glass-card w-full max-sm p-10 pointer-events-auto border-primary/30 bg-background/40 backdrop-blur-3xl rounded-[3rem] animate-in zoom-in-95 shadow-[0_0_100px_rgba(var(--primary),0.1)]">
                       <div className="space-y-10">
                         <div className="flex items-center justify-between">
                           <Badge className="bg-primary/20 text-primary border-none px-5 py-2 text-[10px] font-black uppercase tracking-[0.2em]">Real-Time Speculation</Badge>
@@ -479,8 +478,8 @@ export default function StockDetailsPage() {
                               <div className="relative"><span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-primary text-xl">₹</span><Input type="number" value={tradeAmount} onChange={e => setTradeAmount(e.target.value)} className="h-16 pl-10 bg-black/20 border-none rounded-2xl text-2xl font-black focus-visible:ring-primary/40" /></div>
                             </div>
                             <div className="grid grid-cols-2 gap-6">
-                              <Button onClick={() => executeLiveTrade("HIGHER")} className="h-28 flex-col gap-2 rounded-[2rem] bg-green-500 hover:bg-green-600 shadow-xl shadow-green-500/20 transition-all hover:scale-[1.05] active:scale-95"><ArrowUpCircle className="size-10" /><span className="font-black text-sm uppercase tracking-widest">Higher</span></Button>
-                              <Button onClick={() => executeLiveTrade("LOWER")} className="h-28 flex-col gap-2 rounded-[2rem] bg-red-500 hover:bg-red-600 shadow-xl shadow-red-500/20 transition-all hover:scale-[1.05] active:scale-95"><ArrowDownCircle className="size-10" /><span className="font-black text-sm uppercase tracking-widest">Lower</span></Button>
+                              <button onClick={() => executeLiveTrade("HIGHER")} className="h-28 flex flex-col items-center justify-center gap-2 rounded-[2rem] bg-green-500 hover:bg-green-600 text-white shadow-xl shadow-green-500/20 transition-all hover:scale-[1.05] active:scale-95"><ArrowUpCircle className="size-10" /><span className="font-black text-sm uppercase tracking-widest">Higher</span></button>
+                              <button onClick={() => executeLiveTrade("LOWER")} className="h-28 flex flex-col items-center justify-center gap-2 rounded-[2rem] bg-red-500 hover:bg-red-600 text-white shadow-xl shadow-red-500/20 transition-all hover:scale-[1.05] active:scale-95"><ArrowDownCircle className="size-10" /><span className="font-black text-sm uppercase tracking-widest">Lower</span></button>
                             </div>
                           </div>
                         )}

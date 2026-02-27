@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { DashboardShell } from "@/components/dashboard-shell"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
@@ -27,13 +27,12 @@ import { doc, serverTimestamp, collection } from "firebase/firestore"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 
-export default function ModuleWorkspacePage() {
-  const params = useParams()
+export default function ModuleWorkspacePage({ params }: { params: Promise<{ moduleId: string }> }) {
+  const { moduleId } = React.use(params)
   const router = useRouter()
   const { toast } = useToast()
   const { user } = useUser()
   const db = useFirestore()
-  const moduleId = params?.moduleId as string
 
   const module = MOCK_LEARNING_MODULES.find(m => m.id === moduleId) || MOCK_LEARNING_MODULES[0]
   
@@ -212,9 +211,9 @@ export default function ModuleWorkspacePage() {
 
               <CardFooter className="p-10 pt-0">
                 {isCompleted ? (
-                  <Button className="w-full h-14 rounded-2xl bg-muted text-foreground hover:bg-muted/80 font-bold text-lg gap-2" disabled>
+                  <div className="w-full h-14 rounded-2xl bg-muted flex items-center justify-center text-foreground font-bold text-lg gap-2">
                     <CheckCircle2 className="size-5 text-primary" /> Lesson Completed
-                  </Button>
+                  </div>
                 ) : (
                   <Button 
                     className="w-full h-14 rounded-2xl font-bold text-lg gap-2 shadow-xl shadow-primary/20 hover:scale-[1.01]" 
